@@ -11,6 +11,7 @@ import {
   jsonb,
   numeric,
   uniqueIndex,
+  index,
 } from 'drizzle-orm/pg-core'
 
 // ─── Types para colunas jsonb ─────────────────────────────────────────────────
@@ -91,7 +92,10 @@ export const sessions = pgTable('sessions', {
   role: roleEnum('role').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  index('sessions_user_id_idx').on(t.userId),
+  index('sessions_expires_at_idx').on(t.expiresAt),
+])
 
 export const passwordResetTokens = pgTable('password_reset_tokens', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -127,6 +131,7 @@ export const trailModules = pgTable('trail_modules', {
   videoUrl: varchar('video_url', { length: 500 }),
   videoStorageKey: varchar('video_storage_key', { length: 500 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 export const challenges = pgTable('challenges', {
@@ -141,6 +146,7 @@ export const challenges = pgTable('challenges', {
   baseXp: integer('base_xp').default(10).notNull(),
   validationModeOverride: validationModeEnum('validation_mode_override'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 // ─── 3. Configuração por Tenant ───────────────────────────────────────────────
@@ -197,8 +203,10 @@ export const moduleProgress = pgTable('module_progress', {
   unlockedBy: uuid('unlocked_by').references(() => users.id),
   unlockedAt: timestamp('unlocked_at'),
   completedAt: timestamp('completed_at'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
   uniqueIndex('module_progress_tenant_student_module_idx').on(t.tenantId, t.studentId, t.moduleId),
+  index('module_progress_tenant_student_idx').on(t.tenantId, t.studentId),
 ])
 
 export const challengeSubmissions = pgTable('challenge_submissions', {
@@ -216,7 +224,10 @@ export const challengeSubmissions = pgTable('challenge_submissions', {
   reviewerNote: text('reviewer_note'),
   submittedAt: timestamp('submitted_at').defaultNow().notNull(),
   reviewedAt: timestamp('reviewed_at'),
-})
+}, (t) => [
+  index('challenge_submissions_tenant_student_challenge_idx').on(t.tenantId, t.studentId, t.challengeId),
+  index('challenge_submissions_tenant_class_challenge_submitted_idx').on(t.tenantId, t.classId, t.challengeId, t.submittedAt),
+])
 
 // ─── 5. Gamificação ───────────────────────────────────────────────────────────
 
@@ -228,7 +239,9 @@ export const xpEvents = pgTable('xp_events', {
   reason: varchar('reason', { length: 100 }).notNull(),
   refId: uuid('ref_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  index('xp_events_tenant_student_idx').on(t.tenantId, t.studentId),
+])
 
 export const studentStats = pgTable('student_stats', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -239,6 +252,7 @@ export const studentStats = pgTable('student_stats', {
   currentStreak: integer('current_streak').default(0).notNull(),
   longestStreak: integer('longest_streak').default(0).notNull(),
   lastActivity: date('last_activity'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
   uniqueIndex('student_stats_tenant_student_idx').on(t.tenantId, t.studentId),
@@ -315,4 +329,6 @@ export const notifications = pgTable('notifications', {
   body: text('body'),
   readAt: timestamp('read_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  index('notifications_tenant_user_read_idx').on(t.tenantId, t.userId, t.readAt),
+])
