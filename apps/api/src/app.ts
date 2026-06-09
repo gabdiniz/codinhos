@@ -1,4 +1,4 @@
-import Fastify from 'fastify'
+import Fastify, { type FastifyError } from 'fastify'
 import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
@@ -33,7 +33,8 @@ export async function createApp() {
   })
 
   // Error handler global
-  app.setErrorHandler((error, _req, reply) => {
+  // Fastify v5: setErrorHandler recebe FastifyError (extends Error) — já tem statusCode, validation, etc.
+  app.setErrorHandler((error: FastifyError, _req, reply) => {
     if (error instanceof AppError) {
       return reply.status(error.statusCode).send({
         error: { code: error.code, message: error.message },
