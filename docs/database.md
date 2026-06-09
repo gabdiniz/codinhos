@@ -8,7 +8,7 @@
 ## Convenções
 
 - IDs: `uuid` v4 gerado automaticamente pelo banco (`DEFAULT gen_random_uuid()`)
-- Timestamps: `created_at` em toda tabela; `updated_at` nas tabelas cujas linhas são mutadas
+- Timestamps: `created_at` em toda tabela; `updated_at` nas tabelas cujas linhas são mutadas — definido com `.$onUpdate(() => new Date())` no schema Drizzle para auto-atualização
 - Nomes: `snake_case` no plural
 - E-mail único **por tenant**, não globalmente: `UNIQUE (tenant_id, email)`
 - Migrations: nunca editar uma migration já aplicada — criar nova
@@ -236,6 +236,7 @@
 | `unlocked_by` | uuid FK → users nullable | quem desbloqueou (gestor/professor no modo `controlled`) |
 | `unlocked_at` | timestamp nullable | quando foi desbloqueado manualmente |
 | `completed_at` | timestamp nullable | |
+| `created_at` | timestamp | |
 | `updated_at` | timestamp | atualizado em toda mudança de status |
 
 **Constraints:** `UNIQUE (tenant_id, student_id, module_id)`
@@ -424,11 +425,15 @@
 |---|---|---|
 | `sessions` | `(user_id)` | `deleteExpiredSessions` roda a cada login |
 | `sessions` | `(expires_at)` | jobs de limpeza de sessões expiradas |
+| `trail_modules` | `(trail_id)` | listar módulos de uma trilha |
+| `challenges` | `(module_id)` | listar desafios de um módulo |
 | `challenge_submissions` | `(tenant_id, student_id, challenge_id)` | cálculo de `attempt_number` e busca de histórico |
 | `challenge_submissions` | `(tenant_id, class_id, challenge_id, submitted_at)` | placar semanal |
 | `xp_events` | `(tenant_id, student_id)` | timeline de XP do aluno |
 | `notifications` | `(tenant_id, user_id, read_at)` | listagem de notificações não lidas |
 | `module_progress` | `(tenant_id, student_id)` | progresso geral do aluno |
+| `ai_conversations` | `(tenant_id, student_id, challenge_id)` | buscar conversa ativa de um aluno em um desafio |
+| `class_weekly_challenges` | `(tenant_id, class_id)` | buscar desafio da semana de uma turma |
 
 ---
 

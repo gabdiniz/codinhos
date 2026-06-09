@@ -67,7 +67,7 @@ export const tenants = pgTable('tenants', {
   settings: jsonb('settings').$type<TenantSettings>().default({}).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 
 export const users = pgTable('users', {
@@ -80,7 +80,7 @@ export const users = pgTable('users', {
   avatarUrl: varchar('avatar_url', { length: 500 }),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
   uniqueIndex('users_tenant_email_idx').on(t.tenantId, t.email),
 ])
@@ -117,7 +117,7 @@ export const trails = pgTable('trails', {
   language: languageEnum('language').notNull(),
   order: integer('order').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 
 export const trailModules = pgTable('trail_modules', {
@@ -131,8 +131,10 @@ export const trailModules = pgTable('trail_modules', {
   videoUrl: varchar('video_url', { length: 500 }),
   videoStorageKey: varchar('video_storage_key', { length: 500 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index('trail_modules_trail_id_idx').on(t.trailId),
+])
 
 export const challenges = pgTable('challenges', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -146,8 +148,10 @@ export const challenges = pgTable('challenges', {
   baseXp: integer('base_xp').default(10).notNull(),
   validationModeOverride: validationModeEnum('validation_mode_override'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index('challenges_module_id_idx').on(t.moduleId),
+])
 
 // ─── 3. Configuração por Tenant ───────────────────────────────────────────────
 
@@ -169,7 +173,7 @@ export const classes = pgTable('classes', {
   validationMode: validationModeEnum('validation_mode').default('auto').notNull(),
   showRanking: boolean('show_ranking').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 })
 
 export const classStudents = pgTable('class_students', {
@@ -203,7 +207,8 @@ export const moduleProgress = pgTable('module_progress', {
   unlockedBy: uuid('unlocked_by').references(() => users.id),
   unlockedAt: timestamp('unlocked_at'),
   completedAt: timestamp('completed_at'),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
   uniqueIndex('module_progress_tenant_student_module_idx').on(t.tenantId, t.studentId, t.moduleId),
   index('module_progress_tenant_student_idx').on(t.tenantId, t.studentId),
@@ -253,7 +258,7 @@ export const studentStats = pgTable('student_stats', {
   longestStreak: integer('longest_streak').default(0).notNull(),
   lastActivity: date('last_activity'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
   uniqueIndex('student_stats_tenant_student_idx').on(t.tenantId, t.studentId),
 ])
@@ -287,7 +292,9 @@ export const classWeeklyChallenges = pgTable('class_weekly_challenges', {
   startsAt: timestamp('starts_at').notNull(),
   endsAt: timestamp('ends_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  index('class_weekly_challenges_tenant_class_idx').on(t.tenantId, t.classId),
+])
 
 // ─── 6. Tutor de IA ───────────────────────────────────────────────────────────
 
@@ -297,7 +304,9 @@ export const aiConversations = pgTable('ai_conversations', {
   studentId: uuid('student_id').references(() => users.id).notNull(),
   challengeId: uuid('challenge_id').references(() => challenges.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [
+  index('ai_conversations_tenant_student_challenge_idx').on(t.tenantId, t.studentId, t.challengeId),
+])
 
 export const aiMessages = pgTable('ai_messages', {
   id: uuid('id').defaultRandom().primaryKey(),
