@@ -39,6 +39,15 @@ function mapSettings(tenant: {
   }
 }
 
+// ─── GET /:slug/theme (público — sem autenticação) ───────────────────────────
+
+export async function getTheme(tenantId: string) {
+  const tenant = await findTenantSettings(tenantId)
+  if (!tenant) throw new NotFoundError('Tenant')
+
+  return { data: { theme: tenant.theme ?? null } }
+}
+
 // ─── GET /:slug/settings ──────────────────────────────────────────────────────
 
 export async function getSettings(tenantId: string) {
@@ -73,19 +82,4 @@ export async function updateSettings(tenantId: string, body: UpdateSettingsBody)
         }),
         ...(g.streakBonusXp !== undefined && { streak_bonus_xp: g.streakBonusXp }),
         ...(g.streakBonusMaxXp !== undefined && { streak_bonus_max_xp: g.streakBonusMaxXp }),
-        ...(g.streakMilestoneDays !== undefined && {
-          streak_milestone_days: g.streakMilestoneDays,
-        }),
-      },
-    }
-  }
-
-  const updated = await updateTenantSettings(tenantId, {
-    theme: body.theme,
-    settings: newSettings,
-  })
-
-  if (!updated) throw new NotFoundError('Tenant')
-
-  return { data: { settings: mapSettings(updated) } }
-}
+       
