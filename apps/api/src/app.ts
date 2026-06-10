@@ -11,6 +11,7 @@ import { tenantTrailsRoutes } from './modules/tenant-trails/tenant-trails.routes
 import { classesRoutes } from './modules/classes/classes.routes.js'
 import { learnRoutes } from './modules/learn/learn.routes.js'
 import { submissionsRoutes } from './modules/submissions/submissions.routes.js'
+import { gamificationRoutes } from './modules/gamification/gamification.routes.js'
 import { AppError } from './shared/errors/index.js'
 
 export async function createApp() {
@@ -77,6 +78,7 @@ export async function createApp() {
   await app.register(classesRoutes, { prefix: '/api' })
   await app.register(learnRoutes, { prefix: '/api' })
   await app.register(submissionsRoutes, { prefix: '/api' })
+  await app.register(gamificationRoutes, { prefix: '/api' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok' }))
