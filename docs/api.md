@@ -92,9 +92,8 @@ Response: { data: { message: "Senha redefinida com sucesso" } }
 ### PATCH `/profile`
 ```
 Request:  { name?, avatarUrl? }
-Response: { data: { user: { id, name, avatarUrl } } }
+Response: { data: { user: { id, name, email, role, isActive, avatarUrl, createdAt } } }
 // Qualquer role autenticado pode atualizar os próprios dados
-// ⚠️ Não implementado — entra junto com o módulo de users
 ```
 
 ### PATCH `/password`
@@ -102,8 +101,7 @@ Response: { data: { user: { id, name, avatarUrl } } }
 Request:  { currentPassword, newPassword }
 Response: { data: { message: "Senha atualizada" } }
 // 401 se currentPassword incorreto
-// Invalida todas as outras sessões ativas do usuário ao trocar a senha
-// ⚠️ Não implementado — entra junto com o módulo de users
+// Invalida todas as outras sessões ativas do usuário ao trocar a senha (sessão atual mantida)
 ```
 
 ---
@@ -120,7 +118,7 @@ Response: { data: { message: "Senha atualizada" } }
 | POST | `/import` | manager | Importa alunos via CSV |
 | GET | `/:userId` | manager | Detalhes do usuário |
 | PATCH | `/:userId` | manager | Atualiza nome, avatar |
-| DELETE | `/:userId` | manager | Desativa usuário (soft delete — `is_active = false`; 400 se auto-desativação; 403 se alvo for manager ou superior) |
+| DELETE | `/:userId` | manager | Desativa usuário (soft delete — `is_active = false`; 422 se auto-desativação; 403 se alvo for manager ou superior) |
 | POST | `/:userId/resend-invite` | manager | Reenvia e-mail de convite |
 
 ### GET `/`
@@ -153,8 +151,7 @@ Response: { data: { user: { id, name, email, role, isActive, avatarUrl, createdA
 Request:  (sem body)
 Response: { data: { message: "Convite reenviado" } }
 // Invalida tokens de convite anteriores (marca usedAt) e cria novo token
-// 400 se o usuário já definiu senha (nenhum token de convite pendente E usuário tem sessões ativas ou trocou senha)
-// Na prática: 400 se não existe nenhum token 'invite' não-usado para o usuário
+// 422 se não existe nenhum token 'invite' não-usado para o usuário (já configurou o acesso)
 ```
 
 ### GET `/template`
