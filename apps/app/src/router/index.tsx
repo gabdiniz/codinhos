@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { TenantLayout } from './TenantLayout.tsx'
 import { ProtectedRoute } from './ProtectedRoute.tsx'
+import { StudentShell } from './StudentShell.tsx'
 
 // Pages — lazy imports para code splitting
 import { lazy, Suspense } from 'react'
@@ -58,46 +59,35 @@ export const router = createBrowserRouter([
         element: <Page component={LoginPage} />,
       },
 
-      // ── Área do aluno ────────────────────────────────────────────────────────
+      // ── Área do aluno (layout route) ─────────────────────────────────────────
       {
-        path: 'learn',
         element: (
           <ProtectedRoute role="student">
-            <Page component={StudentDashboardPage} />
+            <StudentShell />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: 'learn/:moduleId',
-        element: (
-          <ProtectedRoute role="student">
-            <Page component={LearnPage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'learn/:moduleId/challenge/:challengeId',
-        element: (
-          <ProtectedRoute role="student">
-            <Page component={ChallengePage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'profile',
-        element: (
-          <ProtectedRoute role="student">
-            <Page component={ProfilePage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'ranking',
-        element: (
-          <ProtectedRoute role="student">
-            <Page component={RankingPage} />
-          </ProtectedRoute>
-        ),
+        children: [
+          {
+            path: 'learn',
+            element: <Page component={StudentDashboardPage} />,
+          },
+          {
+            path: 'learn/:moduleId',
+            element: <Page component={LearnPage} />,
+          },
+          {
+            path: 'learn/:moduleId/challenge/:challengeId',
+            element: <Page component={ChallengePage} />,
+          },
+          {
+            path: 'profile',
+            element: <Page component={ProfilePage} />,
+          },
+          {
+            path: 'ranking',
+            element: <Page component={RankingPage} />,
+          },
+        ],
       },
 
       // ── Área do gestor ───────────────────────────────────────────────────────
