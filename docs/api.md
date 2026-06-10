@@ -182,7 +182,7 @@ Response: { data: { created: N, skipped: N, errors: [{ row, reason }] } }
 | POST | `/` | manager | Cria turma |
 | GET | `/:classId` | manager | Detalhes da turma |
 | PATCH | `/:classId` | manager | Atualiza configurações |
-| DELETE | `/:classId` | manager | Remove turma (cascata: desvincula alunos e trilhas, preserva submissions) |
+| DELETE | `/:classId` | manager | Remove turma (cascata: weekly challenges → alunos → trilhas; 409 se há submissões) |
 | GET | `/:classId/students` | manager | Alunos da turma |
 | POST | `/:classId/students` | manager | Adiciona aluno à turma |
 | DELETE | `/:classId/students/:studentId` | manager | Remove aluno da turma (preserva submissions e module_progress) |
@@ -235,7 +235,7 @@ Response: { data: [{ id, name, email, avatarUrl, isActive }], meta: { total } }
 Request:  { studentId }
 Response: { data: { classStudent } }
 // 409 se aluno já está na turma
-// 400 se studentId não pertence ao tenant
+// 404 se studentId não pertence ao tenant
 ```
 
 ### POST `/:classId/trails`
