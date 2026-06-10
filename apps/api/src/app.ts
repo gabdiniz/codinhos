@@ -10,6 +10,7 @@ import { catalogRoutes } from './modules/catalog/catalog.routes.js'
 import { tenantTrailsRoutes } from './modules/tenant-trails/tenant-trails.routes.js'
 import { classesRoutes } from './modules/classes/classes.routes.js'
 import { learnRoutes } from './modules/learn/learn.routes.js'
+import { submissionsRoutes } from './modules/submissions/submissions.routes.js'
 import { AppError } from './shared/errors/index.js'
 
 export async function createApp() {
@@ -75,6 +76,7 @@ export async function createApp() {
   await app.register(tenantTrailsRoutes, { prefix: '/api' })
   await app.register(classesRoutes, { prefix: '/api' })
   await app.register(learnRoutes, { prefix: '/api' })
+  await app.register(submissionsRoutes, { prefix: '/api' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok' }))
