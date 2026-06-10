@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 export const slugChallengeParamsSchema = z.object({
   slug: z.string(),
-  challengeId: z.uuid(),
+  challengeId: z.string().uuid(),
 })
 
 // ─── Body ─────────────────────────────────────────────────────────────────────

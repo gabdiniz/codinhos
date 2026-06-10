@@ -4,6 +4,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:local": "concurrently -n api,app -c cyan,magenta \"pnpm --filter @codinhos/api dev\" \"pnpm --filter @codinhos/app dev\"",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
@@ -11,6 +12,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
+    "concurrently": "^9.1.2",
     "turbo": "^2.3.3",
     "typescript": "^5.7.2"
   },
