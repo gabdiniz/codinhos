@@ -4,7 +4,7 @@ import { Resend } from 'resend'
 import { eq } from 'drizzle-orm'
 import type { FastifyReply } from 'fastify'
 import { db } from '../../shared/db/index.js'
-import { users, passwordResetTokens } from '../../shared/db/schema.js'
+import { users, passwordResetTokens, sessions } from '../../shared/db/schema.js'
 import {
   findUserByEmailAndTenant,
   findUserByEmailAndRole,
@@ -233,5 +233,8 @@ export async function resetPassword(body: ResetPasswordBody) {
       .update(passwordResetTokens)
       .set({ usedAt: now })
       .where(eq(passwordResetTokens.id, tokenRecord.id))
+
+    // Invalida todas as sessões ativas do usuário
+    await tx.delete(sessions).where(eq(sessions.userId, tokenRecord.userId))
   })
 }

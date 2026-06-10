@@ -28,6 +28,8 @@ if (!SUPER_ADMIN_PASSWORD) {
   console.error('❌  SEED_SUPER_ADMIN_PASSWORD não definido')
   process.exit(1)
 }
+// Após o guard acima, SUPER_ADMIN_PASSWORD está garantidamente definido
+const adminPassword: string = SUPER_ADMIN_PASSWORD
 
 const client = postgres(DATABASE_URL, { max: 1 })
 const db = drizzle(client, { schema })
@@ -69,7 +71,7 @@ async function seed() {
     .limit(1)
 
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12)
+    const passwordHash = await bcrypt.hash(adminPassword, 12)
     const [admin] = await db
       .insert(users)
       .values({

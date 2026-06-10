@@ -21,6 +21,12 @@ import {
   messageResponseSchema,
 } from './auth.schema.js'
 
+// redirectTo calculado pelo role do usuário
+function buildRedirectTo(role: string, slug: string): string {
+  if (role === 'manager') return `/${slug}/dashboard`
+  return `/${slug}/learn`
+}
+
 export async function authRoutes(app: FastifyInstance) {
   const f = app.withTypeProvider<ZodTypeProvider>()
 
@@ -42,7 +48,8 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const result = await login(req.resolvedTenantId, req.body, reply)
-      return reply.status(200).send(result)
+      const redirectTo = buildRedirectTo(result.user.role, req.params.slug)
+      return reply.status(200).send({ data: { user: result.user, redirectTo } })
     },
   )
 
@@ -61,7 +68,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       await logout(req.sessionId, reply)
-      return reply.status(200).send({ message: 'Logout realizado com sucesso' })
+      return reply.status(200).send({ data: { message: 'Logout realizado com sucesso' } })
     },
   )
 
@@ -80,7 +87,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const result = await getMe(req.user.id)
-      return reply.status(200).send(result)
+      return reply.status(200).send({ data: { user: result.user } })
     },
   )
 
@@ -102,13 +109,14 @@ export async function authRoutes(app: FastifyInstance) {
       await forgotPassword(req.params.slug, req.resolvedTenantId, req.body)
       return reply
         .status(200)
-        .send({ message: 'Se o e-mail existir, você receberá as instruções em breve' })
+        .send({ data: { message: 'Se o e-mail existir, você receberá as instruções em breve' } })
     },
   )
 
   /**
    * POST /api/:slug/auth/reset-password
    * Redefine a senha usando o token recebido por e-mail.
+   * Invalida todas as sessões ativas do usuário após redefinição.
    */
   f.post(
     '/:slug/auth/reset-password',
@@ -122,7 +130,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       await resetPassword(req.body)
-      return reply.status(200).send({ message: 'Senha redefinida com sucesso' })
+      return reply.status(200).send({ data: { message: 'Senha redefinida com sucesso' } })
     },
   )
 
@@ -142,7 +150,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const result = await loginSuperAdmin(req.body, reply)
-      return reply.status(200).send(result)
+      return reply.status(200).send({ data: { user: result.user, redirectTo: '/admin' } })
     },
   )
 
@@ -160,7 +168,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       await logout(req.sessionId, reply)
-      return reply.status(200).send({ message: 'Logout realizado com sucesso' })
+      return reply.status(200).send({ data: { message: 'Logout realizado com sucesso' } })
     },
   )
 }

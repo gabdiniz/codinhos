@@ -59,6 +59,7 @@ export async function findUserById(id: string) {
       email: users.email,
       name: users.name,
       role: users.role,
+      avatarUrl: users.avatarUrl,
       isActive: users.isActive,
       tenantId: users.tenantId,
     })
@@ -93,6 +94,10 @@ export async function deleteExpiredSessions(userId: string) {
   await db
     .delete(sessions)
     .where(and(eq(sessions.userId, userId), lt(sessions.expiresAt, new Date())))
+}
+
+export async function deleteSessionsByUserId(userId: string) {
+  await db.delete(sessions).where(eq(sessions.userId, userId))
 }
 
 // ─── Password Reset Token ─────────────────────────────────────────────────────

@@ -30,25 +30,45 @@ export const resetPasswordBodySchema = z.object({
     .max(100, 'Senha deve ter no máximo 100 caracteres'),
 })
 
-// ─── Response bodies ──────────────────────────────────────────────────────────
+// ─── Response schemas ─────────────────────────────────────────────────────────
 
+const roleEnum = z.enum(['super_admin', 'manager', 'professor', 'student'])
+
+// Usuário retornado no login (sem avatarUrl — não necessário no momento do login)
 export const authUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),
-  role: z.enum(['super_admin', 'manager', 'professor', 'student']),
+  role: roleEnum,
+})
+
+// Usuário retornado no /me (completo)
+export const meUserSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  name: z.string(),
+  role: roleEnum,
+  avatarUrl: z.string().nullable(),
+  tenantId: z.string().uuid(),
 })
 
 export const loginResponseSchema = z.object({
-  user: authUserSchema,
+  data: z.object({
+    user: authUserSchema,
+    redirectTo: z.string(),
+  }),
 })
 
 export const meResponseSchema = z.object({
-  user: authUserSchema,
+  data: z.object({
+    user: meUserSchema,
+  }),
 })
 
 export const messageResponseSchema = z.object({
-  message: z.string(),
+  data: z.object({
+    message: z.string(),
+  }),
 })
 
 // ─── Inferred types ───────────────────────────────────────────────────────────
