@@ -4,6 +4,7 @@ import cors from '@fastify/cors'
 import rateLimit from '@fastify/rate-limit'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 import { authRoutes } from './modules/auth/auth.routes.js'
+import { tenantsRoutes } from './modules/tenants/tenants.routes.js'
 import { AppError } from './shared/errors/index.js'
 
 export async function createApp() {
@@ -63,6 +64,7 @@ export async function createApp() {
 
   // Routes
   await app.register(authRoutes, { prefix: '/api' })
+  await app.register(tenantsRoutes, { prefix: '/api' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok' }))

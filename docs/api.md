@@ -816,7 +816,8 @@ Response: { data: { tenant } }
 Response: { data: { message: "Tenant desativado" } }
 // is_active = false no tenant → DELETE FROM sessions WHERE tenant_id = :tenantId
 // Usuários não são deletados — ficam inacessíveis via ACCOUNT_DISABLED enquanto tenant inativo
-// 400 se tenantId = tenant __system__ (não pode desativar o tenant do Super Admin)
+// 422 se tenantId = tenant __system__ (não pode desativar o tenant do Super Admin)
+// 422 se tenant já está inativo
 ```
 
 ### Catálogo de Trilhas
