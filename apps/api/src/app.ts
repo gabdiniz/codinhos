@@ -14,6 +14,7 @@ import { submissionsRoutes } from './modules/submissions/submissions.routes.js'
 import { gamificationRoutes } from './modules/gamification/gamification.routes.js'
 import { notificationsRoutes } from './modules/notifications/notifications.routes.js'
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js'
+import { weeklyChallengesRoutes } from './modules/weekly-challenges/weekly-challenges.routes.js'
 import { AppError } from './shared/errors/index.js'
 
 export async function createApp() {
@@ -83,6 +84,7 @@ export async function createApp() {
   await app.register(gamificationRoutes, { prefix: '/api' })
   await app.register(notificationsRoutes, { prefix: '/api' })
   await app.register(dashboardRoutes, { prefix: '/api' })
+  await app.register(weeklyChallengesRoutes, { prefix: '/api' })
 
   // Health check
   app.get('/health', async () => ({ status: 'ok' }))
