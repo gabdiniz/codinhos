@@ -1,0 +1,243 @@
+import type { FastifyInstance } from 'fastify'
+import type { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
+import { authenticate } from '../../shared/middlewares/authenticate.js'
+import { requireRole } from '../../shared/middlewares/require-role.js'
+import {
+  getClasses,
+  getClassDetail,
+  createNewClass,
+  updateExistingClass,
+  removeClass,
+  getClassStudents,
+  addStudent,
+  removeStudent,
+  getClassTrails,
+  assignTrail,
+  updateExistingClassTrail,
+  removeClassTrail,
+} from './classes.service.js'
+import {
+  slugParamsSchema,
+  classParamsSchema,
+  studentParamsSchema,
+  classTrailParamsSchema,
+  createClassBodySchema,
+  updateClassBodySchema,
+  addStudentBodySchema,
+  assignTrailBodySchema,
+  updateClassTrailBodySchema,
+  listClassesResponseSchema,
+  classResponseSchema,
+  classDetailResponseSchema,
+  listStudentsResponseSchema,
+  classStudentResponseSchema,
+  listClassTrailsResponseSchema,
+  classTrailResponseSchema,
+  messageResponseSchema,
+} from './classes.schema.js'
+
+export async function classesRoutes(app: FastifyInstance) {
+  const f = app.withTypeProvider<ZodTypeProvider>()
+  const guard = [resolveTenant, authenticate, requireRole('manager')]
+
+  // ── Classes ───────────────────────────────────────────────────────────────
+
+  f.get(
+    '/:slug/classes',
+    {
+      schema: {
+        params: slugParamsSchema,
+        response: { 200: listClassesResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await getClasses(req.resolvedTenantId)
+      return reply.status(200).send(result)
+    },
+  )
+
+  f.post(
+    '/:slug/classes',
+    {
+      schema: {
+        params: slugParamsSchema,
+        body: createClassBodySchema,
+        response: { 201: classResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await createNewClass(req.resolvedTenantId, req.body)
+      return reply.status(201).send({ data: result })
+    },
+  )
+
+  f.get(
+    '/:slug/classes/:classId',
+    {
+      schema: {
+        params: classParamsSchema,
+        response: { 200: classDetailResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await getClassDetail(req.params.classId, req.resolvedTenantId)
+      return reply.status(200).send({ data: result })
+    },
+  )
+
+  f.patch(
+    '/:slug/classes/:classId',
+    {
+      schema: {
+        params: classParamsSchema,
+        body: updateClassBodySchema,
+        response: { 200: classResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await updateExistingClass(
+        req.params.classId,
+        req.resolvedTenantId,
+        req.body,
+      )
+      return reply.status(200).send({ data: result })
+    },
+  )
+
+  f.delete(
+    '/:slug/classes/:classId',
+    {
+      schema: {
+        params: classParamsSchema,
+        response: { 200: messageResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      await removeClass(req.params.classId, req.resolvedTenantId)
+      return reply.status(200).send({ data: { message: 'Turma removida' } })
+    },
+  )
+
+  // ── Students ──────────────────────────────────────────────────────────────
+
+  f.get(
+    '/:slug/classes/:classId/students',
+    {
+      schema: {
+        params: classParamsSchema,
+        response: { 200: listStudentsResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await getClassStudents(req.params.classId, req.resolvedTenantId)
+      return reply.status(200).send(result)
+    },
+  )
+
+  f.post(
+    '/:slug/classes/:classId/students',
+    {
+      schema: {
+        params: classParamsSchema,
+        body: addStudentBodySchema,
+        response: { 201: classStudentResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await addStudent(req.params.classId, req.resolvedTenantId, req.body)
+      return reply.status(201).send({ data: result })
+    },
+  )
+
+  f.delete(
+    '/:slug/classes/:classId/students/:studentId',
+    {
+      schema: {
+        params: studentParamsSchema,
+        response: { 200: messageResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      await removeStudent(req.params.classId, req.params.studentId, req.resolvedTenantId)
+      return reply.status(200).send({ data: { message: 'Aluno removido da turma' } })
+    },
+  )
+
+  // ── Trails ────────────────────────────────────────────────────────────────
+
+  f.get(
+    '/:slug/classes/:classId/trails',
+    {
+      schema: {
+        params: classParamsSchema,
+        response: { 200: listClassTrailsResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await getClassTrails(req.params.classId, req.resolvedTenantId)
+      return reply.status(200).send(result)
+    },
+  )
+
+  f.post(
+    '/:slug/classes/:classId/trails',
+    {
+      schema: {
+        params: classParamsSchema,
+        body: assignTrailBodySchema,
+        response: { 201: classTrailResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await assignTrail(req.params.classId, req.resolvedTenantId, req.body)
+      return reply.status(201).send({ data: result })
+    },
+  )
+
+  f.patch(
+    '/:slug/classes/:classId/trails/:trailId',
+    {
+      schema: {
+        params: classTrailParamsSchema,
+        body: updateClassTrailBodySchema,
+        response: { 200: classTrailResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await updateExistingClassTrail(
+        req.params.classId,
+        req.params.trailId,
+        req.resolvedTenantId,
+        req.body,
+      )
+      return reply.status(200).send({ data: result })
+    },
+  )
+
+  f.delete(
+    '/:slug/classes/:classId/trails/:trailId',
+    {
+      schema: {
+        params: classTrailParamsSchema,
+        response: { 200: messageResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      await removeClassTrail(req.params.classId, req.params.trailId, req.resolvedTenantId)
+      return reply.status(200).send({ data: { message: 'Trilha removida da turma' } })
+    },
+  )
+}

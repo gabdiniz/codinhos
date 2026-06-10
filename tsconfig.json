@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "files": [],
+  "references": [
+    { "path": "apps/api" },
+    { "path": "packages/types" },
+    { "path": "packages/ui" }
+  ]
+}

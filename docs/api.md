@@ -55,8 +55,8 @@
 ### POST `/login`
 ```
 Request:  { email, password }
-Response: { data: { user: { id, name, role }, redirectTo } }
-Cookie:   Set-Cookie: session_id=...; HttpOnly; SameSite=Strict
+Response: { data: { user: { id, name, email, role }, redirectTo } }
+Cookie:   Set-Cookie: sessionId=...; HttpOnly; SameSite=Lax
 // redirectTo por role: student → /:slug/learn | manager → /:slug/dashboard | super_admin → /admin
 // 401 { error: { code: "INVALID_CREDENTIALS" } } — credenciais inválidas (resposta genérica, não revelar se e-mail existe)
 // 403 { error: { code: "ACCOUNT_DISABLED" } }  — conta ou tenant desativado
@@ -85,14 +85,14 @@ Response: { data: { message: "E-mail enviado se o endereço existir" } }
 ```
 Request:  { token, newPassword }
 Response: { data: { message: "Senha redefinida com sucesso" } }
-// Invalida todas as sessões ativas do usuário após redefinição
-// 400 se token inválido, expirado ou já utilizado
+// Invalida todas as sessões ativas do usuário após redefinição (DELETE WHERE user_id = ...)
+// 422 se token inválido, expirado ou já utilizado
 ```
 
 ### PATCH `/profile`
 ```
 Request:  { name?, avatarUrl? }
-Response: { data: { user: { id, name, avatarUrl } } }
+Response: { data: { user: { id, name, email, role, isActive, avatarUrl, createdAt } } }
 // Qualquer role autenticado pode atualizar os próprios dados
 ```
 
@@ -101,7 +101,7 @@ Response: { data: { user: { id, name, avatarUrl } } }
 Request:  { currentPassword, newPassword }
 Response: { data: { message: "Senha atualizada" } }
 // 401 se currentPassword incorreto
-// Invalida todas as outras sessões ativas do usuário ao trocar a senha
+// Invalida todas as outras sessões ativas do usuário ao trocar a senha (sessão atual mantida)
 ```
 
 ---
@@ -118,7 +118,7 @@ Response: { data: { message: "Senha atualizada" } }
 | POST | `/import` | manager | Importa alunos via CSV |
 | GET | `/:userId` | manager | Detalhes do usuário |
 | PATCH | `/:userId` | manager | Atualiza nome, avatar |
-| DELETE | `/:userId` | manager | Desativa usuário (soft delete — `is_active = false`; 400 se auto-desativação; 403 se alvo for outro manager) |
+| DELETE | `/:userId` | manager | Desativa usuário (soft delete — `is_active = false`; 422 se auto-desativação; 403 se alvo for manager ou superior) |
 | POST | `/:userId/resend-invite` | manager | Reenvia e-mail de convite |
 
 ### GET `/`
@@ -150,7 +150,8 @@ Response: { data: { user: { id, name, email, role, isActive, avatarUrl, createdA
 ```
 Request:  (sem body)
 Response: { data: { message: "Convite reenviado" } }
-// 400 se o usuário já definiu senha (token 'invite' já usado)
+// Invalida tokens de convite anteriores (marca usedAt) e cria novo token
+// 422 se não existe nenhum token 'invite' não-usado para o usuário (já configurou o acesso)
 ```
 
 ### GET `/template`
@@ -181,7 +182,7 @@ Response: { data: { created: N, skipped: N, errors: [{ row, reason }] } }
 | POST | `/` | manager | Cria turma |
 | GET | `/:classId` | manager | Detalhes da turma |
 | PATCH | `/:classId` | manager | Atualiza configurações |
-| DELETE | `/:classId` | manager | Remove turma (cascata: desvincula alunos e trilhas, preserva submissions) |
+| DELETE | `/:classId` | manager | Remove turma (cascata: weekly challenges → alunos → trilhas; 409 se há submissões) |
 | GET | `/:classId/students` | manager | Alunos da turma |
 | POST | `/:classId/students` | manager | Adiciona aluno à turma |
 | DELETE | `/:classId/students/:studentId` | manager | Remove aluno da turma (preserva submissions e module_progress) |
@@ -234,7 +235,7 @@ Response: { data: [{ id, name, email, avatarUrl, isActive }], meta: { total } }
 Request:  { studentId }
 Response: { data: { classStudent } }
 // 409 se aluno já está na turma
-// 400 se studentId não pertence ao tenant
+// 404 se studentId não pertence ao tenant
 ```
 
 ### POST `/:classId/trails`
@@ -372,6 +373,8 @@ Response: {
 ### POST `/`
 ```
 Request:  { code, classId }
+// classId no body (não na URL) — o mesmo desafio pode ser submetido em turmas diferentes,
+// cada uma com seu próprio validationMode e registros de submission
 Response: {
   data: {
     submission: { id, status, testResults, attemptNumber },
@@ -637,6 +640,7 @@ Response: {
       lastActivity: timestamp | null,
       pendingReview: N   // submissões aguardando revisão manual
     }]
+    // MVP: students não paginado — adequado para turmas de até ~50 alunos
   }
 }
 ```
@@ -737,7 +741,7 @@ Response: { data: { theme } }
 ```
 Request:  { email, password }
 Response: { data: { user: { id, name, role: 'super_admin' }, redirectTo: '/admin' } }
-Cookie:   Set-Cookie: session_id=...; HttpOnly; SameSite=Strict
+Cookie:   Set-Cookie: sessionId=...; HttpOnly; SameSite=Lax
 // 401 { error: { code: "INVALID_CREDENTIALS" } }
 ```
 
@@ -771,13 +775,13 @@ Response: { data: [{ id, name, email, role, isActive, tenantId, createdAt }], me
 
 ### GET `/tenants`
 ```
-Query:    ?page=1&limit=20
-Response: { data: [{ id, slug, name, plan, createdAt }], meta: { total, page, limit } }
+Query:    ?page=1&limit=20&isActive=true|false   // default: retorna todos
+Response: { data: [{ id, slug, name, plan, isActive, createdAt }], meta: { total, page, limit } }
 ```
 
 ### GET `/tenants/:tenantId`
 ```
-Response: { data: { tenant: { id, slug, name, plan, settings, theme, createdAt } } }
+Response: { data: { tenant: { id, slug, name, plan, settings, theme, isActive, createdAt } } }
 ```
 
 ### POST `/tenants`
@@ -790,22 +794,27 @@ Request:  {
   managerName,
   managerEmail
 }
-Response: { data: { tenant, manager: { id, email } } }
-// Cria tenant + usuário manager + envia convite ao gestor automaticamente
+Response: { data: { tenant, manager: { id, email }, inviteSent: boolean } }
+// Cria tenant + usuário manager + tenta enviar convite ao gestor
+// inviteSent: false se o envio de e-mail falhou (token criado, gestor pode reenviar depois)
+// 409 se slug já existe
 ```
 
 ### PATCH `/tenants/:tenantId`
 ```
 Request:  { name?, plan?, settings?, theme? }
 Response: { data: { tenant } }
+// settings é merged (não substituído): { ai_messages_per_day: 30 } preserva max_students existente
 // Para desabilitar IA completamente: settings.ai_messages_per_day = 0
 ```
 
 ### DELETE `/tenants/:tenantId`
 ```
 Response: { data: { message: "Tenant desativado" } }
-// is_active = false no tenant → todas as sessões ativas do tenant são invalidadas imediatamente
+// is_active = false no tenant → DELETE FROM sessions WHERE tenant_id = :tenantId
 // Usuários não são deletados — ficam inacessíveis via ACCOUNT_DISABLED enquanto tenant inativo
+// 422 se tenantId = tenant __system__ (não pode desativar o tenant do Super Admin)
+// 422 se tenant já está inativo
 ```
 
 ### Catálogo de Trilhas
