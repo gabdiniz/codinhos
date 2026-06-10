@@ -44,6 +44,10 @@ export const settingsResponseSchema = z.object({
   }),
 })
 
-// ─── Inferred types ───────────────────────────────────────────────────────────
+// ─── Response — GET /:slug/theme (público) ────────────────────────────────────
 
-export type UpdateSettingsBody = z.infer<typeof updateSettingsBodySchema>
+export const themeResponseSchema = z.object({
+  data: z.object({
+    theme: z.record(z.string()).nullable(),
+  }),
+})
