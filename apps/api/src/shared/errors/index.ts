@@ -60,3 +60,10 @@ export class UnprocessableError extends AppError {
     super(422, 'UNPROCESSABLE', message)
   }
 }
+
+/** 429 — limite diário de uso excedido */
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Limite diário de mensagens atingido') {
+    super(429, 'TOO_MANY_REQUESTS', message)
+  }
+}
