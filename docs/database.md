@@ -7,11 +7,13 @@
 
 ## Convenções
 
-- IDs: `uuid` v4 gerado automaticamente
-- Timestamps: `created_at` e `updated_at` em toda tabela
+- IDs: `uuid` v4 gerado automaticamente pelo banco (`DEFAULT gen_random_uuid()`)
+- Timestamps: `created_at` em toda tabela; `updated_at` nas tabelas cujas linhas são mutadas — definido com `.$onUpdate(() => new Date())` no schema Drizzle para auto-atualização
 - Nomes: `snake_case` no plural
 - E-mail único **por tenant**, não globalmente: `UNIQUE (tenant_id, email)`
 - Migrations: nunca editar uma migration já aplicada — criar nova
+- **Soft delete**: nunca deletar com `DELETE`. Usar `is_active = false` em `tenants` e `users`. Outras tabelas são append-only ou imutáveis.
+- **Cascade**: nenhuma `CASCADE DELETE` definida — deleções físicas não ocorrem no MVP.
 
 ---
 
@@ -69,6 +71,8 @@
 
 > ¹ `professor` incluído no enum agora para evitar migration futura. Não utilizado até V2.
 
+> **Super Admin e `tenant_id`**: o Super Admin é um `user` com `role = 'super_admin'` e pertence a um tenant de sistema criado pelo seed script com `slug = '__system__'`. Esse tenant nunca é exposto na UI e não representa uma escola real. O `tenant_id` da sessão do Super Admin aponta para esse tenant de sistema.
+
 ---
 
 ### `sessions`
@@ -82,6 +86,8 @@
 | `expires_at` | timestamp | |
 | `created_at` | timestamp | |
 
+> Sessões são imutáveis após a criação — nunca são atualizadas, apenas deletadas (logout ou expiração).
+
 ---
 
 ### `password_reset_tokens`
@@ -90,11 +96,13 @@
 |---|---|---|
 | `id` | uuid PK | |
 | `user_id` | uuid FK → users | |
-| `token_hash` | varchar(255) UNIQUE | |
+| `token_hash` | varchar(255) UNIQUE | SHA-256 do token bruto enviado por e-mail |
 | `type` | enum | `invite` (primeiro acesso) ou `reset` (recuperação de senha) |
 | `expires_at` | timestamp | expira em 1h |
 | `used_at` | timestamp | preenchido ao usar; tokens usados são inválidos |
 | `created_at` | timestamp | |
+
+> O token bruto é gerado com `randomBytes(32).toString('hex')` e enviado por e-mail. Apenas o hash SHA-256 é armazenado no banco.
 
 ---
 
@@ -130,6 +138,7 @@
 | `video_url` | varchar(500) | *(V2)* link externo (YouTube, Vimeo) |
 | `video_storage_key` | varchar(500) | *(V2)* chave no Cloudflare R2 para upload |
 | `created_at` | timestamp | |
+| `updated_at` | timestamp | |
 
 ---
 
@@ -148,6 +157,7 @@
 | `base_xp` | int NOT NULL DEFAULT 10 | XP base por completar o desafio |
 | `validation_mode_override` | enum nullable | sobrescreve o `validation_mode` da turma para este desafio específico; `null` = usa o da turma |
 | `created_at` | timestamp | |
+| `updated_at` | timestamp | |
 
 ---
 
@@ -226,8 +236,12 @@
 | `unlocked_by` | uuid FK → users nullable | quem desbloqueou (gestor/professor no modo `controlled`) |
 | `unlocked_at` | timestamp nullable | quando foi desbloqueado manualmente |
 | `completed_at` | timestamp nullable | |
+| `created_at` | timestamp | |
+| `updated_at` | timestamp | atualizado em toda mudança de status |
 
 **Constraints:** `UNIQUE (tenant_id, student_id, module_id)`
+
+> Progresso é por aluno × módulo × tenant — não por turma. Se o aluno está em duas turmas com a mesma trilha, o progresso é compartilhado.
 
 ---
 
@@ -240,7 +254,7 @@
 | `student_id` | uuid FK → users | |
 | `challenge_id` | uuid FK → challenges | |
 | `class_id` | uuid FK → classes | define qual `validation_mode` aplicar |
-| `attempt_number` | int NOT NULL | número da tentativa (1, 2, 3…); usado no cálculo de bônus de XP |
+| `attempt_number` | int NOT NULL | número da tentativa (1, 2, 3…); calculado no INSERT como `COUNT(rows com mesmo tenant_id + student_id + challenge_id) + 1` |
 | `code` | text NOT NULL | código submetido pelo aluno |
 | `status` | enum | `pending`, `passed`, `failed`, `under_review` |
 | `test_results` | jsonb | resultado detalhado de cada test case |
@@ -286,6 +300,7 @@
 | `current_streak` | int DEFAULT 0 | dias consecutivos com atividade |
 | `longest_streak` | int DEFAULT 0 | |
 | `last_activity` | date nullable | data da última submissão |
+| `created_at` | timestamp | |
 | `updated_at` | timestamp | |
 
 **Constraints:** `UNIQUE (tenant_id, student_id)`
@@ -335,7 +350,7 @@
 | `ends_at` | timestamp | |
 | `created_at` | timestamp | |
 
-> O placar do desafio da semana é computado filtrando `challenge_submissions` por `challenge_id` + `class_id` + `submitted_at` dentro do intervalo `starts_at / ends_at`.
+> O placar do desafio da semana é computado filtrando `challenge_submissions` por `challenge_id + class_id + status = 'passed' + submitted_at` dentro do intervalo `starts_at / ends_at`. Apenas submissões aprovadas contam para o placar.
 
 ---
 
@@ -381,6 +396,7 @@
 **Constraints:** `UNIQUE (tenant_id, student_id, challenge_id, date)`
 
 > Limite diário configurado em `tenants.settings.ai_messages_per_day`.
+> **Padrão de escrita**: sempre via upsert — `INSERT ... ON CONFLICT (tenant_id, student_id, challenge_id, date) DO UPDATE SET message_count = message_count + 1`. Nunca usar INSERT simples.
 
 ---
 
@@ -398,6 +414,26 @@
 | `body` | text nullable | |
 | `read_at` | timestamp nullable | `null` = não lida |
 | `created_at` | timestamp | |
+
+---
+
+## Índices de Performance
+
+> Além dos índices UNIQUE documentados em cada tabela, os índices abaixo são necessários para as queries mais frequentes.
+
+| Tabela | Índice | Motivo |
+|---|---|---|
+| `sessions` | `(user_id)` | `deleteExpiredSessions` roda a cada login |
+| `sessions` | `(expires_at)` | jobs de limpeza de sessões expiradas |
+| `trail_modules` | `(trail_id)` | listar módulos de uma trilha |
+| `challenges` | `(module_id)` | listar desafios de um módulo |
+| `challenge_submissions` | `(tenant_id, student_id, challenge_id)` | cálculo de `attempt_number` e busca de histórico |
+| `challenge_submissions` | `(tenant_id, class_id, challenge_id, submitted_at)` | placar semanal |
+| `xp_events` | `(tenant_id, student_id)` | timeline de XP do aluno |
+| `notifications` | `(tenant_id, user_id, read_at)` | listagem de notificações não lidas |
+| `module_progress` | `(tenant_id, student_id)` | progresso geral do aluno |
+| `ai_conversations` | `(tenant_id, student_id, challenge_id)` | buscar conversa ativa de um aluno em um desafio |
+| `class_weekly_challenges` | `(tenant_id, class_id)` | buscar desafio da semana de uma turma |
 
 ---
 
