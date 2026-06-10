@@ -6,6 +6,7 @@
  * Idempotente: pode rodar múltiplas vezes sem duplicar dados.
  */
 
+import 'dotenv/config'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import bcrypt from 'bcryptjs'
