@@ -72,11 +72,11 @@ export const router = createBrowserRouter([
             element: <Page component={StudentDashboardPage} />,
           },
           {
-            path: 'learn/:moduleId',
+            path: 'learn/:trailId',
             element: <Page component={LearnPage} />,
           },
           {
-            path: 'learn/:moduleId/challenge/:challengeId',
+            path: 'learn/:trailId/module/:moduleId',
             element: <Page component={ChallengePage} />,
           },
           {
