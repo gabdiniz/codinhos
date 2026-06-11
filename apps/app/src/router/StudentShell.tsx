@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.tsx'
+import { ClassProvider } from '../contexts/ClassContext.tsx'
 import { api } from '../lib/api.ts'
 import styles from './StudentShell.module.css'
 
@@ -135,7 +136,9 @@ export function StudentShell() {
 
       {/* ── Conteúdo da página ── */}
       <main className={styles.main}>
-        <Outlet />
+        <ClassProvider>
+          <Outlet />
+        </ClassProvider>
       </main>
 
       {/* ── Bottom nav (mobile) ── */}

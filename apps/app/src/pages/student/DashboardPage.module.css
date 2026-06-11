@@ -1,0 +1,294 @@
+/* ─── DashboardPage ────────────────────────────────────────────────────────────
+   Lista de trilhas do aluno. Estética: mission briefing board — RPG + terminal.
+──────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  padding: 2.5rem;
+  max-width: 980px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.headerInner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.className {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  opacity: 0.8;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.02em;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* ── HUD de stats ────────────────────────────────────────────────────────── */
+
+.hud {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.hudChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: color-mix(in srgb, var(--chip-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 22%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--chip-color);
+}
+
+.hudIcon {
+  display: flex;
+  align-items: center;
+  opacity: 0.9;
+}
+
+.hudText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hudLabel {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+  line-height: 1;
+}
+
+.hudValue {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── Grid de trilhas ─────────────────────────────────────────────────────── */
+
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1rem;
+}
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: cardIn 0.4s ease both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.cardLink {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: 3px;
+  border-left-color: var(--color-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition:
+    border-left-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.cardLink:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Acento lateral por status */
+.card_in_progress .cardLink {
+  border-left-color: var(--color-primary);
+}
+
+.card_completed .cardLink {
+  border-left-color: var(--color-success);
+}
+
+.card_in_progress .cardLink:hover {
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-primary));
+}
+
+.card_completed .cardLink:hover {
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-success));
+}
+
+/* ── Topo do card ────────────────────────────────────────────────────────── */
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+.badge_not_started { color: var(--color-text-muted); }
+.badge_in_progress { color: var(--color-primary); }
+.badge_completed   { color: var(--color-success); }
+
+.cardArrow {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.cardLink:hover .cardArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Título da trilha ────────────────────────────────────────────────────── */
+
+.trailTitle {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+/* ── Barra de progresso ──────────────────────────────────────────────────── */
+
+.progressArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.progressTrack {
+  height: 3px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fill_not_started { background: var(--color-border); }
+.fill_in_progress { background: var(--color-primary); }
+.fill_completed   { background: var(--color-success); }
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progressLabel {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+}
+
+.progressPct {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Estados (loading, erro, vazio) ──────────────────────────────────────── */
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.stateText {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stateError {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  padding: 2.5rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .root {
+    padding: 1.25rem;
+  }
+
+  .headerInner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .hud {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .hudChip {
+    flex: 1;
+    justify-content: center;
+  }
+}
