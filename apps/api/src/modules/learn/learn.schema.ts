@@ -96,6 +96,15 @@ export const moduleDetailResponseSchema = z.object({
         title: z.string(),
         description: z.string().nullable(),
         starterCode: z.string().nullable(),
+        testCases: z
+          .array(
+            z.object({
+              input: z.unknown(),
+              expected: z.unknown(),
+              description: z.string(),
+            }),
+          )
+          .nullable(),
         difficulty: difficultySchema,
         baseXp: z.number(),
       })
