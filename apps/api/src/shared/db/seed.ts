@@ -184,10 +184,18 @@ async function seed() {
   await upsertUser(demoTenant.id, 'gestor@escola-demo.com', 'demo1234', 'manager', 'Gestor Demo')
   const demoStudent = await upsertUser(demoTenant.id, 'aluno@escola-demo.com', 'demo1234', 'student', 'Aluno Demo')
 
-  // ── 3. Turma Demo + matrícula do aluno ──────────────────────────────────────
+  // ── 3. Turma Demo + alunos ──────────────────────────────────────────────────
   console.log('\n🎓  Turma Demo')
   const demoClass = await upsertClass(demoTenant.id, 'Turma Demo')
+  const student2 = await upsertUser(demoTenant.id, 'ana@escola-demo.com',    'demo1234', 'student', 'Ana Souza')
+  const student3 = await upsertUser(demoTenant.id, 'pedro@escola-demo.com',  'demo1234', 'student', 'Pedro Lima')
+  const student4 = await upsertUser(demoTenant.id, 'julia@escola-demo.com',  'demo1234', 'student', 'Julia Costa')
+  const student5 = await upsertUser(demoTenant.id, 'lucas@escola-demo.com',  'demo1234', 'student', 'Lucas Moura')
   await upsertClassStudent(demoClass.id, demoStudent.id)
+  await upsertClassStudent(demoClass.id, student2.id)
+  await upsertClassStudent(demoClass.id, student3.id)
+  await upsertClassStudent(demoClass.id, student4.id)
+  await upsertClassStudent(demoClass.id, student5.id)
 
   // ── 4. Trilha Demo ───────────────────────────────────────────────────────────
   console.log('\n🗺️   Trilha Demo')
@@ -202,6 +210,7 @@ async function seed() {
   console.log('\n📋  Credenciais de acesso:')
   console.log('   Gestor  → gestor@escola-demo.com / demo1234')
   console.log('   Aluno   → aluno@escola-demo.com  / demo1234')
+  console.log('   Alunos extras → ana / pedro / julia / lucas @escola-demo.com / demo1234')
   console.log('   URL     → http://localhost:5173/escola-demo/login')
 }
 
