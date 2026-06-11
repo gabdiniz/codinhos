@@ -12,7 +12,7 @@ import postgres from 'postgres'
 import bcrypt from 'bcryptjs'
 import { eq, and } from 'drizzle-orm'
 import * as schema from './schema.js'
-import { tenants, users } from './schema.js'
+import { tenants, users, classes, classStudents, trails, classTrails } from './schema.js'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -84,6 +84,90 @@ async function upsertUser(
   return created!
 }
 
+async function upsertClass(tenantId: string, name: string) {
+  const [existing] = await db
+    .select({ id: classes.id })
+    .from(classes)
+    .where(and(eq(classes.tenantId, tenantId), eq(classes.name, name)))
+    .limit(1)
+
+  if (existing) {
+    console.log(`  ⏩  Turma '${name}' já existe:`, existing.id)
+    return existing
+  }
+
+  const [created] = await db
+    .insert(classes)
+    .values({ tenantId, name, progressionMode: 'sequential', validationMode: 'auto', showRanking: true })
+    .returning({ id: classes.id })
+
+  console.log(`  ✅  Turma '${name}' criada:`, created!.id)
+  return created!
+}
+
+async function upsertTrail(slug: string, title: string, description: string) {
+  const [existing] = await db
+    .select({ id: trails.id })
+    .from(trails)
+    .where(eq(trails.slug, slug))
+    .limit(1)
+
+  if (existing) {
+    console.log(`  ⏩  Trilha '${slug}' já existe:`, existing.id)
+    return existing
+  }
+
+  const [created] = await db
+    .insert(trails)
+    .values({ slug, title, description, language: 'javascript', order: 1 })
+    .returning({ id: trails.id })
+
+  console.log(`  ✅  Trilha '${slug}' criada:`, created!.id)
+  return created!
+}
+
+async function upsertClassTrail(classId: string, trailId: string) {
+  const [existing] = await db
+    .select({ id: classTrails.id })
+    .from(classTrails)
+    .where(and(eq(classTrails.classId, classId), eq(classTrails.trailId, trailId)))
+    .limit(1)
+
+  if (existing) {
+    console.log(`  ⏩  Trilha já vinculada à turma:`, existing.id)
+    return existing
+  }
+
+  const [created] = await db
+    .insert(classTrails)
+    .values({ classId, trailId, order: 1, visualBlocksEnabled: false })
+    .returning({ id: classTrails.id })
+
+  console.log(`  ✅  Trilha vinculada à turma:`, created!.id)
+  return created!
+}
+
+async function upsertClassStudent(classId: string, studentId: string) {
+  const [existing] = await db
+    .select({ id: classStudents.id })
+    .from(classStudents)
+    .where(and(eq(classStudents.classId, classId), eq(classStudents.studentId, studentId)))
+    .limit(1)
+
+  if (existing) {
+    console.log(`  ⏩  Matrícula já existe:`, existing.id)
+    return existing
+  }
+
+  const [created] = await db
+    .insert(classStudents)
+    .values({ classId, studentId })
+    .returning({ id: classStudents.id })
+
+  console.log(`  ✅  Aluno matriculado na turma:`, created!.id)
+  return created!
+}
+
 // ─── Seed ─────────────────────────────────────────────────────────────────────
 
 async function seed() {
@@ -98,7 +182,21 @@ async function seed() {
   console.log('\n🏫  Escola Demo')
   const demoTenant = await upsertTenant('escola-demo', 'Escola Demo', 'basic')
   await upsertUser(demoTenant.id, 'gestor@escola-demo.com', 'demo1234', 'manager', 'Gestor Demo')
-  await upsertUser(demoTenant.id, 'aluno@escola-demo.com',  'demo1234', 'student', 'Aluno Demo')
+  const demoStudent = await upsertUser(demoTenant.id, 'aluno@escola-demo.com', 'demo1234', 'student', 'Aluno Demo')
+
+  // ── 3. Turma Demo + matrícula do aluno ──────────────────────────────────────
+  console.log('\n🎓  Turma Demo')
+  const demoClass = await upsertClass(demoTenant.id, 'Turma Demo')
+  await upsertClassStudent(demoClass.id, demoStudent.id)
+
+  // ── 4. Trilha Demo ───────────────────────────────────────────────────────────
+  console.log('\n🗺️   Trilha Demo')
+  const demoTrail = await upsertTrail(
+    'javascript-fundamentos',
+    'JavaScript: Fundamentos',
+    'Aprenda os fundamentos do JavaScript: variáveis, tipos, funções e lógica de programação.',
+  )
+  await upsertClassTrail(demoClass.id, demoTrail.id)
 
   console.log('\n🎉  Seed concluído.')
   console.log('\n📋  Credenciais de acesso:')
