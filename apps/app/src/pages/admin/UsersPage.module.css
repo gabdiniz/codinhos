@@ -1,0 +1,276 @@
+/* ─── Admin UsersPage ───────────────────────────────────────────────────────── */
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.stateText {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stateError {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.root {
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 960px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pageTitle {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+}
+
+.pageSubtitle {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ── Filtros ─────────────────────────────────────────────────────────────── */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filterSelect {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.filterSelect:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+/* ── Tabela ──────────────────────────────────────────────────────────────── */
+
+.table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.tableHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px 80px 120px;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+
+.tableHead > span {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px 80px 120px;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition-fast);
+}
+
+.tableRow:last-child { border-bottom: none; }
+
+.tableRow:hover {
+  background: color-mix(in srgb, var(--color-text) 2.5%, transparent);
+}
+
+.userName {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 1rem;
+}
+
+.userEmail {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 1rem;
+}
+
+.tenantId {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+
+.badge {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.role_super_admin {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.role_manager {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+
+.role_professor {
+  color: var(--color-info);
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-info) 22%, transparent);
+}
+
+.role_student {
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-muted) 18%, transparent);
+}
+
+.statusActive {
+  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 22%, transparent);
+}
+
+.statusInactive {
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-text-muted) 18%, transparent);
+}
+
+/* ── Vazio ───────────────────────────────────────────────────────────────── */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.emptyTitle {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.emptyText {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Paginação ───────────────────────────────────────────────────────────── */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.pageBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pageBtn:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.pageBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.pageInfo {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .root { padding: 1.5rem 1.25rem; }
+  .tableHead { display: none; }
+  .tableRow {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    padding: 0.875rem 1rem;
+  }
+  .userName { padding-right: 0; }
+  .userEmail { padding-right: 0; }
+}

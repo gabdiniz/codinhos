@@ -235,6 +235,7 @@ export async function findModuleWithChallenge(moduleId: string) {
       title: challenges.title,
       description: challenges.description,
       starterCode: challenges.starterCode,
+      testCases: challenges.testCases,
       difficulty: challenges.difficulty,
       baseXp: challenges.baseXp,
     })
