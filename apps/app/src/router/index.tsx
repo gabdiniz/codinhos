@@ -3,8 +3,9 @@ import { TenantLayout } from './TenantLayout.tsx'
 import { ProtectedRoute } from './ProtectedRoute.tsx'
 import { StudentShell } from './StudentShell.tsx'
 import { ManagerShell } from './ManagerShell.tsx'
+import { AdminShell } from './AdminShell.tsx'
 
-// Pages — lazy imports para code splitting
+// Pages -- lazy imports para code splitting
 import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('../pages/LoginPage.tsx'))
@@ -21,6 +22,11 @@ const ManagerDashboardPage = lazy(() => import('../pages/manager/DashboardPage.t
 const ClassesPage = lazy(() => import('../pages/manager/ClassesPage.tsx'))
 const StudentsPage = lazy(() => import('../pages/manager/StudentsPage.tsx'))
 const SettingsPage = lazy(() => import('../pages/manager/SettingsPage.tsx'))
+
+// Admin
+const TenantsPage = lazy(() => import('../pages/admin/TenantsPage.tsx'))
+const BadgesPage = lazy(() => import('../pages/admin/BadgesPage.tsx'))
+const AdminUsersPage = lazy(() => import('../pages/admin/UsersPage.tsx'))
 
 // Fallback de carregamento
 function PageLoader() {
@@ -49,18 +55,18 @@ function Page({ component: Component }: { component: React.ComponentType }) {
 }
 
 export const router = createBrowserRouter([
-  // ── Rotas de tenant ──────────────────────────────────────────────────────────
+  // -- Rotas de tenant ----------------------------------------------------------
   {
     path: '/:slug',
     element: <TenantLayout />,
     children: [
-      // Login (público dentro do tenant)
+      // Login (publico dentro do tenant)
       {
         path: 'login',
         element: <Page component={LoginPage} />,
       },
 
-      // ── Área do aluno (layout route) ─────────────────────────────────────────
+      // -- Area do aluno (layout route) -----------------------------------------
       {
         element: (
           <ProtectedRoute role="student">
@@ -91,7 +97,7 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // ── Área do gestor (layout route) ───────────────────────────────────────
+      // -- Area do gestor (layout route) ----------------------------------------
       {
         element: (
           <ProtectedRoute role="manager">
@@ -118,6 +124,33 @@ export const router = createBrowserRouter([
         ],
       },
 
+      // -- Area do super admin (layout route) -----------------------------------
+      {
+        element: (
+          <ProtectedRoute role="super_admin">
+            <AdminShell />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            path: 'admin/tenants',
+            element: <Page component={TenantsPage} />,
+          },
+          {
+            path: 'admin/badges',
+            element: <Page component={BadgesPage} />,
+          },
+          {
+            path: 'admin/users',
+            element: <Page component={AdminUsersPage} />,
+          },
+          {
+            path: 'admin',
+            element: <Navigate to="tenants" replace />,
+          },
+        ],
+      },
+
       // Redirect raiz do tenant para o local correto (tratado pelo ProtectedRoute)
       {
         index: true,
@@ -126,20 +159,20 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // ── Rotas globais ─────────────────────────────────────────────────────────
+  // -- Rotas globais ------------------------------------------------------------
   {
     path: '/404',
     element: (
       <div style={{ textAlign: 'center', padding: '4rem', fontFamily: 'var(--font-sans)', color: 'var(--color-text)' }}>
-        <h1>Escola não encontrada</h1>
+        <h1>Escola nao encontrada</h1>
         <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-          Verifique o endereço e tente novamente.
+          Verifique o endereco e tente novamente.
         </p>
       </div>
     ),
   },
 
-  // Qualquer rota não mapeada redireciona para 404
+  // Qualquer rota nao mapeada redireciona para 404
   {
     path: '*',
     element: <Navigate to="/404" replace />,
