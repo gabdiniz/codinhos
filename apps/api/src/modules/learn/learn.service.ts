@@ -84,12 +84,18 @@ export async function getTrailDetail(
   tenantId: string,
   studentId: string,
   trailId: string,
-  classId: string,
+  classId: string | undefined,
 ) {
-  const membership = await findClassWithMembership(classId, studentId, tenantId)
-  if (!membership) throw new ForbiddenError()
+  let membership
+  if (classId) {
+    membership = await findClassWithMembership(classId, studentId, tenantId)
+    if (!membership) throw new ForbiddenError()
+  } else {
+    membership = await findFirstStudentClass(studentId, tenantId)
+    if (!membership) throw new NotFoundError('Turma')
+  }
 
-  const classTrail = await findClassTrail(classId, trailId)
+  const classTrail = await findClassTrail(membership.id, trailId)
   if (!classTrail) throw new NotFoundError('Trilha')
 
   const [modules, progressMap] = await Promise.all([
@@ -98,6 +104,7 @@ export async function getTrailDetail(
   ])
 
   const statusMap = computeModuleStatuses(modules, progressMap, membership.progressionMode)
+
 
   return {
     data: {
@@ -121,16 +128,22 @@ export async function getModuleDetail(
   tenantId: string,
   studentId: string,
   moduleId: string,
-  classId: string,
+  classId: string | undefined,
 ) {
-  const membership = await findClassWithMembership(classId, studentId, tenantId)
-  if (!membership) throw new ForbiddenError()
+  let membership
+  if (classId) {
+    membership = await findClassWithMembership(classId, studentId, tenantId)
+    if (!membership) throw new ForbiddenError()
+  } else {
+    membership = await findFirstStudentClass(studentId, tenantId)
+    if (!membership) throw new NotFoundError('Turma')
+  }
 
   const mod = await findModuleWithChallenge(moduleId)
   if (!mod) throw new NotFoundError('Módulo')
 
   // Verifica se a trilha do módulo está atribuída à turma
-  const classTrail = await findClassTrail(classId, mod.trailId)
+  const classTrail = await findClassTrail(membership.id, mod.trailId)
   if (!classTrail) throw new NotFoundError('Módulo')
 
   // Calcula status do módulo com base no progressionMode
@@ -167,19 +180,25 @@ export async function getChallengeDetail(
   tenantId: string,
   studentId: string,
   challengeId: string,
-  classId: string,
+  classId: string | undefined,
 ) {
-  const membership = await findClassWithMembership(classId, studentId, tenantId)
-  if (!membership) throw new ForbiddenError()
+  let membership
+  if (classId) {
+    membership = await findClassWithMembership(classId, studentId, tenantId)
+    if (!membership) throw new ForbiddenError()
+  } else {
+    membership = await findFirstStudentClass(studentId, tenantId)
+    if (!membership) throw new NotFoundError('Turma')
+  }
 
   const challenge = await findChallengeWithTrail(challengeId)
   if (!challenge) throw new NotFoundError('Desafio')
 
   // Verifica se a trilha do desafio está atribuída à turma
-  const classTrail = await findClassTrail(classId, challenge.trailId)
+  const classTrail = await findClassTrail(membership.id, challenge.trailId)
   if (!classTrail) throw new NotFoundError('Desafio')
 
-  const lastSub = await findLastSubmission(challengeId, studentId, classId, tenantId)
+  const lastSub = await findLastSubmission(challengeId, studentId, membership.id, tenantId)
 
   return {
     data: {
