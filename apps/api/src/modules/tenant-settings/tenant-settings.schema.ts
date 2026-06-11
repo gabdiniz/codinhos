@@ -51,3 +51,7 @@ export const themeResponseSchema = z.object({
     theme: z.record(z.string()).nullable(),
   }),
 })
+
+// ─── Inferred types ───────────────────────────────────────────────────────────
+
+export type UpdateSettingsBody = z.infer<typeof updateSettingsBodySchema>

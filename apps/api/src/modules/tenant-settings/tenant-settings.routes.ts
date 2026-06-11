@@ -47,4 +47,20 @@ export async function tenantSettingsRoutes(app: FastifyInstance) {
     },
   )
 
-  // PATCH /:s
+  // PATCH /:slug/settings — atualiza theme e/ou gamification
+  f.patch(
+    '/:slug/settings',
+    {
+      schema: {
+        params: slugParamsSchema,
+        body: updateSettingsBodySchema,
+        response: { 200: settingsResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await updateSettings(req.resolvedTenantId, req.body)
+      return reply.status(200).send(result)
+    },
+  )
+}
