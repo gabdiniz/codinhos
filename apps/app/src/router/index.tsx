@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { TenantLayout } from './TenantLayout.tsx'
 import { ProtectedRoute } from './ProtectedRoute.tsx'
 import { StudentShell } from './StudentShell.tsx'
+import { ManagerShell } from './ManagerShell.tsx'
 
 // Pages — lazy imports para code splitting
 import { lazy, Suspense } from 'react'
@@ -90,38 +91,31 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // ── Área do gestor ───────────────────────────────────────────────────────
+      // ── Área do gestor (layout route) ───────────────────────────────────────
       {
-        path: 'manager',
         element: (
           <ProtectedRoute role="manager">
-            <Page component={ManagerDashboardPage} />
+            <ManagerShell />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: 'manager/classes',
-        element: (
-          <ProtectedRoute role="manager">
-            <Page component={ClassesPage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'manager/students',
-        element: (
-          <ProtectedRoute role="manager">
-            <Page component={StudentsPage} />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'manager/settings',
-        element: (
-          <ProtectedRoute role="manager">
-            <Page component={SettingsPage} />
-          </ProtectedRoute>
-        ),
+        children: [
+          {
+            path: 'manager',
+            element: <Page component={ManagerDashboardPage} />,
+          },
+          {
+            path: 'manager/classes',
+            element: <Page component={ClassesPage} />,
+          },
+          {
+            path: 'manager/students',
+            element: <Page component={StudentsPage} />,
+          },
+          {
+            path: 'manager/settings',
+            element: <Page component={SettingsPage} />,
+          },
+        ],
       },
 
       // Redirect raiz do tenant para o local correto (tratado pelo ProtectedRoute)
