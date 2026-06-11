@@ -919,3 +919,77 @@ Response: { data: { badge } }
 Request:  { name?, description?, iconUrl?, triggerType?, triggerValue? }
 Response: { data: { badge } }
 ```
+
+---
+
+## Tutor de IA (Codi) — `/:slug/ai`
+
+> Exclusivo para role `student`. O tutor é o Codi, personagem pedagógico da plataforma.
+
+### Modelo e custo
+
+- **Modelo**: `claude-haiku-4-5-20251001` (mais rápido e barato)
+- **Histórico**: últimas 10 mensagens da conversa enviadas à API
+- **Conversa por desafio**: cada desafio tem sua própria conversa; trocar de desafio reinicia o contexto
+- **Limite diário**: configurável em `tenants.settings.ai_messages_per_day` (padrão: 20 msgs/aluno/dia)
+- **Contagem**: 1 por mensagem enviada pelo aluno (1 request = 1 msg user + 1 msg assistant = 1 no contador)
+
+### System prompt (contexto injetado a cada request)
+
+O tutor recebe no system prompt, a cada request:
+- Nome, escola e nível do aluno
+- Título, enunciado, dificuldade e conceito do módulo do desafio
+- Código atual do aluno (se enviado no body)
+
+Isso garante que o tutor sempre conhece o desafio, mesmo após vários turnos de conversa.
+
+### Endpoints
+
+| Método | Rota | Role | Descrição |
+|---|---|---|---|
+| GET | `/:slug/ai/challenges/:challengeId/conversation` | student | Obtém/cria conversa e histórico |
+| POST | `/:slug/ai/challenges/:challengeId/messages` | student | Envia mensagem e recebe resposta |
+
+### GET `/:slug/ai/challenges/:challengeId/conversation`
+
+Retorna (ou cria) a conversa do aluno para o desafio, com as últimas mensagens e o status de uso diário.
+
+```
+Response: {
+  data: {
+    conversationId: string,
+    messages: [{ id, role: 'user' | 'assistant', content, createdAt }],
+    messagesUsedToday: number,
+    dailyLimit: number | null    // null = sem limite configurado
+  }
+}
+```
+
+### POST `/:slug/ai/challenges/:challengeId/messages`
+
+Envia uma mensagem do aluno e retorna a resposta do tutor.
+
+```
+Request: {
+  message: string           // obrigatório, 1–2000 chars
+  currentCode?: string      // código atual do editor (até 10000 chars)
+                            // — injetado no system prompt para contexto
+}
+
+Response: {
+  data: {
+    message: { id, role: 'assistant', content, createdAt },
+    messagesUsedToday: number,
+    dailyLimit: number | null
+  }
+}
+
+// 429 { error: { code: "TOO_MANY_REQUESTS", message: "Você atingiu o limite de X mensagens por dia..." } }
+// 404 { error: { code: "NOT_FOUND", message: "Desafio não encontrado" } }
+```
+
+### Rastreamento de uso (`ai_usage`)
+
+A tabela `ai_usage` registra `message_count` por `(tenant_id, student_id, challenge_id, date)`.
+O limite diário é verificado somando todos os desafios do aluno no dia atual.
+O frontend pode exibir `messagesUsedToday / dailyLimit` como barra de progresso.

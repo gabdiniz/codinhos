@@ -39,6 +39,15 @@ function mapSettings(tenant: {
   }
 }
 
+// ─── GET /:slug/theme (público — sem autenticação) ───────────────────────────
+
+export async function getTheme(tenantId: string) {
+  const tenant = await findTenantSettings(tenantId)
+  if (!tenant) throw new NotFoundError('Tenant')
+
+  return { data: { theme: tenant.theme ?? null } }
+}
+
 // ─── GET /:slug/settings ──────────────────────────────────────────────────────
 
 export async function getSettings(tenantId: string) {

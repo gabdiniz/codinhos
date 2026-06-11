@@ -35,8 +35,12 @@ export async function createApp() {
   // Plugins
   await app.register(cookie)
 
+  const isDev = process.env.NODE_ENV !== 'production'
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim())
+    ?? (isDev ? ['http://localhost:5173', 'http://localhost:3000'] : [])
+
   await app.register(cors, {
-    origin: process.env.CORS_ORIGIN?.split(',').map((o) => o.trim()) ?? [],
+    origin: allowedOrigins,
     credentials: true,
   })
 
