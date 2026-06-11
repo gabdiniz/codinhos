@@ -1,0 +1,332 @@
+/* ─── RankingPage ───────────────────────────────────────────────────────────────
+   Ranking da turma: pódio top-3 + lista completa.
+──────────────────────────────────────────────────────────────── */
+
+.root {
+  padding: 2.5rem;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Estados ─────────────────────────────────────────────────────────────────*/
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.stateText {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stateError {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────*/
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.myPosition {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.myPositionLabel {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.myPositionValue {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+/* ── Pódio ───────────────────────────────────────────────────────────────────*/
+
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem 0;
+}
+
+.podiumSlot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 160px;
+  padding: 1rem 0.75rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom: none;
+}
+
+/* 1º lugar — mais alto */
+.podiumFirst {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  background: color-mix(in srgb, var(--color-surface) 80%, var(--color-accent));
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  align-self: stretch;
+}
+
+/* Destaque para o próprio aluno */
+.podiumMe {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.podiumMedal {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.podiumAvatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.podiumFirst .podiumAvatar {
+  width: 64px;
+  height: 64px;
+  border-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+.podiumInitials {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.podiumFirst .podiumInitials {
+  color: var(--color-accent);
+}
+
+.podiumAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.podiumName {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.podiumXp {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-xp);
+}
+
+/* ── Lista ───────────────────────────────────────────────────────────────────*/
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.row:hover {
+  background: var(--color-surface-raised);
+}
+
+/* Linha do próprio aluno */
+.rowMe {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-primary));
+}
+
+.rowMe:hover {
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-primary));
+}
+
+.position {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  min-width: 2.25rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Avatar na lista */
+.avatarWrap {
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarImg {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.studentName {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meTag {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+.rowStats {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex-shrink: 0;
+}
+
+.xp {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-xp);
+}
+
+.level {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────*/
+
+@media (max-width: 640px) {
+  .root {
+    padding: 1.25rem;
+    gap: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .podium {
+    padding: 1rem 0 0;
+  }
+
+  .level {
+    display: none;
+  }
+}
