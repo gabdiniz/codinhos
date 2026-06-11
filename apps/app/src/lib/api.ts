@@ -40,7 +40,8 @@ async function request<T>(
     ...options,
     credentials: 'include', // envia o cookie sessionId httpOnly
     headers: {
-      'Content-Type': 'application/json',
+      // Content-Type só quando há body — evita FST_ERR_CTP_EMPTY_JSON_BODY no DELETE
+      ...(options.body !== undefined && { 'Content-Type': 'application/json' }),
       ...options.headers,
     },
   })
