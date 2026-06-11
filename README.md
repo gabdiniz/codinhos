@@ -23,7 +23,7 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 
 - Node.js 20+
 - pnpm 9+
-- PostgreSQL 14+
+- Docker + Docker Compose (para o banco de dados)
 
 ---
 
@@ -37,7 +37,15 @@ cd codinhos
 pnpm install
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Suba o banco de dados
+
+O projeto usa Docker para o PostgreSQL:
+
+```bash
+docker compose up -d
+```
+
+### 3. Configure as variáveis de ambiente
 
 **API** (`apps/api/.env`):
 ```bash

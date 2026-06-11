@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: codinhos-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: codinhos
+    ports:
+      - '5432:5432'
+    volumes:
+      - codinhos_db:/var/lib/postgresql/data
+
+volumes:
+  codinhos_db:
