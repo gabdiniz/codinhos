@@ -37,6 +37,22 @@ export async function findClassWithMembership(
   return row ?? null
 }
 
+/** Primeira turma em que o aluno está matriculado no tenant (usado quando classId não é informado). */
+export async function findFirstStudentClass(studentId: string, tenantId: string) {
+  const [row] = await db
+    .select({
+      id: classes.id,
+      name: classes.name,
+      progressionMode: classes.progressionMode,
+      validationMode: classes.validationMode,
+    })
+    .from(classes)
+    .innerJoin(classStudents, eq(classStudents.classId, classes.id))
+    .where(and(eq(classStudents.studentId, studentId), eq(classes.tenantId, tenantId)))
+    .limit(1)
+  return row ?? null
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 /** Trilhas atribuídas à turma com dados da trilha, ordenadas por order. */

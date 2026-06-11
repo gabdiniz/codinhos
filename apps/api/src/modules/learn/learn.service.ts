@@ -1,6 +1,7 @@
 import { computeModuleStatuses } from '../../shared/utils/progression.js'
 import {
   findClassWithMembership,
+  findFirstStudentClass,
   listClassTrailsWithData,
   countModulesPerTrail,
   countCompletedModulesPerTrail,
@@ -18,16 +19,23 @@ import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js'
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 
-/** GET /:slug/learn?classId= */
+/** GET /:slug/learn?classId= (classId opcional — auto-resolve a primeira turma do aluno) */
 export async function getDashboard(
   tenantId: string,
   studentId: string,
-  classId: string,
+  classId: string | undefined,
 ) {
-  const cls = await findClassWithMembership(classId, studentId, tenantId)
-  if (!cls) throw new ForbiddenError()
+  let cls
+  if (classId) {
+    cls = await findClassWithMembership(classId, studentId, tenantId)
+    if (!cls) throw new ForbiddenError()
+  } else {
+    cls = await findFirstStudentClass(studentId, tenantId)
+    if (!cls) throw new NotFoundError('Turma')
+  }
 
-  const classTrailsData = await listClassTrailsWithData(classId)
+  const resolvedClassId = cls.id
+  const classTrailsData = await listClassTrailsWithData(resolvedClassId)
   const trailIds = classTrailsData.map((ct) => ct.trailId)
 
   const [totalCounts, completedCounts, stats] = await Promise.all([
@@ -35,6 +43,7 @@ export async function getDashboard(
     countCompletedModulesPerTrail(trailIds, studentId, tenantId),
     findStudentStats(studentId, tenantId),
   ])
+
 
   const trailsResult = classTrailsData.map((ct) => {
     const total = totalCounts[ct.trailId] ?? 0

@@ -24,7 +24,7 @@ export const challengeParamsSchema = z.object({
 // ─── Query ────────────────────────────────────────────────────────────────────
 
 export const classIdQuerySchema = z.object({
-  classId: z.string().uuid('classId inválido'),
+  classId: z.string().uuid('classId inválido').optional(),
 })
 
 // ─── Response schemas ─────────────────────────────────────────────────────────
