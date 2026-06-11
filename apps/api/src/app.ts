@@ -53,9 +53,18 @@ export async function createApp() {
   // Error handler global
   // Fastify v5: setErrorHandler recebe FastifyError (extends Error) — já tem statusCode, validation, etc.
   app.setErrorHandler((error: FastifyError, _req, reply) => {
-    if (error instanceof AppError) {
-      return reply.status(error.statusCode).send({
-        error: { code: error.code, message: error.message },
+    // AppError e subclasses (instanceof + fallback duck-type para tsx/esbuild edge cases)
+    const isAppError =
+      error instanceof AppError ||
+      ('statusCode' in error &&
+        'code' in error &&
+        typeof (error as AppError).code === 'string' &&
+        [400, 401, 403, 404, 409, 422, 429].includes((error as AppError).statusCode))
+
+    if (isAppError) {
+      const appErr = error as AppError
+      return reply.status(appErr.statusCode).send({
+        error: { code: appErr.code, message: appErr.message },
       })
     }
 

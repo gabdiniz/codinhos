@@ -97,14 +97,23 @@ export async function removeClass(classId: string, tenantId: string) {
   // Bloqueia se há submissions — FK classId NOT NULL impede deleção da turma
   const hasSubmissions = await hasClassSubmissions(classId)
   if (hasSubmissions) {
-    throw new ConflictError('Turma possui submissões — não é possível removê-la')
+    throw new ConflictError('Turma possui submissões registradas — não é possível removê-la')
   }
 
   // Cascade: weekly challenges → alunos → trilhas → turma
-  await deleteClassWeeklyChallenges(classId)
-  await removeAllStudentsFromClass(classId)
-  await removeAllTrailsFromClass(classId)
-  await deleteClass(classId, tenantId)
+  try {
+    await deleteClassWeeklyChallenges(classId)
+    await removeAllStudentsFromClass(classId)
+    await removeAllTrailsFromClass(classId)
+    await deleteClass(classId, tenantId)
+  } catch (err) {
+    // FK violation do Postgres (código 23503) — dados vinculados à turma
+    const pgCode = (err as { code?: string }).code
+    if (pgCode === '23503') {
+      throw new ConflictError('Não é possível remover a turma: há dados vinculados')
+    }
+    throw err
+  }
 }
 
 // ─── Class Students ───────────────────────────────────────────────────────────

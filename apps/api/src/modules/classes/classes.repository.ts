@@ -41,7 +41,12 @@ export async function listClasses(tenantId: string) {
   const countMap = new Map(studentsCountRows.map((r) => [r.classId, Number(r.total)]))
 
   return rows.map((r) => ({
-    ...r,
+    id: r.id,
+    name: r.name,
+    progressionMode: r.progressionMode,
+    validationMode: r.validationMode,
+    showRanking: r.showRanking,
+    createdAt: r.createdAt.toISOString(),
     studentsCount: countMap.get(r.id) ?? 0,
   }))
 }
@@ -60,7 +65,8 @@ export async function findClassById(classId: string, tenantId: string) {
     .from(classes)
     .where(and(eq(classes.id, classId), eq(classes.tenantId, tenantId)))
     .limit(1)
-  return cls ?? null
+  if (!cls) return null
+  return { ...cls, createdAt: cls.createdAt.toISOString() }
 }
 
 export async function countClassStudents(classId: string): Promise<number> {
@@ -106,7 +112,7 @@ export async function createClass(input: CreateClassInput) {
       showRanking: classes.showRanking,
       createdAt: classes.createdAt,
     })
-  return cls!
+  return { ...cls!, createdAt: cls!.createdAt.toISOString() }
 }
 
 type UpdateClassInput = {
@@ -135,7 +141,8 @@ export async function updateClass(classId: string, tenantId: string, input: Upda
       showRanking: classes.showRanking,
       createdAt: classes.createdAt,
     })
-  return cls ?? null
+  if (!cls) return null
+  return { ...cls, createdAt: cls.createdAt.toISOString() }
 }
 
 export async function deleteClass(classId: string, tenantId: string) {
