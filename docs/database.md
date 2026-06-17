@@ -38,6 +38,7 @@
 > {
 >   "ai_messages_per_day": 20,
 >   "max_students": 100,
+>   "ai_error_explanation_enabled": true,
 >   "gamification": {
 >     "xp_per_level": 100,
 >     "first_attempt_bonus_multiplier": 1.5,
@@ -377,6 +378,14 @@
 | `role` | enum | `user`, `assistant` |
 | `content` | text | |
 | `created_at` | timestamp | |
+
+> **Explicação de erro:** quando o aluno pede ajuda sobre um teste que falhou,
+> o contexto (`failedTest`: descrição, esperado, obtido, erro) vem no body de
+> `POST /messages` e é usado **apenas para montar o system prompt** daquela
+> chamada — não é uma coluna nova nem fica persistido em separado. A resposta
+> do tutor é salva em `ai_messages` normalmente, como qualquer outra mensagem.
+> Controlado por `tenants.settings.ai_error_explanation_enabled` (default
+> `true` quando ausente — ver seção 1).
 
 ---
 

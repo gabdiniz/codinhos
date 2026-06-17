@@ -133,6 +133,24 @@ O tutor **não entrega a resposta** — guia o aluno com dicas progressivas. O p
 - Aluno travado por muito tempo → IA oferece ajuda proativamente
 - Aluno erra 3x o mesmo desafio → IA muda a abordagem da explicação
 
+### Explicação de erro ao falhar um teste *(configurável pelo gestor)*
+
+Quando um teste do desafio falha, o aluno pode pedir explicitamente que o Codi
+explique o erro (botão no painel de resultados — não é automático). O contexto
+do teste que falhou (descrição, esperado, obtido, mensagem de erro) é enviado
+junto da mensagem e incorporado ao prompt de sistema, mas o tutor continua
+seguindo a mesma regra de não entregar a solução completa — apenas explica o
+que está errado e guia o raciocínio.
+
+**Por que não é automático:** disparar a cada falha tiraria a "luta produtiva"
+do aluno (errar faz parte do aprendizado) e consumiria o limite diário de
+mensagens em re-execuções rápidas. O aluno decide quando quer ajuda.
+
+**Configuração:** liga/desliga por tenant, controlado pelo Gestor (não pelo
+Super Admin — é uma escolha pedagógica, não um limite de custo). Detalhes
+técnicos em `agent_docs/banco-de-dados.md` (campo `ai_error_explanation_enabled`
+em `tenants.settings`).
+
 ---
 
 ## Gamificação

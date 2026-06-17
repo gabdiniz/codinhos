@@ -707,23 +707,40 @@ Response: {
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| GET | `/` | manager | Tema e configurações do tenant |
-| PATCH | `/theme` | manager | Atualiza variáveis CSS |
+| GET | `/theme` | público | Apenas o tema (usado no boot do app, antes do login) |
+| GET | `/settings` | manager | Tema + configurações completas do tenant |
+| PATCH | `/settings` | manager | Atualiza theme, gamification e/ou aiErrorExplanationEnabled |
 
-### GET `/`
+### GET `/theme`
+```
+Response: { data: { theme: { "--color-primary": "#...", ... } | null } }
+```
+
+### GET `/settings`
 ```
 Response: {
   data: {
-    theme: { "--color-primary": "#...", ... },
-    settings: { ai_messages_per_day: N, max_students: N }
+    settings: {
+      name: string
+      plan: string
+      theme: { "--color-primary": "#...", ... } | null
+      gamification: { xpPerLevel, firstAttemptBonusMultiplier, streakBonusXp, streakBonusMaxXp, streakMilestoneDays } | null
+      aiMessagesPerDay: number | null   // somente leitura — definido pelo Super Admin
+      maxStudents: number | null        // somente leitura — definido pelo Super Admin
+      aiErrorExplanationEnabled: boolean // default true; editável pelo gestor
+    }
   }
 }
 ```
 
-### PATCH `/theme`
+### PATCH `/settings`
 ```
-Request:  { theme: { "--color-primary": "#...", ... } }
-Response: { data: { theme } }
+Request: {
+  theme?: { "--color-primary": "#...", ... }
+  gamification?: { xpPerLevel?, firstAttemptBonusMultiplier?, streakBonusXp?, streakBonusMaxXp?, streakMilestoneDays? }
+  aiErrorExplanationEnabled?: boolean
+}
+Response: { data: { settings: /* mesmo formato do GET /settings */ } }
 ```
 
 ---
@@ -974,6 +991,13 @@ Request: {
   message: string           // obrigatório, 1–2000 chars
   currentCode?: string      // código atual do editor (até 10000 chars)
                             // — injetado no system prompt para contexto
+  failedTest?: {            // contexto de um teste que falhou (botão "Pedir ajuda ao Codi")
+    description: string     // descrição do caso de teste
+    expected?: string
+    actual?: string
+    error?: string
+  }                         // ignorado pelo backend se o tenant tiver
+                            // ai_error_explanation_enabled = false
 }
 
 Response: {
