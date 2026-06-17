@@ -167,6 +167,17 @@ export async function listClassStudents(classId: string) {
   return rows
 }
 
+/** Busca a turma atual do aluno dentro do tenant — assume turma única por aluno */
+export async function findStudentCurrentClass(studentId: string, tenantId: string) {
+  const [row] = await db
+    .select({ id: classes.id, name: classes.name })
+    .from(classStudents)
+    .innerJoin(classes, eq(classes.id, classStudents.classId))
+    .where(and(eq(classStudents.studentId, studentId), eq(classes.tenantId, tenantId)))
+    .limit(1)
+  return row ?? null
+}
+
 export async function findClassStudent(classId: string, studentId: string) {
   const [row] = await db
     .select({
@@ -191,7 +202,8 @@ export async function addStudentToClass(classId: string, studentId: string) {
       studentId: classStudents.studentId,
       joinedAt: classStudents.joinedAt,
     })
-  return row!
+  // joinedAt vem do banco como Date — classStudentResponseSchema espera string ISO
+  return { ...row!, joinedAt: row!.joinedAt.toISOString() }
 }
 
 export async function removeStudentFromClass(classId: string, studentId: string) {

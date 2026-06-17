@@ -46,7 +46,7 @@ export async function usersRoutes(app: FastifyInstance) {
       preHandler: [resolveTenant, authenticate],
     },
     async (req, reply) => {
-      const result = await updateProfile(req.user.id, req.body)
+      const result = await updateProfile(req.user.id, req.tenantId, req.body)
       return reply.status(200).send({ data: result })
     },
   )
@@ -66,7 +66,7 @@ export async function usersRoutes(app: FastifyInstance) {
       preHandler: [resolveTenant, authenticate],
     },
     async (req, reply) => {
-      await updatePassword(req.user.id, req.sessionId, req.body)
+      await updatePassword(req.user.id, req.tenantId, req.sessionId, req.body)
       return reply.status(200).send({ data: { message: 'Senha atualizada com sucesso' } })
     },
   )
