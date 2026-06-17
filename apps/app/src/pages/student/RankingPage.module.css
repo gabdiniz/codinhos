@@ -130,6 +130,21 @@
   border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
+/* Perfil de outro aluno pode ser aberto */
+.podiumClickable {
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.podiumClickable:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+.podiumClickable:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .podiumMedal {
   font-size: 1.5rem;
   line-height: 1;
@@ -194,6 +209,19 @@
 
 /* ── Lista ───────────────────────────────────────────────────────────────────*/
 
+.listScroll {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Com muitos alunos, a lista vira uma área com scroll contido em vez de
+   um "linguição" empurrando o resto da página para baixo. */
+.listScrollContained {
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
 .list {
   list-style: none;
   display: flex;
@@ -226,6 +254,42 @@
   background: color-mix(in srgb, var(--color-surface) 84%, var(--color-primary));
 }
 
+/* Perfil de outro aluno pode ser aberto */
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Barra fixa com a própria posição — some no fim do scroll, mas fica
+   visível enquanto o aluno rola a lista para comparar com os colegas. */
+.stickyMe {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, var(--color-surface) 85%, var(--color-primary));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 -8px 16px color-mix(in srgb, var(--color-background) 50%, transparent);
+  cursor: pointer;
+}
+
+.stickyMe:hover {
+  background: color-mix(in srgb, var(--color-surface) 78%, var(--color-primary));
+}
+
+.stickyMe:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .position {
   font-family: var(--font-mono);
   font-size: 0.9375rem;
@@ -244,89 +308,4 @@
   height: 36px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--color-primary) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
-  color: var(--color-primary);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatarImg {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.studentName {
-  flex: 1;
-  font-family: var(--font-sans);
-  font-size: 0.9375rem;
-  color: var(--color-text);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.meTag {
-  font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
-  border-radius: var(--radius-sm);
-  padding: 1px 5px;
-  flex-shrink: 0;
-}
-
-.rowStats {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  flex-shrink: 0;
-}
-
-.xp {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--color-xp);
-}
-
-.level {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--color-text-muted);
-}
-
-/* ── Responsive ──────────────────────────────────────────────────────────────*/
-
-@media (max-width: 640px) {
-  .root {
-    padding: 1.25rem;
-    gap: 1.5rem;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .podium {
-    padding: 1rem 0 0;
-  }
-
-  .level {
-    display: none;
-  }
-}
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, 

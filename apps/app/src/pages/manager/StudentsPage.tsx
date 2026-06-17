@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
+import StudentProfileDrawer from '../../components/StudentProfileDrawer/StudentProfileDrawer.tsx'
 import styles from './StudentsPage.module.css'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -90,6 +91,15 @@ function IconEdit() {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
+function IconEye() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   )
 }
@@ -253,6 +263,7 @@ function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalPr
   const [name, setName] = useState(student.name)
   const [email, setEmail] = useState(student.email)
   const [classId, setClassId] = useState<string>('')
+  const [birthDate, setBirthDate] = useState<string>('')
   const [classOptions, setClassOptions] = useState<ClassOption[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -272,13 +283,14 @@ function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalPr
     async function loadData() {
       try {
         const [userRes, classesRes] = await Promise.all([
-          api.get<{ data: { user: Student & { classId?: string | null } } }>(
+          api.get<{ data: { user: Student & { classId?: string | null; birthDate?: string | null } } }>(
             `/api/${slug}/users/${student.id}`,
           ),
           api.get<{ data: ClassOption[] }>(`/api/${slug}/classes`),
         ])
         if (cancelled) return
         setClassId(userRes.data.user.classId ?? '')
+        setBirthDate(userRes.data.user.birthDate ?? '')
         setClassOptions(classesRes.data)
       } catch (err) {
         if (cancelled) return
@@ -300,6 +312,7 @@ function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalPr
         name: name.trim(),
         email: email.trim(),
         classId: classId === '' ? null : classId,
+        birthDate: birthDate === '' ? null : birthDate,
       })
       onSave(student.id, name.trim())
     } catch (err) {
@@ -354,6 +367,16 @@ function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalPr
               ))}
             </select>
           </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Data de nascimento</label>
+            <input
+              className={styles.input}
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              disabled={loadingData}
+            />
+          </div>
           {(loadError ?? error) && <p className={styles.formError}>{loadError ?? error}</p>}
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={saving}>Cancelar</button>
@@ -379,6 +402,7 @@ export default function StudentsPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   const [showInvite, setShowInvite] = useState(false)
@@ -387,12 +411,21 @@ export default function StudentsPage() {
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [profileStudentId, setProfileStudentId] = useState<string | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
 
-  const load = useCallback(async (p: number) => {
+  // Só exibimos a tela cheia de "carregando" no primeiro fetch — recargas
+  // seguintes (filtro, busca, paginação) atualizam a tabela sem desmontar
+  // a busca/filtros, evitando perder o foco do input a cada tecla digitada.
+  const firstLoadDone = useRef(false)
+
+  const load = useCallback(async (p: number, s: string, status: StatusFilter) => {
     if (!slug) return
     setLoadError(null)
     try {
       const qs = new URLSearchParams({ role: 'student', page: String(p), limit: String(PAGE_SIZE) })
+      if (s.trim()) qs.set('search', s.trim())
+      if (status !== 'all') qs.set('isActive', status === 'active' ? 'true' : 'false')
       const res = await api.get<{ data: Student[]; meta: Meta }>(`/api/${slug}/users?${qs}`)
       setStudents(res.data)
       setMeta(res.meta)
@@ -400,10 +433,25 @@ export default function StudentsPage() {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar alunos.')
     } finally {
       setLoading(false)
+      firstLoadDone.current = true
     }
   }, [slug])
 
-  useEffect(() => { load(page) }, [load, page])
+  // Busca com debounce — evita disparar uma requisição por tecla digitada
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350)
+    return () => clearTimeout(t)
+  }, [search])
+
+  // Filtro mudou — volta para a primeira página
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, statusFilter])
+
+  useEffect(() => {
+    if (!firstLoadDone.current) setLoading(true)
+    load(page, debouncedSearch, statusFilter)
+  }, [load, page, debouncedSearch, statusFilter])
 
   useEffect(() => {
     if (!toast) return
@@ -421,7 +469,7 @@ export default function StudentsPage() {
     setShowInvite(false)
     setHighlightId(newId)
     setToast('Convite enviado!')
-    await load(page)
+    await load(page, debouncedSearch, statusFilter)
   }
 
   async function handleDeactivate() {
@@ -430,14 +478,14 @@ export default function StudentsPage() {
     await api.delete(`/api/${slug}/users/${deactivateTarget.id}`)
     setDeactivateTarget(null)
     setToast(`${targetName} foi desativado(a).`)
-    await load(page)
+    await load(page, debouncedSearch, statusFilter)
   }
 
   async function handleEditSave(id: string, newName: string) {
     setEditTarget(null)
     setHighlightId(id)
     setToast(`${newName} foi atualizado(a).`)
-    await load(page)
+    await load(page, debouncedSearch, statusFilter)
   }
 
   async function handleResendInvite(student: Student) {
@@ -455,22 +503,14 @@ export default function StudentsPage() {
 
   function handlePageChange(newPage: number) {
     setPage(newPage)
-    setLoading(true)
   }
 
-  const filtered = useMemo(() => {
-    let list = students
-    if (statusFilter === 'active')   list = list.filter((s) => s.isActive)
-    if (statusFilter === 'inactive') list = list.filter((s) => !s.isActive)
-    if (search.trim()) {
-      const q = search.trim().toLowerCase()
-      list = list.filter((s) =>
-        s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q),
-      )
-    }
-    return list
-  }, [students, statusFilter, search])
+  function openProfile(studentId: string) {
+    setProfileStudentId(studentId)
+    setProfileOpen(true)
+  }
 
+  const hasActiveFilters = debouncedSearch.trim() !== '' || statusFilter !== 'all'
   const totalPages = Math.ceil(meta.total / PAGE_SIZE)
 
   if (loading) {
@@ -521,17 +561,17 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {students.length === 0 ? (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>
-            {students.length === 0 ? 'Nenhum aluno ainda' : 'Nenhum resultado'}
+            {hasActiveFilters ? 'Nenhum resultado' : 'Nenhum aluno ainda'}
           </p>
           <p className={styles.emptyText}>
-            {students.length === 0
-              ? 'Convide o primeiro aluno para comecar.'
-              : 'Tente ajustar os filtros ou a busca.'}
+            {hasActiveFilters
+              ? 'Tente ajustar os filtros ou a busca.'
+              : 'Convide o primeiro aluno para comecar.'}
           </p>
-          {students.length === 0 && (
+          {!hasActiveFilters && (
             <button className={styles.btnPrimary} onClick={() => setShowInvite(true)}>
               <IconPlus />Convidar aluno
             </button>
@@ -544,7 +584,7 @@ export default function StudentsPage() {
             <span>Status</span>
             <span />
           </div>
-          {filtered.map((s) => (
+          {students.map((s) => (
             <div
               key={s.id}
               className={`${styles.tableRow} ${s.id === highlightId ? styles.tableRowHighlighted : ''}`}
@@ -564,6 +604,14 @@ export default function StudentsPage() {
               <div className={styles.colActions}>
                 <button
                   className={styles.actionBtn}
+                  onClick={() => openProfile(s.id)}
+                  title="Ver perfil"
+                  aria-label={`Ver perfil de ${s.name}`}
+                >
+                  <IconEye />
+                </button>
+                <button
+                  className={styles.actionBtn}
                   onClick={() => setEditTarget(s)}
                   title="Editar"
                   aria-label={`Editar ${s.name}`}
@@ -572,77 +620,4 @@ export default function StudentsPage() {
                 </button>
                 {!s.isActive && (
                   <button
-                    className={styles.actionBtn}
-                    onClick={() => handleResendInvite(s)}
-                    disabled={resendingId === s.id}
-                    title="Reenviar convite"
-                    aria-label={`Reenviar convite para ${s.name}`}
-                  >
-                    <IconRefresh />
-                  </button>
-                )}
-                {s.isActive && (
-                  <button
-                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                    onClick={() => setDeactivateTarget(s)}
-                    title="Desativar"
-                    aria-label={`Desativar ${s.name}`}
-                  >
-                    <IconSlash />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            className={styles.pageBtn}
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1}
-            aria-label="Anterior"
-          >
-            <IconChevronLeft />
-          </button>
-          <span className={styles.pageInfo}>{page} / {totalPages}</span>
-          <button
-            className={styles.pageBtn}
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page === totalPages}
-            aria-label="Proxima"
-          >
-            <IconChevronRight />
-          </button>
-        </div>
-      )}
-
-      {showInvite && slug && (
-        <InviteModal
-          slug={slug}
-          onClose={() => setShowInvite(false)}
-          onSave={handleInvite}
-        />
-      )}
-      {deactivateTarget && (
-        <DeactivateConfirm
-          student={deactivateTarget}
-          onConfirm={handleDeactivate}
-          onCancel={() => setDeactivateTarget(null)}
-        />
-      )}
-      {editTarget && slug && (
-        <EditStudentModal
-          slug={slug}
-          student={editTarget}
-          onClose={() => setEditTarget(null)}
-          onSave={handleEditSave}
-        />
-      )}
-
-      {toast && <div className={styles.toast} role="status">{toast}</div>}
-    </div>
-  )
-}
+                    cla

@@ -21,9 +21,10 @@ interface TenantSettings {
   aiMessagesPerDay: number | null
   maxStudents: number | null
   aiErrorExplanationEnabled: boolean
+  allowStudentProfileView: boolean
 }
 
-type TabId = 'geral' | 'tema' | 'gamificacao' | 'tutor-ia'
+type TabId = 'geral' | 'tema' | 'gamificacao' | 'tutor-ia' | 'privacidade'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -157,11 +158,20 @@ function IconRefresh() {
   )
 }
 
+function IconShield() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+    </svg>
+  )
+}
+
 const TABS: { id: TabId; label: string; icon: () => JSX.Element }[] = [
   { id: 'geral',        label: 'Geral',        icon: IconBuilding },
   { id: 'tema',         label: 'Tema visual',  icon: IconPalette },
   { id: 'gamificacao',  label: 'Gamificação',  icon: IconZap },
   { id: 'tutor-ia',     label: 'Tutor de IA',  icon: IconBot },
+  { id: 'privacidade',  label: 'Privacidade',  icon: IconShield },
 ]
 
 // ─── Sub-componente: seletor de cor ──────────────────────────────────────────
@@ -234,6 +244,11 @@ export default function SettingsPage() {
   const [savingAiHelp, setSavingAiHelp] = useState(false)
   const [aiHelpMsg, setAiHelpMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Privacidade — aluno pode ver perfil de outro aluno
+  const [allowProfileView, setAllowProfileView] = useState(true)
+  const [savingProfileView, setSavingProfileView] = useState(false)
+  const [profileViewMsg, setProfileViewMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const load = useCallback(async () => {
     if (!slug) return
     setLoadError(null)
@@ -254,6 +269,7 @@ export default function SettingsPage() {
       })
       setMilestonesRaw(g.streakMilestoneDays.join(', '))
       setAiHelpEnabled(s.aiErrorExplanationEnabled)
+      setAllowProfileView(s.allowStudentProfileView)
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar configurações.')
     } finally {
@@ -281,6 +297,12 @@ export default function SettingsPage() {
     const t = setTimeout(() => setAiHelpMsg(null), 3500)
     return () => clearTimeout(t)
   }, [aiHelpMsg])
+
+  useEffect(() => {
+    if (!profileViewMsg) return
+    const t = setTimeout(() => setProfileViewMsg(null), 3500)
+    return () => clearTimeout(t)
+  }, [profileViewMsg])
 
   function setColor(key: string, value: string) {
     setThemeValues((prev) => ({ ...prev, [key]: value }))
@@ -355,6 +377,23 @@ export default function SettingsPage() {
       })
     } finally {
       setSavingAiHelp(false)
+    }
+  }
+
+  async function handleSaveProfileView() {
+    if (!slug) return
+    setSavingProfileView(true)
+    setProfileViewMsg(null)
+    try {
+      await api.patch(`/api/${slug}/settings`, { allowStudentProfileView: allowProfileView })
+      setProfileViewMsg({ type: 'success', text: 'Configuração de privacidade salva com sucesso.' })
+    } catch (err) {
+      setProfileViewMsg({
+        type: 'error',
+        text: err instanceof ApiError ? err.message : 'Erro ao salvar configuração de privacidade.',
+      })
+    } finally {
+      setSavingProfileView(false)
     }
   }
 
@@ -590,42 +629,4 @@ export default function SettingsPage() {
               </p>
 
               <div className={styles.toggleRow}>
-                <div>
-                  <span className={styles.label}>Tutor explica o erro</span>
-                  <p className={styles.fieldHint}>
-                    Quando ativado, o botão "Pedir ajuda ao Codi" aparece nos testes que falharem,
-                    e o Codi recebe o teste como contexto para explicar o que deu errado.
-                  </p>
-                </div>
-                <label className={styles.switch}>
-                  <input
-                    type="checkbox"
-                    className={styles.switchInput}
-                    checked={aiHelpEnabled}
-                    onChange={(e) => setAiHelpEnabled(e.target.checked)}
-                    aria-label="Ativar explicação de erro pelo tutor de IA"
-                  />
-                  <span className={styles.switchTrack}>
-                    <span className={styles.switchThumb} />
-                  </span>
-                </label>
-              </div>
-
-              {aiHelpMsg && (
-                <p className={aiHelpMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
-                  {aiHelpMsg.text}
-                </p>
-              )}
-
-              <div className={styles.sectionFooter}>
-                <button className={styles.btnPrimary} onClick={handleSaveAiHelp} disabled={savingAiHelp}>
-                  {savingAiHelp ? 'Salvando...' : 'Salvar tutor de IA'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
+               
