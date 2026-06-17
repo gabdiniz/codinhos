@@ -3,7 +3,14 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    // Override do react-library.json (pensado para packages/ui, que emite .d.ts):
+    // este é um app Vite — o bundler faz a emissão e resolve imports com
+    // extensão .ts/.tsx, então o tsc só precisa typecheckar (--noEmit).
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "allowImportingTsExtensions": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
