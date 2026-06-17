@@ -19,6 +19,7 @@ import {
 export type TenantSettings = {
   ai_messages_per_day?: number
   max_students?: number
+  ai_error_explanation_enabled?: boolean
   gamification?: {
     xp_per_level?: number
     first_attempt_bonus_multiplier?: number
