@@ -60,6 +60,41 @@ interface AiMessage {
   createdAt: string
 }
 
+/** Contexto de um teste que falhou — enviado quando o aluno pede ajuda ao Codi */
+interface FailedTestContext {
+  description: string
+  expected?: string
+  actual?: string
+  error?: string
+}
+
+/** Pedido de ajuda originado de um clique em "Pedir ajuda ao Codi" num teste falho */
+interface HelpRequest {
+  failedTest: FailedTestContext
+  /** Identificador único por clique — garante que o CodiDrawer reaja mesmo a cliques repetidos no mesmo teste */
+  nonce: number
+}
+
+interface AiConversationData {
+  conversationId: string
+  messages: AiMessage[]
+  messagesUsedToday: number
+  dailyLimit: number | null
+  aiErrorExplanationEnabled: boolean
+}
+
+/** Serializa um valor de teste (unknown) para texto, respeitando o limite do backend (500 chars) */
+function serializeTestValue(value: unknown): string {
+  if (value === undefined) return 'undefined'
+  let text: string
+  try {
+    text = JSON.stringify(value) ?? String(value)
+  } catch {
+    text = String(value)
+  }
+  return text.slice(0, 500)
+}
+
 interface SubmitBadge {
   id: string; slug: string; name: string; iconUrl: string | null
 }
@@ -264,7 +299,15 @@ function CodeEditor({ initialValue, onChange }: CodeEditorProps) {
 
 // ─── TestResultsPanel ─────────────────────────────────────────────────────────
 
-function TestResultsPanel({ results }: { results: TestResult[] }) {
+interface TestResultsPanelProps {
+  results: TestResult[]
+  /** Chamado quando o aluno clica em "Pedir ajuda ao Codi" num teste que falhou */
+  onAskCodi?: (result: TestResult) => void
+  /** Tarefa 3.3 — esconde o botão quando o tenant desabilitou a explicação de erro */
+  aiHelpEnabled?: boolean
+}
+
+function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPanelProps) {
   const passed = results.filter((r) => r.passed).length
   const total = results.length
   const allPassed = passed === total
@@ -304,6 +347,16 @@ function TestResultsPanel({ results }: { results: TestResult[] }) {
                     )
                   }
                 </div>
+              )}
+              {!r.passed && aiHelpEnabled && onAskCodi && (
+                <button
+                  type="button"
+                  className={styles.askCodiBtn}
+                  onClick={() => onAskCodi(r)}
+                >
+                  <IconBot />
+                  Pedir ajuda ao Codi
+                </button>
               )}
             </div>
           </li>
@@ -346,41 +399,45 @@ interface CodiDrawerProps {
   challengeId: string
   slug: string
   getCode: () => string
+  /** Conversa carregada pelo ChallengePage ao abrir o desafio (sem round-trip extra) */
+  conversation: AiConversationData | null
+  /** Pedido de ajuda originado de um clique em "Pedir ajuda ao Codi" num teste falho */
+  pendingHelpRequest: HelpRequest | null
 }
 
-function CodiDrawer({ open, onClose, challengeId, slug, getCode }: CodiDrawerProps) {
+function CodiDrawer({
+  open,
+  onClose,
+  challengeId,
+  slug,
+  getCode,
+  conversation,
+  pendingHelpRequest,
+}: CodiDrawerProps) {
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dailyLimit, setDailyLimit] = useState<number | null>(null)
   const [usedToday, setUsedToday] = useState(0)
-  const [loaded, setLoaded] = useState(false)
+  const [pendingFailedTest, setPendingFailedTest] = useState<FailedTestContext | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Carrega histórico ao abrir pela primeira vez
+  // Sincroniza com a conversa carregada pelo ChallengePage
   useEffect(() => {
-    if (!open || loaded) return
-    api
-      .get<{
-        data: {
-          conversationId: string
-          messages: AiMessage[]
-          messagesUsedToday: number
-          dailyLimit: number | null
-        }
-      }>(`/api/${slug}/ai/challenges/${challengeId}/conversation`)
-      .then((res) => {
-        setMessages(res.data.messages)
-        setUsedToday(res.data.messagesUsedToday)
-        setDailyLimit(res.data.dailyLimit)
-        setLoaded(true)
-      })
-      .catch(() => {
-        // Codi pode não estar configurado no ambiente demo — abre vazio
-        setLoaded(true)
-      })
-  }, [open, loaded, slug, challengeId])
+    if (!conversation) return
+    setMessages(conversation.messages)
+    setUsedToday(conversation.messagesUsedToday)
+    setDailyLimit(conversation.dailyLimit)
+  }, [conversation])
+
+  // Pré-popula o campo ao receber um pedido de ajuda vindo de um teste que falhou
+  // (Tarefa 3.2) — não envia automaticamente, o aluno confirma o envio
+  useEffect(() => {
+    if (!pendingHelpRequest) return
+    setPendingFailedTest(pendingHelpRequest.failedTest)
+    setInput('Por que esse teste falhou?')
+  }, [pendingHelpRequest])
 
   // Scroll automático para o fim
   useEffect(() => {
@@ -412,10 +469,13 @@ function CodiDrawer({ open, onClose, challengeId, slug, getCode }: CodiDrawerPro
       }>(`/api/${slug}/ai/challenges/${challengeId}/messages`, {
         message: text,
         currentCode: getCode(),
+        ...(pendingFailedTest ? { failedTest: pendingFailedTest } : {}),
       })
       setMessages((prev) => [...prev, res.data.message])
       setUsedToday(res.data.messagesUsedToday)
       setDailyLimit(res.data.dailyLimit)
+      // Contexto consumido — não deve vazar pra próxima mensagem livre
+      setPendingFailedTest(null)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Codi não está disponível agora.')
       setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
@@ -531,6 +591,9 @@ export default function ChallengePage() {
 
   // Codi
   const [codiOpen, setCodiOpen] = useState(false)
+  const [aiData, setAiData] = useState<AiConversationData | null>(null)
+  const [helpRequest, setHelpRequest] = useState<HelpRequest | null>(null)
+  const helpRequestSeq = useRef(0)
 
   // Carrega dados do módulo — reseta estado ao trocar de módulo
   useEffect(() => {
@@ -543,6 +606,8 @@ export default function ChallengePage() {
     setSubmitResult(null)
     setSubmitError(null)
     setCodiOpen(false)
+    setAiData(null)
+    setHelpRequest(null)
     api
       .get<{ data: ModuleDetail }>(`/api/${slug}/learn/modules/${moduleId}`)
       .then((res) => {
@@ -552,6 +617,42 @@ export default function ChallengePage() {
       .catch((err) => setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar desafio.'))
       .finally(() => setLoading(false))
   }, [slug, moduleId])
+
+  // Carrega a conversa com o Codi assim que o desafio é conhecido — uma única vez,
+  // sem round-trip extra (Tarefa 1.3 / 3.3: já traz aiErrorExplanationEnabled)
+  const challengeIdForAi = moduleData?.challenge?.id
+  useEffect(() => {
+    if (!slug || !challengeIdForAi) return
+    api
+      .get<{ data: AiConversationData }>(`/api/${slug}/ai/challenges/${challengeIdForAi}/conversation`)
+      .then((res) => setAiData(res.data))
+      .catch(() => {
+        // Codi pode não estar configurado no ambiente demo — assume feature desligada
+        setAiData({
+          conversationId: '',
+          messages: [],
+          messagesUsedToday: 0,
+          dailyLimit: null,
+          aiErrorExplanationEnabled: false,
+        })
+      })
+  }, [slug, challengeIdForAi])
+
+  // ── Pedir ajuda ao Codi sobre um teste que falhou (Tarefa 3.1) ──
+  // Trunca pra respeitar os limites do failedTestSchema no backend (500/500/1000 chars)
+  const handleAskCodi = useCallback((result: TestResult) => {
+    helpRequestSeq.current += 1
+    setHelpRequest({
+      failedTest: {
+        description: result.description.slice(0, 500),
+        expected: result.error ? undefined : serializeTestValue(result.expected),
+        actual: result.error ? undefined : serializeTestValue(result.actual),
+        error: result.error?.slice(0, 1000),
+      },
+      nonce: helpRequestSeq.current,
+    })
+    setCodiOpen(true)
+  }, [])
 
   // Termina worker ao desmontar
   useEffect(() => {
@@ -803,7 +904,11 @@ export default function ChallengePage() {
 
           {/* Resultados dos testes */}
           {testResults && runState === 'done' && (
-            <TestResultsPanel results={testResults} />
+            <TestResultsPanel
+              results={testResults}
+              onAskCodi={handleAskCodi}
+              aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
+            />
           )}
         </div>
       </div>
@@ -824,6 +929,8 @@ export default function ChallengePage() {
             challengeId={challenge.id}
             slug={slug!}
             getCode={() => codeRef.current}
+            conversation={aiData}
+            pendingHelpRequest={helpRequest}
           />
         </>
       )}

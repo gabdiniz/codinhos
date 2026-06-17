@@ -19,6 +19,7 @@ const gamificationSettingsSchema = z.object({
 export const updateSettingsBodySchema = z.object({
   theme: z.record(z.string()).optional(),
   gamification: gamificationSettingsSchema.optional(),
+  aiErrorExplanationEnabled: z.boolean().optional(),
 })
 
 // ─── Response ─────────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ export const settingsResponseSchema = z.object({
       gamification: gamificationResponseSchema.nullable(),
       aiMessagesPerDay: z.number().nullable(),
       maxStudents: z.number().nullable(),
+      aiErrorExplanationEnabled: z.boolean(),
     }),
   }),
 })

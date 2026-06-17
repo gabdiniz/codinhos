@@ -86,7 +86,14 @@ export async function insertMessage(
  * Busca dados do desafio para compor o system prompt.
  * Não precisa de tenant_id — desafios são do catálogo global.
  */
-export async function getChallengeContext(challengeId: string) {
+export async function getChallengeContext(challengeId: string): Promise<{
+  challengeTitle: string
+  challengeDescription: string | null
+  difficulty: 'easy' | 'medium' | 'hard'
+  moduleConcept: string | null
+  moduleTitle: string
+  language: 'javascript' | 'python'
+} | null> {
   const [row] = await db
     .select({
       challengeTitle: challenges.title,
@@ -102,6 +109,8 @@ export async function getChallengeContext(challengeId: string) {
     .where(eq(challenges.id, challengeId))
     .limit(1)
 
+  // Anotação explícita acima: sem ela o TS prova (incorretamente) que `row` nunca
+  // é undefined e descarta o ramo `null`, quebrando o caso "desafio não existe".
   return row ?? null
 }
 
@@ -145,6 +154,7 @@ export async function getTenantAiConfig(tenantId: string) {
     ? {
         name: row.name,
         aiMessagesPerDay: row.settings?.ai_messages_per_day ?? null,
+        aiErrorExplanationEnabled: row.settings?.ai_error_explanation_enabled ?? true,
       }
     : null
 }

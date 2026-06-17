@@ -29,6 +29,13 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
+type FailedTestContext = {
+  description: string
+  expected?: string
+  actual?: string
+  error?: string
+}
+
 function buildSystemPrompt(opts: {
   studentName: string
   tenantName: string
@@ -39,6 +46,7 @@ function buildSystemPrompt(opts: {
   moduleConcept: string | null
   language: string
   currentCode: string | undefined
+  failedTest: FailedTestContext | undefined
 }): string {
   const {
     studentName,
@@ -50,10 +58,19 @@ function buildSystemPrompt(opts: {
     moduleConcept,
     language,
     currentCode,
+    failedTest,
   } = opts
 
   const codeBlock = currentCode
     ? `\n\n## Código atual do aluno\n\`\`\`${language}\n${currentCode}\n\`\`\``
+    : ''
+
+  const failedTestBlock = failedTest
+    ? `\n\n## Teste que falhou
+- Caso: ${failedTest.description}${failedTest.expected ? `\n- Esperado: ${failedTest.expected}` : ''}${failedTest.actual ? `\n- Obtido: ${failedTest.actual}` : ''}${failedTest.error ? `\n- Erro: ${failedTest.error}` : ''}
+
+O aluno pediu ajuda especificamente sobre esse erro. Explique a causa de forma
+construtiva, sem reescrever o código corrigido.`
     : ''
 
   return `Você é o Codi, tutor de programação da plataforma Codinhos.
@@ -68,7 +85,7 @@ function buildSystemPrompt(opts: {
 - Dificuldade: ${DIFFICULTY_LABEL[difficulty] ?? difficulty}
 - Módulo: ${moduleConcept ?? 'Programação'}
 - Linguagem: ${language}
-${challengeDescription ? `- Enunciado: ${challengeDescription}` : ''}${codeBlock}
+${challengeDescription ? `- Enunciado: ${challengeDescription}` : ''}${codeBlock}${failedTestBlock}
 
 ## Diretrizes pedagógicas
 - Fale de forma simples e amigável, adequada para alunos de 11 a 14 anos
@@ -87,6 +104,7 @@ export async function getConversation(
   studentId: string,
   challengeId: string,
   dailyLimit: number | null,
+  aiErrorExplanationEnabled: boolean,
 ) {
   const conversationId = await findOrCreateConversation(tenantId, studentId, challengeId)
   const messages = await listConversationMessages(conversationId, HISTORY_LIMIT)
@@ -102,6 +120,7 @@ export async function getConversation(
     })),
     messagesUsedToday,
     dailyLimit,
+    aiErrorExplanationEnabled,
   }
 }
 
@@ -113,7 +132,7 @@ export async function sendMessage(
   challengeId: string,
   body: SendMessageBody,
   student: { name: string; level: number },
-  tenant: { name: string; aiMessagesPerDay: number | null },
+  tenant: { name: string; aiMessagesPerDay: number | null; aiErrorExplanationEnabled: boolean },
 ) {
   // 1. Verificar limite diário ANTES de qualquer persistência
   const effectiveLimit = tenant.aiMessagesPerDay ?? DEFAULT_DAILY_LIMIT
@@ -145,6 +164,10 @@ export async function sendMessage(
     { role: 'user' as const, content: body.message },
   ]
 
+  // Defesa em profundidade: só usa o contexto do teste falho se o tenant tiver a
+  // feature habilitada, mesmo que o frontend envie (ex.: cache desatualizado)
+  const failedTest = tenant.aiErrorExplanationEnabled ? body.failedTest : undefined
+
   // 5. Chamar Anthropic
   const aiResponse = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -159,6 +182,7 @@ export async function sendMessage(
       moduleConcept: context.moduleConcept ?? null,
       language: context.language,
       currentCode: body.currentCode,
+      failedTest,
     }),
     messages: apiMessages,
   })

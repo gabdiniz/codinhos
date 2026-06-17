@@ -42,6 +42,7 @@ export async function aiTutorRoutes(app: FastifyInstance) {
         req.user.id,
         challengeId,
         tenantConfig.aiMessagesPerDay,
+        tenantConfig.aiErrorExplanationEnabled,
       )
 
       return reply.status(200).send({ data: result })
