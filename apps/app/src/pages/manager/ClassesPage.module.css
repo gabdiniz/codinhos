@@ -258,6 +258,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.className:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
 }
 
 .rankingBadge {
