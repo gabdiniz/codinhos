@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
 import { useAuth } from '../../contexts/AuthContext.tsx'
 import { useClass } from '../../contexts/ClassContext.tsx'
+import StudentProfileDrawer from '../../components/StudentProfileDrawer/StudentProfileDrawer.tsx'
 import styles from './RankingPage.module.css'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -17,6 +18,8 @@ interface RankingEntry {
 interface RankingData {
   ranking: RankingEntry[]
   myPosition: number | null
+  // Config do gestor — se false, aluno só pode abrir o próprio perfil
+  allowProfileView: boolean
 }
 
 // ─── Ícones inline ────────────────────────────────────────────────────────────
@@ -42,6 +45,10 @@ function initials(name: string) {
 
 const MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
+// A partir desse total, a lista vira uma área com scroll contido (em vez de um
+// "linguição" de itens) e ganha uma barra fixa mostrando a própria posição.
+const SCROLL_THRESHOLD = 8
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function RankingPage() {
@@ -53,6 +60,8 @@ export default function RankingPage() {
   const [className, setClassName] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [profileStudentId, setProfileStudentId] = useState<string | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   useEffect(() => {
     if (!slug) return
@@ -98,7 +107,14 @@ export default function RankingPage() {
     )
   }
 
-  const { ranking, myPosition } = data
+  const { ranking, myPosition, allowProfileView } = data
+  const myEntry = ranking.find((e) => e.student.id === user?.id) ?? null
+  const isLongList = ranking.length > SCROLL_THRESHOLD
+
+  function openProfile(studentId: string) {
+    setProfileStudentId(studentId)
+    setProfileOpen(true)
+  }
 
   return (
     <div className={styles.root}>
@@ -121,11 +137,11 @@ export default function RankingPage() {
       {ranking.length >= 3 && (
         <section className={styles.podium}>
           {/* 2º lugar */}
-          <PodiumSlot entry={ranking[1]!} myId={user?.id} />
+          <PodiumSlot entry={ranking[1]!} myId={user?.id} allowProfileView={allowProfileView} onOpen={openProfile} />
           {/* 1º lugar (centro, mais alto) */}
-          <PodiumSlot entry={ranking[0]!} myId={user?.id} first />
+          <PodiumSlot entry={ranking[0]!} myId={user?.id} allowProfileView={allowProfileView} onOpen={openProfile} first />
           {/* 3º lugar */}
-          <PodiumSlot entry={ranking[2]!} myId={user?.id} />
+          <PodiumSlot entry={ranking[2]!} myId={user?.id} allowProfileView={allowProfileView} onOpen={openProfile} />
         </section>
       )}
 
@@ -133,74 +149,36 @@ export default function RankingPage() {
       {ranking.length === 0 ? (
         <p className={styles.empty}>// nenhum aluno no ranking ainda.</p>
       ) : (
-        <ol className={styles.list}>
-          {ranking.map((entry) => {
-            const isMe = entry.student.id === user?.id
-            return (
-              <li
-                key={entry.student.id}
-                className={`${styles.row} ${isMe ? styles.rowMe : ''}`}
-              >
-                <span className={styles.position}>
-                  {MEDAL[entry.position] ?? `#${entry.position}`}
-                </span>
-
-                <div className={styles.avatarWrap}>
-                  {entry.student.avatarUrl
-                    ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.avatarImg} />
-                    : <div className={styles.avatar}>{initials(entry.student.name)}</div>
+        <div className={`${styles.listScroll} ${isLongList ? styles.listScrollContained : ''}`}>
+          <ol className={styles.list}>
+            {ranking.map((entry) => {
+              const isMe = entry.student.id === user?.id
+              const canOpen = allowProfileView || isMe
+              return (
+                <li
+                  key={entry.student.id}
+                  className={`${styles.row} ${isMe ? styles.rowMe : ''} ${canOpen ? styles.rowClickable : ''}`}
+                  onClick={canOpen ? () => openProfile(entry.student.id) : undefined}
+                  role={canOpen ? 'button' : undefined}
+                  tabIndex={canOpen ? 0 : undefined}
+                  onKeyDown={
+                    canOpen
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            openProfile(entry.student.id)
+                          }
+                        }
+                      : undefined
                   }
-                </div>
-
-                <span className={styles.studentName}>
-                  {entry.student.name}
-                  {isMe && <span className={styles.meTag}>você</span>}
-                </span>
-
-                <div className={styles.rowStats}>
-                  <span className={styles.xp}>
-                    <IconStar />
-                    {entry.totalXp.toLocaleString('pt-BR')}
+                >
+                  <span className={styles.position}>
+                    {MEDAL[entry.position] ?? `#${entry.position}`}
                   </span>
-                  <span className={styles.level}>Nível {entry.level}</span>
-                </div>
-              </li>
-            )
-          })}
-        </ol>
-      )}
-    </div>
-  )
-}
 
-// ─── PodiumSlot ───────────────────────────────────────────────────────────────
-
-function PodiumSlot({
-  entry,
-  myId,
-  first = false,
-}: {
-  entry: RankingEntry
-  myId?: string
-  first?: boolean
-}) {
-  const isMe = entry.student.id === myId
-  const medal = MEDAL[entry.position] ?? ''
-
-  return (
-    <div className={`${styles.podiumSlot} ${first ? styles.podiumFirst : ''} ${isMe ? styles.podiumMe : ''}`}>
-      <span className={styles.podiumMedal}>{medal}</span>
-      <div className={styles.podiumAvatar}>
-        {entry.student.avatarUrl
-          ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.podiumAvatarImg} />
-          : <span className={styles.podiumInitials}>{initials(entry.student.name)}</span>
-        }
-      </div>
-      <span className={styles.podiumName}>{entry.student.name.split(' ')[0]}</span>
-      <span className={styles.podiumXp}>
-        <IconStar />
-        {entry.totalXp.toLocaleString('pt-BR')}
-      </span>
-    </div>
-  )
-}
+                  <div className={styles.avatarWrap}>
+                    {entry.student.avatarUrl
+                      ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.avatarImg} />
+                      : <div className={styles.avatar}>{initials(entry.student.name)}</div>
+                    }
+    

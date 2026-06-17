@@ -1,4 +1,4 @@
-import { and, count, eq, isNull, ne } from 'drizzle-orm'
+import { and, count, eq, ilike, isNull, ne, or } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import { users, passwordResetTokens, sessions } from '../../shared/db/schema.js'
 
@@ -13,6 +13,7 @@ export async function findUserById(id: string, tenantId: string) {
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,
       passwordHash: users.passwordHash,
@@ -32,6 +33,7 @@ export async function findUserByIdOnly(id: string) {
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,
       passwordHash: users.passwordHash,
@@ -54,15 +56,20 @@ export async function findUserByEmailInTenant(email: string, tenantId: string) {
 type ListUsersOptions = {
   tenantId: string
   role?: 'student' | 'manager' | 'professor'
+  search?: string
+  isActive?: boolean
   page: number
   limit: number
 }
 
-export async function listUsers({ tenantId, role, page, limit }: ListUsersOptions) {
-  const baseWhere = eq(users.tenantId, tenantId)
-  const where = role !== undefined
-    ? and(baseWhere, eq(users.role, role))
-    : baseWhere
+export async function listUsers({ tenantId, role, search, isActive, page, limit }: ListUsersOptions) {
+  const conditions = [eq(users.tenantId, tenantId)]
+  if (role !== undefined) conditions.push(eq(users.role, role))
+  if (isActive !== undefined) conditions.push(eq(users.isActive, isActive))
+  if (search !== undefined) {
+    conditions.push(or(ilike(users.name, `%${search}%`), ilike(users.email, `%${search}%`))!)
+  }
+  const where = and(...conditions)
 
   const [rows, [{ value: total }]] = await Promise.all([
     db
@@ -115,6 +122,7 @@ type UpdateUserInput = {
   name?: string
   email?: string
   avatarUrl?: string | null
+  birthDate?: string | null
   passwordHash?: string
 }
 
@@ -125,6 +133,7 @@ export async function updateUser(id: string, tenantId: string, input: UpdateUser
       ...(input.name !== undefined && { name: input.name }),
       ...(input.email !== undefined && { email: input.email }),
       ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
+      ...(input.birthDate !== undefined && { birthDate: input.birthDate }),
       ...(input.passwordHash !== undefined && { passwordHash: input.passwordHash }),
     })
     .where(and(eq(users.id, id), eq(users.tenantId, tenantId)))
@@ -134,6 +143,7 @@ export async function updateUser(id: string, tenantId: string, input: UpdateUser
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,
     })
@@ -185,16 +195,4 @@ export async function createInviteToken(userId: string, tokenHash: string, expir
   })
 }
 
-// ─── Sessões ──────────────────────────────────────────────────────────────────
-
-/** Deleta todas as sessões do usuário exceto a sessão atual */
-export async function deleteOtherSessions(userId: string, currentSessionId: string) {
-  await db
-    .delete(sessions)
-    .where(and(eq(sessions.userId, userId), ne(sessions.id, currentSessionId)))
-}
-
-/** Deleta todas as sessões do usuário */
-export async function deleteAllSessions(userId: string) {
-  await db.delete(sessions).where(eq(sessions.userId, userId))
-}
+// ─── Sessões ──────────────────────────────────────────────────

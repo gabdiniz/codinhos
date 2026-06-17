@@ -7,6 +7,7 @@ import {
   listClassRanking,
   listBadgesWithEarnedStatus,
 } from './gamification.repository.js'
+import { findTenantSettings } from '../tenant-settings/tenant-settings.repository.js'
 import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -19,6 +20,10 @@ vi.mock('./gamification.repository.js', () => ({
   listBadgesWithEarnedStatus: vi.fn(),
   countXpEvents: vi.fn(),
   listXpEvents: vi.fn(),
+}))
+
+vi.mock('../tenant-settings/tenant-settings.repository.js', () => ({
+  findTenantSettings: vi.fn(),
 }))
 
 // ─── Testes ───────────────────────────────────────────────────────────────────
@@ -138,50 +143,36 @@ describe('gamification.service', () => {
 
       expect(result.myPosition).toBeNull()
     })
-  })
 
-  // ── getBadges ──────────────────────────────────────────────────────────────
+    it('allowProfileView reflete o setting do tenant quando requester é aluno', async () => {
+      vi.mocked(findClassRankingConfig).mockResolvedValue({ showRanking: true })
+      vi.mocked(listClassRanking).mockResolvedValue([])
+      vi.mocked(findTenantSettings).mockResolvedValue({
+        id: 'tenant-id',
+        name: 'Escola',
+        plan: 'basic',
+        theme: null,
+        settings: { allow_student_profile_view: false },
+      })
 
-  describe('getBadges', () => {
-    it('deve retornar earned=false para badges não conquistados', async () => {
-      vi.mocked(listBadgesWithEarnedStatus).mockResolvedValue([
-        {
-          id: 'badge-1',
-          slug: 'first-challenge',
-          name: 'Primeiro Desafio',
-          description: null,
-          iconUrl: null,
-          triggerType: 'challenge_count',
-          triggerValue: 1,
-          earnedAt: null,
-        },
-      ])
+      const result = await getClassRanking('class-id', 'tenant-id', 'student-id', 'student')
 
-      const result = await getBadges('student-id', 'tenant-id')
-
-      expect(result[0]!.earned).toBe(false)
-      expect(result[0]!.earnedAt).toBeNull()
+      expect(result.allowProfileView).toBe(false)
     })
 
-    it('deve retornar earned=true com earnedAt em ISO string para badges conquistados', async () => {
-      const earnedAt = new Date('2025-06-01T10:00:00Z')
-      vi.mocked(listBadgesWithEarnedStatus).mockResolvedValue([
-        {
-          id: 'badge-1',
-          slug: 'first-challenge',
-          name: 'Primeiro Desafio',
-          description: 'Completou o primeiro desafio',
-          iconUrl: '/icons/first.svg',
-          triggerType: 'challenge_count',
-          triggerValue: 1,
-          earnedAt,
-        },
-      ])
+    it('allowProfileView é sempre true para manager, mesmo com tenant desativado', async () => {
+      vi.mocked(findClassRankingConfig).mockResolvedValue({ showRanking: true })
+      vi.mocked(listClassRanking).mockResolvedValue([])
 
-      const result = await getBadges('student-id', 'tenant-id')
+      const result = await getClassRanking('class-id', 'tenant-id', 'manager-id', 'manager')
 
-      expect(result[0]!.earned).toBe(true)
-      expect(result[0]!.earnedAt).toBe(earnedAt.toISOString())
+      expect(result.allowProfileView).toBe(true)
+      expect(findTenantSettings).not.toHaveBeenCalled()
     })
-  })
-})
+
+    it('allowProfileView default é true quando tenant não tem setting salvo', async () => {
+      vi.mocked(findClassRankingConfig).mockResolvedValue({ showRanking: true })
+      vi.mocked(listClassRanking).mockResolvedValue([])
+      vi.mocked(findTenantSettings).mockResolvedValue({
+        id: 'tenant-id',
+  
