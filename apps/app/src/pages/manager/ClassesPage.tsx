@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
 import styles from './ClassesPage.module.css'
 
@@ -384,7 +384,9 @@ export default function ClassesPage() {
           {classes.map((cls) => (
             <div key={cls.id} className={styles.tableRow}>
               <div className={styles.colName}>
-                <span className={styles.className}>{cls.name}</span>
+                <Link to={`/${slug}/manager/classes/${cls.id}`} className={styles.className}>
+                  {cls.name}
+                </Link>
                 {cls.showRanking && <span className={styles.rankingBadge}>ranking</span>}
               </div>
 
