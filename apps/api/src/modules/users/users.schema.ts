@@ -29,7 +29,9 @@ export const createUserBodySchema = z.object({
 
 export const updateUserBodySchema = z.object({
   name: z.string().min(1).max(255).optional(),
+  email: z.string().email('E-mail inválido').optional(),
   avatarUrl: z.string().url('URL de avatar inválida').nullable().optional(),
+  classId: z.string().uuid('ID de turma inválido').nullable().optional(),
 })
 
 export const updateProfileBodySchema = z.object({
@@ -60,6 +62,9 @@ export const userRowSchema = z.object({
 
 export const userDetailSchema = userRowSchema.extend({
   avatarUrl: z.string().nullable(),
+  // Turma atual do aluno (turma única por aluno) — null se não-aluno ou sem turma
+  classId: z.string().uuid().nullable().optional(),
+  className: z.string().nullable().optional(),
 })
 
 export const listUsersResponseSchema = z.object({

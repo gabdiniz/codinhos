@@ -113,19 +113,21 @@ export async function createUser(input: CreateUserInput) {
 
 type UpdateUserInput = {
   name?: string
+  email?: string
   avatarUrl?: string | null
   passwordHash?: string
 }
 
-export async function updateUser(id: string, input: UpdateUserInput) {
+export async function updateUser(id: string, tenantId: string, input: UpdateUserInput) {
   const [user] = await db
     .update(users)
     .set({
       ...(input.name !== undefined && { name: input.name }),
+      ...(input.email !== undefined && { email: input.email }),
       ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
       ...(input.passwordHash !== undefined && { passwordHash: input.passwordHash }),
     })
-    .where(eq(users.id, id))
+    .where(and(eq(users.id, id), eq(users.tenantId, tenantId)))
     .returning({
       id: users.id,
       name: users.name,

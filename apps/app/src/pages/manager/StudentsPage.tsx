@@ -85,6 +85,15 @@ function IconChevronRight() {
   )
 }
 
+function IconEdit() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  )
+}
+
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 function Avatar({ name }: { name: string }) {
@@ -226,6 +235,138 @@ function DeactivateConfirm({ student, onConfirm, onCancel }: DeactivateConfirmPr
   )
 }
 
+// ─── Modal de edição ──────────────────────────────────────────────────────────
+
+interface ClassOption {
+  id: string
+  name: string
+}
+
+interface EditStudentModalProps {
+  slug: string
+  student: Student
+  onClose: () => void
+  onSave: (id: string, name: string) => void
+}
+
+function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalProps) {
+  const [name, setName] = useState(student.name)
+  const [email, setEmail] = useState(student.email)
+  const [classId, setClassId] = useState<string>('')
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const firstRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { firstRef.current?.focus() }, [])
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadData() {
+      try {
+        const [userRes, classesRes] = await Promise.all([
+          api.get<{ data: { user: Student & { classId?: string | null } } }>(
+            `/api/${slug}/users/${student.id}`,
+          ),
+          api.get<{ data: ClassOption[] }>(`/api/${slug}/classes`),
+        ])
+        if (cancelled) return
+        setClassId(userRes.data.user.classId ?? '')
+        setClassOptions(classesRes.data)
+      } catch (err) {
+        if (cancelled) return
+        setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar dados da turma.')
+      } finally {
+        if (!cancelled) setLoadingData(false)
+      }
+    }
+    loadData()
+    return () => { cancelled = true }
+  }, [slug, student.id])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+    try {
+      await api.patch(`/api/${slug}/users/${student.id}`, {
+        name: name.trim(),
+        email: email.trim(),
+        classId: classId === '' ? null : classId,
+      })
+      onSave(student.id, name.trim())
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao salvar alterações.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} aria-modal="true" role="dialog">
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Editar aluno</h2>
+          <button className={styles.modalClose} onClick={onClose} aria-label="Fechar"><IconClose /></button>
+        </div>
+        <form className={styles.modalForm} onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label className={styles.label}>Nome completo</label>
+            <input
+              ref={firstRef}
+              className={styles.input}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ana Lima"
+              required
+              maxLength={255}
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>E-mail</label>
+            <input
+              className={styles.input}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ana@escola.edu.br"
+              required
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Turma</label>
+            <select
+              className={styles.select}
+              value={classId}
+              onChange={(e) => setClassId(e.target.value)}
+              disabled={loadingData}
+            >
+              <option value="">Sem turma</option>
+              {classOptions.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          {(loadError ?? error) && <p className={styles.formError}>{loadError ?? error}</p>}
+          <div className={styles.modalActions}>
+            <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={saving}>Cancelar</button>
+            <button type="submit" className={styles.btnPrimary} disabled={saving || loadingData || !name.trim() || !email.trim()}>
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── StudentsPage ─────────────────────────────────────────────────────────────
 
 export default function StudentsPage() {
@@ -242,6 +383,7 @@ export default function StudentsPage() {
 
   const [showInvite, setShowInvite] = useState(false)
   const [deactivateTarget, setDeactivateTarget] = useState<Student | null>(null)
+  const [editTarget, setEditTarget] = useState<Student | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
@@ -288,6 +430,13 @@ export default function StudentsPage() {
     await api.delete(`/api/${slug}/users/${deactivateTarget.id}`)
     setDeactivateTarget(null)
     setToast(`${targetName} foi desativado(a).`)
+    await load(page)
+  }
+
+  async function handleEditSave(id: string, newName: string) {
+    setEditTarget(null)
+    setHighlightId(id)
+    setToast(`${newName} foi atualizado(a).`)
     await load(page)
   }
 
@@ -413,6 +562,14 @@ export default function StudentsPage() {
                 </span>
               </div>
               <div className={styles.colActions}>
+                <button
+                  className={styles.actionBtn}
+                  onClick={() => setEditTarget(s)}
+                  title="Editar"
+                  aria-label={`Editar ${s.name}`}
+                >
+                  <IconEdit />
+                </button>
                 {!s.isActive && (
                   <button
                     className={styles.actionBtn}
@@ -474,6 +631,14 @@ export default function StudentsPage() {
           student={deactivateTarget}
           onConfirm={handleDeactivate}
           onCancel={() => setDeactivateTarget(null)}
+        />
+      )}
+      {editTarget && slug && (
+        <EditStudentModal
+          slug={slug}
+          student={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSave={handleEditSave}
         />
       )}
 

@@ -16,6 +16,12 @@ import {
   deleteAllSessions,
 } from './users.repository.js'
 import {
+  findClassById,
+  findStudentCurrentClass,
+  addStudentToClass,
+  removeStudentFromClass,
+} from '../classes/classes.repository.js'
+import {
   ConflictError,
   NotFoundError,
   UnprocessableError,
@@ -84,6 +90,12 @@ export async function getUsers(tenantId: string, query: ListUsersQuery) {
 export async function getUserById(userId: string, tenantId: string) {
   const user = await findUserById(userId, tenantId)
   if (!user) throw new NotFoundError('Usuário')
+
+  if (user.role === 'student') {
+    const classInfo = await findStudentCurrentClass(userId, tenantId)
+    return { user: { ...user, classId: classInfo?.id ?? null, className: classInfo?.name ?? null } }
+  }
+
   return { user }
 }
 
@@ -120,12 +132,51 @@ export async function updateExistingUser(
   const existing = await findUserById(userId, tenantId)
   if (!existing) throw new NotFoundError('Usuário')
 
-  const user = await updateUser(userId, {
+  if (body.email !== undefined && body.email !== existing.email) {
+    const emailOwner = await findUserByEmailInTenant(body.email, tenantId)
+    if (emailOwner && emailOwner.id !== userId) {
+      throw new ConflictError('E-mail já cadastrado neste tenant')
+    }
+  }
+
+  if (body.classId !== undefined && existing.role !== 'student') {
+    throw new UnprocessableError('Apenas alunos podem ser associados a uma turma')
+  }
+
+  const user = await updateUser(userId, tenantId, {
     name: body.name,
+    email: body.email,
     avatarUrl: body.avatarUrl,
   })
 
+  if (body.classId !== undefined) {
+    await reassignStudentClass(userId, tenantId, body.classId)
+  }
+
+  if (existing.role === 'student') {
+    const classInfo = await findStudentCurrentClass(userId, tenantId)
+    return { user: { ...user!, classId: classInfo?.id ?? null, className: classInfo?.name ?? null } }
+  }
+
   return { user: user! }
+}
+
+/** Move o aluno para a turma informada (ou remove de qualquer turma, se null) — turma única por aluno */
+async function reassignStudentClass(studentId: string, tenantId: string, classId: string | null) {
+  if (classId !== null) {
+    const cls = await findClassById(classId, tenantId)
+    if (!cls) throw new NotFoundError('Turma')
+  }
+
+  const current = await findStudentCurrentClass(studentId, tenantId)
+  if (current && current.id === classId) return // já está na turma certa
+
+  if (current) {
+    await removeStudentFromClass(current.id, studentId)
+  }
+  if (classId !== null) {
+    await addStudentToClass(classId, studentId)
+  }
 }
 
 // ─── Deactivate ───────────────────────────────────────────────────────────────
@@ -177,11 +228,11 @@ export async function resendInvite(userId: string, tenantId: string, slug: strin
 
 // ─── Profile (usuário atualizando os próprios dados) ─────────────────────────
 
-export async function updateProfile(userId: string, body: UpdateProfileBody) {
+export async function updateProfile(userId: string, tenantId: string, body: UpdateProfileBody) {
   const existing = await findUserByIdOnly(userId)
   if (!existing) throw new NotFoundError('Usuário')
 
-  const user = await updateUser(userId, {
+  const user = await updateUser(userId, tenantId, {
     name: body.name,
     avatarUrl: body.avatarUrl,
   })
@@ -193,6 +244,7 @@ export async function updateProfile(userId: string, body: UpdateProfileBody) {
 
 export async function updatePassword(
   userId: string,
+  tenantId: string,
   currentSessionId: string,
   body: UpdatePasswordBody,
 ) {
@@ -203,7 +255,7 @@ export async function updatePassword(
   if (!passwordMatch) throw new InvalidCredentialsError()
 
   const newHash = await bcrypt.hash(body.newPassword, 12)
-  await updateUser(userId, { passwordHash: newHash })
+  await updateUser(userId, tenantId, { passwordHash: newHash })
 
   // Invalida todas as outras sessões — a sessão atual permanece
   await deleteOtherSessions(userId, currentSessionId)

@@ -168,13 +168,54 @@ agent_docs/   → documentação de contexto para o desenvolvimento
 
 ---
 
+## Testes
+
+### Testes de unidade e integração (backend)
+
+```bash
+pnpm test                          # todos os testes do monorepo
+pnpm --filter @codinhos/api test   # somente backend
+```
+
+### Testes E2E (Playwright)
+
+Os testes E2E sobem um browser real contra o ambiente de desenvolvimento. **Antes de rodar**, certifique-se de que a API e a SPA estão no ar (`pnpm dev` ou `pnpm dev:local`) e que o seed foi executado.
+
+**Instalação (primeira vez):**
+
+```bash
+pnpm install
+pnpm --filter @codinhos/e2e exec playwright install chromium
+```
+
+**Rodar os testes:**
+
+```bash
+pnpm test:e2e        # headless (CI/terminal)
+pnpm test:e2e:ui     # com UI interativa do Playwright
+```
+
+**Cobertura dos specs:**
+
+| Arquivo | O que cobre |
+|---|---|
+| `auth.spec.ts` | Login por role, redirect correto, credencial inválida, logout |
+| `student.spec.ts` | Dashboard → trilha → módulo → editor → executar testes → Codi → perfil → ranking |
+| `manager.spec.ts` | Dashboard, CRUD de turmas, convidar aluno, filtros, configurações |
+| `admin.spec.ts` | Navegação admin, CRUD de tenants, CRUD de badges, listagem de usuários com filtros |
+
+Os testes usam as credenciais do seed. Para alterar, edite `apps/e2e/fixtures/index.ts`.
+
+---
+
 ## Comandos úteis
 
 ```bash
 pnpm build          # build completo do monorepo
 pnpm typecheck      # checagem de tipos em todos os pacotes
 pnpm lint           # Biome lint em todo o monorepo
-pnpm test           # todos os testes
+pnpm test           # todos os testes (backend)
+pnpm test:e2e       # testes E2E (requer dev rodando)
 pnpm format         # formata o código com Biome
 ```
 
