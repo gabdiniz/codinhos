@@ -54,24 +54,66 @@
   margin-top: 0.25rem;
 }
 
-/* ── Seção ───────────────────────────────────────────────────────────────── */
+/* ── Abas ────────────────────────────────────────────────────────────────── */
 
-.section {
+.tabsCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.tabBar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem 0;
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translateY(1px);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+.tabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.tabPanel {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.sectionTitle {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-text);
-  letter-spacing: -0.02em;
 }
 
 .sectionDesc {
@@ -79,12 +121,12 @@
   font-size: 0.875rem;
   color: var(--color-text-muted);
   line-height: 1.5;
-  margin-top: -0.5rem;
 }
 
 .sectionFooter {
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--color-border);
 }
@@ -291,6 +333,68 @@
   opacity: 0.65;
 }
 
+/* ── Tutor de IA — toggle ────────────────────────────────────────────────── */
+
+.toggleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 0.125rem;
+}
+
+.switchInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switchTrack {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background var(--transition-fast);
+}
+
+.switchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-text) 25%, transparent);
+  transition: transform var(--transition-fast);
+}
+
+.switchInput:checked ~ .switchTrack {
+  background: var(--color-primary);
+}
+
+.switchInput:checked ~ .switchTrack .switchThumb {
+  transform: translateX(20px);
+}
+
+.switchInput:focus-visible ~ .switchTrack {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
 /* ── Botão ───────────────────────────────────────────────────────────────── */
 
 .btnPrimary {
@@ -315,6 +419,33 @@
 .btnPrimary:hover:not(:disabled) { opacity: 0.88; }
 .btnPrimary:active:not(:disabled) { transform: translateY(1px); }
 .btnPrimary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 1.125rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.btnSecondary:hover:not(:disabled) {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+.btnSecondary:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Feedback ────────────────────────────────────────────────────────────── */
 
@@ -343,6 +474,10 @@
 @media (max-width: 640px) {
   .root { padding: 1.25rem 1rem; }
 
+  .tabBar { padding: 0.375rem 0.5rem 0; }
+  .tab { padding: 0.5625rem 0.625rem; font-size: 0.75rem; }
+  .tabPanel { padding: 1.125rem; }
+
   .infoGrid { grid-template-columns: 1fr; }
 
   .gamifGrid { grid-template-columns: 1fr; }
@@ -351,4 +486,6 @@
   .colorRow { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .colorLabel { min-width: unset; }
   .colorInputs { width: 100%; }
+
+  .toggleRow { flex-direction: column; gap: 0.75rem; }
 }

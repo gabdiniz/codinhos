@@ -9,11 +9,21 @@ export const slugChallengeParamsSchema = z.object({
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
+/** Contexto de um teste que falhou — enviado quando o aluno pede ajuda sobre o erro */
+const failedTestSchema = z.object({
+  description: z.string().max(500),
+  expected: z.string().max(500).optional(),
+  actual: z.string().max(500).optional(),
+  error: z.string().max(1000).optional(),
+})
+
 export const sendMessageBodySchema = z.object({
   /** Mensagem do aluno */
   message: z.string().min(1).max(2000),
   /** Código atual do aluno no editor (enviado a cada mensagem para o system prompt) */
   currentCode: z.string().max(10000).optional(),
+  /** Contexto do teste que falhou — só é usado se o tenant tiver a feature habilitada */
+  failedTest: failedTestSchema.optional(),
 })
 
 export type SendMessageBody = z.infer<typeof sendMessageBodySchema>
@@ -33,6 +43,7 @@ export const conversationResponseSchema = z.object({
     messages: z.array(messageSchema),
     messagesUsedToday: z.number(),
     dailyLimit: z.number().nullable(),
+    aiErrorExplanationEnabled: z.boolean(),
   }),
 })
 

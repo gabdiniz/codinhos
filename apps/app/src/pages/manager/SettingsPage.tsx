@@ -20,7 +20,10 @@ interface TenantSettings {
   gamification: Gamification | null
   aiMessagesPerDay: number | null
   maxStudents: number | null
+  aiErrorExplanationEnabled: boolean
 }
+
+type TabId = 'geral' | 'tema' | 'gamificacao' | 'tutor-ia'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -71,6 +74,26 @@ const THEME_GROUPS: { group: string; vars: ThemeVar[] }[] = [
   },
 ]
 
+// Espelha os valores padrão definidos em styles/global.css :root.
+// Usado pelo botão "Restaurar padrão" — nunca hardcode cores fora daqui.
+const DEFAULT_THEME: Record<string, string> = {
+  'color-primary':        '#6366f1',
+  'color-primary-hover':  '#4f46e5',
+  'color-secondary':      '#8b5cf6',
+  'color-accent':         '#f59e0b',
+  'color-background':     '#0f0f13',
+  'color-surface':        '#1a1a24',
+  'color-surface-raised': '#22222f',
+  'color-border':         '#2e2e3f',
+  'color-text':           '#f1f0fb',
+  'color-text-muted':     '#9490b5',
+  'color-text-inverse':   '#0f0f13',
+  'color-success':        '#22c55e',
+  'color-error':          '#ef4444',
+  'color-warning':        '#f59e0b',
+  'color-info':           '#3b82f6',
+}
+
 const DEFAULT_GAMIFICATION: Gamification = {
   xpPerLevel: 100,
   firstAttemptBonusMultiplier: 1.5,
@@ -78,6 +101,68 @@ const DEFAULT_GAMIFICATION: Gamification = {
   streakBonusMaxXp: 50,
   streakMilestoneDays: [7, 14, 30],
 }
+
+// ─── Ícones das abas ──────────────────────────────────────────────────────────
+
+function IconBuilding() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="3" width="16" height="18" rx="1" />
+      <path d="M9 21v-4h6v4" />
+      <path d="M8 7h2M14 7h2M8 11h2M14 11h2" />
+    </svg>
+  )
+}
+
+function IconPalette() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22a9 9 0 1 0 0-18c-4.97 0-9 3.694-9 8.25 0 1.78 1.567 2.75 3.5 2.75H8a1.5 1.5 0 0 1 1.5 1.5v.75c0 1.5 1 2.75 2.5 2.75Z" />
+      <circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none" />
+      <circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function IconZap() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  )
+}
+
+function IconBot() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 8V4" />
+      <rect x="4" y="8" width="16" height="12" rx="2" />
+      <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none" />
+      <path d="M9 17h6" />
+      <circle cx="12" cy="3" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+function IconRefresh() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+  )
+}
+
+const TABS: { id: TabId; label: string; icon: () => JSX.Element }[] = [
+  { id: 'geral',        label: 'Geral',        icon: IconBuilding },
+  { id: 'tema',         label: 'Tema visual',  icon: IconPalette },
+  { id: 'gamificacao',  label: 'Gamificação',  icon: IconZap },
+  { id: 'tutor-ia',     label: 'Tutor de IA',  icon: IconBot },
+]
 
 // ─── Sub-componente: seletor de cor ──────────────────────────────────────────
 
@@ -122,6 +207,8 @@ type GamifFields = Omit<Gamification, 'streakMilestoneDays'>
 export default function SettingsPage() {
   const { slug } = useParams<{ slug: string }>()
 
+  const [activeTab, setActiveTab] = useState<TabId>('geral')
+
   const [settings, setSettings] = useState<TenantSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -142,6 +229,11 @@ export default function SettingsPage() {
   const [savingGamif, setSavingGamif] = useState(false)
   const [gamifMsg, setGamifMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Tutor de IA — explicação de erro
+  const [aiHelpEnabled, setAiHelpEnabled] = useState(true)
+  const [savingAiHelp, setSavingAiHelp] = useState(false)
+  const [aiHelpMsg, setAiHelpMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const load = useCallback(async () => {
     if (!slug) return
     setLoadError(null)
@@ -149,7 +241,10 @@ export default function SettingsPage() {
       const res = await api.get<{ data: { settings: TenantSettings } }>(`/api/${slug}/settings`)
       const s = res.data.settings
       setSettings(s)
-      setThemeValues(s.theme ?? {})
+      // Mescla com os padrões da plataforma: o backend só retorna as cores
+      // que a escola já customizou, então campos não-customizados devem
+      // exibir o valor padrão real (não ficar vazios/pretos no picker).
+      setThemeValues({ ...DEFAULT_THEME, ...(s.theme ?? {}) })
       const g = s.gamification ?? DEFAULT_GAMIFICATION
       setGamif({
         xpPerLevel: g.xpPerLevel,
@@ -158,6 +253,7 @@ export default function SettingsPage() {
         streakBonusMaxXp: g.streakBonusMaxXp,
       })
       setMilestonesRaw(g.streakMilestoneDays.join(', '))
+      setAiHelpEnabled(s.aiErrorExplanationEnabled)
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar configurações.')
     } finally {
@@ -180,8 +276,19 @@ export default function SettingsPage() {
     return () => clearTimeout(t)
   }, [gamifMsg])
 
+  useEffect(() => {
+    if (!aiHelpMsg) return
+    const t = setTimeout(() => setAiHelpMsg(null), 3500)
+    return () => clearTimeout(t)
+  }, [aiHelpMsg])
+
   function setColor(key: string, value: string) {
     setThemeValues((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function handleResetTheme() {
+    setThemeValues({ ...DEFAULT_THEME })
+    setThemeMsg(null)
   }
 
   async function handleSaveTheme() {
@@ -234,6 +341,23 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleSaveAiHelp() {
+    if (!slug) return
+    setSavingAiHelp(true)
+    setAiHelpMsg(null)
+    try {
+      await api.patch(`/api/${slug}/settings`, { aiErrorExplanationEnabled: aiHelpEnabled })
+      setAiHelpMsg({ type: 'success', text: 'Configuração do tutor de IA salva com sucesso.' })
+    } catch (err) {
+      setAiHelpMsg({
+        type: 'error',
+        text: err instanceof ApiError ? err.message : 'Erro ao salvar configuração do tutor de IA.',
+      })
+    } finally {
+      setSavingAiHelp(false)
+    }
+  }
+
   // ── Estados de carregamento ────────────────────────────────────────────────
 
   if (loading) {
@@ -264,167 +388,244 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      {/* ── Informações da escola ── */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Informações da escola</h2>
-        <div className={styles.infoGrid}>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Nome</span>
-            <span className={styles.infoValue}>{settings.name}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Plano</span>
-            <span className={`${styles.infoValue} ${styles.planBadge}`}>
-              {PLAN_LABEL[settings.plan] ?? settings.plan}
-            </span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Máx. de alunos</span>
-            <span className={styles.infoValue}>
-              {settings.maxStudents !== null ? settings.maxStudents.toLocaleString('pt-BR') : '—'}
-            </span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Msgs de IA / dia</span>
-            <span className={styles.infoValue}>
-              {settings.aiMessagesPerDay !== null
-                ? settings.aiMessagesPerDay.toLocaleString('pt-BR')
-                : '—'}
-            </span>
-          </div>
+      {/* ── Abas ── */}
+      <div className={styles.tabsCard}>
+        <div className={styles.tabBar} role="tablist" aria-label="Seções de configuração">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                id={`tab-${tab.id}`}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="settings-tabpanel"
+                className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <Icon />
+                {tab.label}
+              </button>
+            )
+          })}
         </div>
-        <p className={styles.infoHint}>
-          Esses valores são configurados pelo administrador da plataforma.
-          Para alterar seu plano, entre em contato com o suporte.
-        </p>
-      </section>
 
-      {/* ── Tema visual ── */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Tema visual</h2>
-        <p className={styles.sectionDesc}>
-          Personalize as cores da plataforma para os alunos da sua escola.
-          As alterações entram em vigor imediatamente após salvar.
-        </p>
+        <div id="settings-tabpanel" role="tabpanel" aria-labelledby={`tab-${activeTab}`} className={styles.tabPanel}>
+          {/* ── Geral ── */}
+          {activeTab === 'geral' && (
+            <>
+              <p className={styles.sectionDesc}>Dados da sua escola, conforme contratado com a plataforma.</p>
 
-        <div className={styles.themeGroups}>
-          {THEME_GROUPS.map(({ group, vars }) => (
-            <div key={group} className={styles.themeGroup}>
-              <h3 className={styles.themeGroupTitle}>{group}</h3>
-              <div className={styles.colorRows}>
-                {vars.map(({ key, label }) => (
-                  <ColorRow
-                    key={key}
-                    label={label}
-                    value={themeValues[key] ?? ''}
-                    onChange={(v) => setColor(key, v)}
-                  />
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Nome</span>
+                  <span className={styles.infoValue}>{settings.name}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Plano</span>
+                  <span className={`${styles.infoValue} ${styles.planBadge}`}>
+                    {PLAN_LABEL[settings.plan] ?? settings.plan}
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Máx. de alunos</span>
+                  <span className={styles.infoValue}>
+                    {settings.maxStudents !== null ? settings.maxStudents.toLocaleString('pt-BR') : '—'}
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Msgs de IA / dia</span>
+                  <span className={styles.infoValue}>
+                    {settings.aiMessagesPerDay !== null
+                      ? settings.aiMessagesPerDay.toLocaleString('pt-BR')
+                      : '—'}
+                  </span>
+                </div>
+              </div>
+
+              <p className={styles.infoHint}>
+                Esses valores são configurados pelo administrador da plataforma.
+                Para alterar seu plano, entre em contato com o suporte.
+              </p>
+            </>
+          )}
+
+          {/* ── Tema visual ── */}
+          {activeTab === 'tema' && (
+            <>
+              <p className={styles.sectionDesc}>
+                Personalize as cores da plataforma para os alunos da sua escola.
+                As alterações entram em vigor imediatamente após salvar.
+              </p>
+
+              <div className={styles.themeGroups}>
+                {THEME_GROUPS.map(({ group, vars }) => (
+                  <div key={group} className={styles.themeGroup}>
+                    <h3 className={styles.themeGroupTitle}>{group}</h3>
+                    <div className={styles.colorRows}>
+                      {vars.map(({ key, label }) => (
+                        <ColorRow
+                          key={key}
+                          label={label}
+                          value={themeValues[key] ?? ''}
+                          onChange={(v) => setColor(key, v)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          ))}
+
+              {themeMsg && (
+                <p className={themeMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {themeMsg.text}
+                </p>
+              )}
+
+              <div className={styles.sectionFooter}>
+                <button className={styles.btnSecondary} onClick={handleResetTheme} disabled={savingTheme}>
+                  <IconRefresh />
+                  Restaurar padrão
+                </button>
+                <button className={styles.btnPrimary} onClick={handleSaveTheme} disabled={savingTheme}>
+                  {savingTheme ? 'Salvando...' : 'Salvar tema'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── Gamificação ── */}
+          {activeTab === 'gamificacao' && (
+            <>
+              <p className={styles.sectionDesc}>Ajuste as regras de XP e streaks para a sua escola.</p>
+
+              <div className={styles.gamifGrid}>
+                <div className={styles.field}>
+                  <label className={styles.label}>XP por nível</label>
+                  <p className={styles.fieldHint}>XP necessário para subir um nível.</p>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={gamif.xpPerLevel}
+                    min={1}
+                    onChange={(e) => setGamif((g) => ({ ...g, xpPerLevel: Number(e.target.value) }))}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>Multiplicador — 1ª tentativa</label>
+                  <p className={styles.fieldHint}>Bônus de XP ao resolver na primeira tentativa (ex: 1.5 = +50%).</p>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={gamif.firstAttemptBonusMultiplier}
+                    min={1}
+                    step={0.1}
+                    onChange={(e) =>
+                      setGamif((g) => ({ ...g, firstAttemptBonusMultiplier: Number(e.target.value) }))
+                    }
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>Bônus XP por streak (diário)</label>
+                  <p className={styles.fieldHint}>XP extra por dia de streak ativo.</p>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={gamif.streakBonusXp}
+                    min={0}
+                    onChange={(e) => setGamif((g) => ({ ...g, streakBonusXp: Number(e.target.value) }))}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>Bônus XP máximo de streak</label>
+                  <p className={styles.fieldHint}>Teto do bônus de streak diário acumulado.</p>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={gamif.streakBonusMaxXp}
+                    min={0}
+                    onChange={(e) => setGamif((g) => ({ ...g, streakBonusMaxXp: Number(e.target.value) }))}
+                  />
+                </div>
+
+                <div className={`${styles.field} ${styles.fieldFull}`}>
+                  <label className={styles.label}>Marcos de streak (dias)</label>
+                  <p className={styles.fieldHint}>
+                    Dias que concedem badges de conquista. Separe por vírgula. Ex: 7, 14, 30
+                  </p>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={milestonesRaw}
+                    onChange={(e) => setMilestonesRaw(e.target.value)}
+                    placeholder="7, 14, 30, 60, 90"
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+
+              {gamifMsg && (
+                <p className={gamifMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {gamifMsg.text}
+                </p>
+              )}
+
+              <div className={styles.sectionFooter}>
+                <button className={styles.btnPrimary} onClick={handleSaveGamification} disabled={savingGamif}>
+                  {savingGamif ? 'Salvando...' : 'Salvar gamificação'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── Tutor de IA ── */}
+          {activeTab === 'tutor-ia' && (
+            <>
+              <p className={styles.sectionDesc}>
+                Controle se o Codi pode usar o contexto de um teste que falhou para explicar o erro ao aluno.
+              </p>
+
+              <div className={styles.toggleRow}>
+                <div>
+                  <span className={styles.label}>Tutor explica o erro</span>
+                  <p className={styles.fieldHint}>
+                    Quando ativado, o botão "Pedir ajuda ao Codi" aparece nos testes que falharem,
+                    e o Codi recebe o teste como contexto para explicar o que deu errado.
+                  </p>
+                </div>
+                <label className={styles.switch}>
+                  <input
+                    type="checkbox"
+                    className={styles.switchInput}
+                    checked={aiHelpEnabled}
+                    onChange={(e) => setAiHelpEnabled(e.target.checked)}
+                    aria-label="Ativar explicação de erro pelo tutor de IA"
+                  />
+                  <span className={styles.switchTrack}>
+                    <span className={styles.switchThumb} />
+                  </span>
+                </label>
+              </div>
+
+              {aiHelpMsg && (
+                <p className={aiHelpMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {aiHelpMsg.text}
+                </p>
+              )}
+
+              <div className={styles.sectionFooter}>
+                <button className={styles.btnPrimary} onClick={handleSaveAiHelp} disabled={savingAiHelp}>
+                  {savingAiHelp ? 'Salvando...' : 'Salvar tutor de IA'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
-
-        {themeMsg && (
-          <p className={themeMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
-            {themeMsg.text}
-          </p>
-        )}
-
-        <div className={styles.sectionFooter}>
-          <button className={styles.btnPrimary} onClick={handleSaveTheme} disabled={savingTheme}>
-            {savingTheme ? 'Salvando...' : 'Salvar tema'}
-          </button>
-        </div>
-      </section>
-
-      {/* ── Gamificação ── */}
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Gamificação</h2>
-        <p className={styles.sectionDesc}>
-          Ajuste as regras de XP e streaks para a sua escola.
-        </p>
-
-        <div className={styles.gamifGrid}>
-          <div className={styles.field}>
-            <label className={styles.label}>XP por nível</label>
-            <p className={styles.fieldHint}>XP necessário para subir um nível.</p>
-            <input
-              type="number"
-              className={styles.input}
-              value={gamif.xpPerLevel}
-              min={1}
-              onChange={(e) => setGamif((g) => ({ ...g, xpPerLevel: Number(e.target.value) }))}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Multiplicador — 1ª tentativa</label>
-            <p className={styles.fieldHint}>Bônus de XP ao resolver na primeira tentativa (ex: 1.5 = +50%).</p>
-            <input
-              type="number"
-              className={styles.input}
-              value={gamif.firstAttemptBonusMultiplier}
-              min={1}
-              step={0.1}
-              onChange={(e) =>
-                setGamif((g) => ({ ...g, firstAttemptBonusMultiplier: Number(e.target.value) }))
-              }
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Bônus XP por streak (diário)</label>
-            <p className={styles.fieldHint}>XP extra por dia de streak ativo.</p>
-            <input
-              type="number"
-              className={styles.input}
-              value={gamif.streakBonusXp}
-              min={0}
-              onChange={(e) => setGamif((g) => ({ ...g, streakBonusXp: Number(e.target.value) }))}
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Bônus XP máximo de streak</label>
-            <p className={styles.fieldHint}>Teto do bônus de streak diário acumulado.</p>
-            <input
-              type="number"
-              className={styles.input}
-              value={gamif.streakBonusMaxXp}
-              min={0}
-              onChange={(e) => setGamif((g) => ({ ...g, streakBonusMaxXp: Number(e.target.value) }))}
-            />
-          </div>
-
-          <div className={`${styles.field} ${styles.fieldFull}`}>
-            <label className={styles.label}>Marcos de streak (dias)</label>
-            <p className={styles.fieldHint}>
-              Dias que concedem badges de conquista. Separe por vírgula. Ex: 7, 14, 30
-            </p>
-            <input
-              type="text"
-              className={styles.input}
-              value={milestonesRaw}
-              onChange={(e) => setMilestonesRaw(e.target.value)}
-              placeholder="7, 14, 30, 60, 90"
-              spellCheck={false}
-            />
-          </div>
-        </div>
-
-        {gamifMsg && (
-          <p className={gamifMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
-            {gamifMsg.text}
-          </p>
-        )}
-
-        <div className={styles.sectionFooter}>
-          <button className={styles.btnPrimary} onClick={handleSaveGamification} disabled={savingGamif}>
-            {savingGamif ? 'Salvando...' : 'Salvar gamificação'}
-          </button>
-        </div>
-      </section>
+      </div>
     </div>
   )
 }

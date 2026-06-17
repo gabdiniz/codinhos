@@ -36,6 +36,7 @@ function mapSettings(tenant: {
     },
     aiMessagesPerDay: tenant.settings?.ai_messages_per_day ?? null,
     maxStudents: tenant.settings?.max_students ?? null,
+    aiErrorExplanationEnabled: tenant.settings?.ai_error_explanation_enabled ?? true,
   }
 }
 
@@ -64,28 +65,33 @@ export async function updateSettings(tenantId: string, body: UpdateSettingsBody)
   if (!current) throw new NotFoundError('Tenant')
 
   // Se não há nada a atualizar, retorna as configurações atuais sem write no banco
-  if (!body.theme && !body.gamification) {
+  if (!body.theme && !body.gamification && body.aiErrorExplanationEnabled === undefined) {
     return { data: { settings: mapSettings(current) } }
   }
 
-  // Merge parcial de settings.gamification (snake_case no banco)
+  // Merge parcial de settings (gamification em snake_case no banco)
   let newSettings: TenantSettings | undefined
-  if (body.gamification) {
+  if (body.gamification || body.aiErrorExplanationEnabled !== undefined) {
     const g = body.gamification
     newSettings = {
       ...current.settings,
-      gamification: {
-        ...current.settings?.gamification,
-        ...(g.xpPerLevel !== undefined && { xp_per_level: g.xpPerLevel }),
-        ...(g.firstAttemptBonusMultiplier !== undefined && {
-          first_attempt_bonus_multiplier: g.firstAttemptBonusMultiplier,
-        }),
-        ...(g.streakBonusXp !== undefined && { streak_bonus_xp: g.streakBonusXp }),
-        ...(g.streakBonusMaxXp !== undefined && { streak_bonus_max_xp: g.streakBonusMaxXp }),
-        ...(g.streakMilestoneDays !== undefined && {
-          streak_milestone_days: g.streakMilestoneDays,
-        }),
-      },
+      ...(g && {
+        gamification: {
+          ...current.settings?.gamification,
+          ...(g.xpPerLevel !== undefined && { xp_per_level: g.xpPerLevel }),
+          ...(g.firstAttemptBonusMultiplier !== undefined && {
+            first_attempt_bonus_multiplier: g.firstAttemptBonusMultiplier,
+          }),
+          ...(g.streakBonusXp !== undefined && { streak_bonus_xp: g.streakBonusXp }),
+          ...(g.streakBonusMaxXp !== undefined && { streak_bonus_max_xp: g.streakBonusMaxXp }),
+          ...(g.streakMilestoneDays !== undefined && {
+            streak_milestone_days: g.streakMilestoneDays,
+          }),
+        },
+      }),
+      ...(body.aiErrorExplanationEnabled !== undefined && {
+        ai_error_explanation_enabled: body.aiErrorExplanationEnabled,
+      }),
     }
   }
 
