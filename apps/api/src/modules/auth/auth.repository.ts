@@ -15,7 +15,18 @@ export async function findTenantBySlug(slug: string) {
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 
-export async function findUserByEmailAndTenant(email: string, tenantId: string) {
+export async function findUserByEmailAndTenant(
+  email: string,
+  tenantId: string,
+): Promise<{
+  id: string
+  email: string
+  name: string
+  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  passwordHash: string
+  isActive: boolean
+  tenantId: string
+} | null> {
   const [user] = await db
     .select({
       id: users.id,
@@ -29,6 +40,8 @@ export async function findUserByEmailAndTenant(email: string, tenantId: string) 
     .from(users)
     .where(and(eq(users.email, email), eq(users.tenantId, tenantId)))
     .limit(1)
+  // Anotação explícita acima: sem ela o TS prova (incorretamente) que `user` nunca
+  // é undefined e descarta o ramo `null`, quebrando o caso "usuário não existe".
   return user ?? null
 }
 
@@ -52,7 +65,15 @@ export async function findUserByEmailAndRole(
   return user ?? null
 }
 
-export async function findUserById(id: string) {
+export async function findUserById(id: string): Promise<{
+  id: string
+  email: string
+  name: string
+  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  avatarUrl: string | null
+  isActive: boolean
+  tenantId: string
+} | null> {
   const [user] = await db
     .select({
       id: users.id,
@@ -66,6 +87,7 @@ export async function findUserById(id: string) {
     .from(users)
     .where(eq(users.id, id))
     .limit(1)
+  // Mesmo padrão: anotação explícita pra TS não descartar o ramo `null`.
   return user ?? null
 }
 
@@ -136,4 +158,3 @@ export async function findValidPasswordResetToken(tokenHash: string) {
     .limit(1)
   return token ?? null
 }
-
