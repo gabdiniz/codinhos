@@ -713,8 +713,35 @@
 }
 
 .codiMsgContent {
-  white-space: pre-wrap;
   word-break: break-word;
+}
+
+.mdParagraph {
+  margin: 0;
+}
+
+.mdParagraph:not(:last-child) {
+  margin-bottom: 0.5rem;
+}
+
+.mdList {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mdList:last-child {
+  margin-bottom: 0;
+}
+
+.mdCode {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
 }
 
 /* Indicador de digitação */

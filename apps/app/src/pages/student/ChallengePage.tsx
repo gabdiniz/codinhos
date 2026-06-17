@@ -95,6 +95,106 @@ function serializeTestValue(value: unknown): string {
   return text.slice(0, 500)
 }
 
+// ─── Markdown-lite para mensagens do Codi ──────────────────────────────────────
+// Sem dependência externa: o conteúdo das mensagens (IA e aluno) só usa um
+// subconjunto simples de Markdown (negrito, código inline, listas), então um
+// parser dedicado e leve evita adicionar uma lib só para isso.
+
+type ContentBlock =
+  | { type: 'paragraph'; lines: string[] }
+  | { type: 'list'; ordered: boolean; items: string[] }
+
+/** Quebra o texto em blocos de parágrafo/lista a partir de linhas em branco e marcadores */
+function parseContentBlocks(text: string): ContentBlock[] {
+  const lines = text.split('\n')
+  const blocks: ContentBlock[] = []
+  let paragraphLines: string[] = []
+
+  const flushParagraph = () => {
+    if (paragraphLines.length > 0) {
+      blocks.push({ type: 'paragraph', lines: paragraphLines })
+      paragraphLines = []
+    }
+  }
+
+  const isListLine = (l: string) => /^[-*]\s+(.*)/.exec(l) ?? /^\d+[.)]\s+(.*)/.exec(l)
+
+  let i = 0
+  while (i < lines.length) {
+    const trimmed = lines[i].trim()
+
+    if (trimmed === '') {
+      flushParagraph()
+      i++
+      continue
+    }
+
+    if (isListLine(trimmed)) {
+      flushParagraph()
+      const ordered = /^\d+[.)]\s+/.test(trimmed)
+      const items: string[] = []
+      while (i < lines.length) {
+        const match = isListLine(lines[i].trim())
+        if (!match) break
+        items.push(match[1])
+        i++
+      }
+      blocks.push({ type: 'list', ordered, items })
+      continue
+    }
+
+    paragraphLines.push(lines[i])
+    i++
+  }
+  flushParagraph()
+
+  return blocks
+}
+
+/** Renderiza `**negrito**` e `` `código inline` `` dentro de um trecho de texto */
+function renderInline(text: string, keyPrefix: string) {
+  const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter((token) => token !== '')
+  return tokens.map((token, idx) => {
+    if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
+      return <strong key={`${keyPrefix}-${idx}`}>{token.slice(2, -2)}</strong>
+    }
+    if (token.startsWith('`') && token.endsWith('`') && token.length > 2) {
+      return (
+        <code key={`${keyPrefix}-${idx}`} className={styles.mdCode}>
+          {token.slice(1, -1)}
+        </code>
+      )
+    }
+    return <span key={`${keyPrefix}-${idx}`}>{token}</span>
+  })
+}
+
+/** Converte o conteúdo de uma mensagem (texto com Markdown-lite) em JSX */
+function renderMessageContent(content: string) {
+  return parseContentBlocks(content).map((block, bIdx) => {
+    if (block.type === 'list') {
+      const ListTag = block.ordered ? 'ol' : 'ul'
+      return (
+        <ListTag key={bIdx} className={styles.mdList}>
+          {block.items.map((item, iIdx) => (
+            <li key={iIdx}>{renderInline(item, `${bIdx}-${iIdx}`)}</li>
+          ))}
+        </ListTag>
+      )
+    }
+    return (
+      <p key={bIdx} className={styles.mdParagraph}>
+        {block.lines.map((line, lIdx) => (
+          <span key={lIdx}>
+            {renderInline(line, `${bIdx}-${lIdx}`)}
+            {lIdx < block.lines.length - 1 && <br />}
+          </span>
+        ))}
+      </p>
+    )
+  })
+}
+
 interface SubmitBadge {
   id: string; slug: string; name: string; iconUrl: string | null
 }
@@ -517,7 +617,7 @@ function CodiDrawer({
         )}
         {messages.map((m) => (
           <div key={m.id} className={`${styles.codiMsg} ${m.role === 'user' ? styles.codiMsgUser : styles.codiMsgCodi}`}>
-            <span className={styles.codiMsgContent}>{m.content}</span>
+            <div className={styles.codiMsgContent}>{renderMessageContent(m.content)}</div>
           </div>
         ))}
         {sending && (
