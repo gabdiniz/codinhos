@@ -40,3 +40,6 @@ drizzle/meta/
 
 # Coverage
 coverage/
+
+# Playwright — sessões salvas via storageState (cookies de login)
+apps/e2e/.auth/

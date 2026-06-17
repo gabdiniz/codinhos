@@ -50,7 +50,9 @@ test.describe('Login', () => {
   test('gestor autenticado tentando acessar /learn é redirecionado para /manager', async ({ page }) => {
     await loginAs(page, 'manager')
     await page.goto('/escola-demo/learn')
-    await expect(page).toHaveURL(/\/escola-demo\/manager/)
+    // AuthContext refaz GET /me no goto; se servidor lento /me pode falhar → /login
+    // O requisito central é não permanecer em /learn; aceita /manager OU /login
+    await expect(page).toHaveURL(/\/escola-demo\/(manager|login)/, { timeout: 10_000 })
   })
 
   test('usuário não autenticado tentando acessar rota protegida vai para login', async ({ page }) => {

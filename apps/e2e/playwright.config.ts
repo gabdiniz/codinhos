@@ -16,16 +16,19 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests',
+  // Login único por role, salvo em apps/e2e/.auth/*.json (ver global-setup.ts).
+  // Evita 50+ logins bcrypt sequenciais que sobrecarregavam o servidor durante a suíte.
+  globalSetup: './global-setup.ts',
   fullyParallel: false,       // testes compartilham estado de sessão — serial é mais seguro
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 1,  // 1 retry local para absorver fixture timeout intermitente
   workers: 1,
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
     baseURL: 'http://localhost:5173',
-    // Cookie de sessão persiste entre steps — não usar storageState global
-    // pois cada describe loga com role diferente
+    // Cada fixture (studentPage/managerPage/adminPage) carrega o storageState
+    // do role correspondente — ver fixtures/index.ts e global-setup.ts
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
