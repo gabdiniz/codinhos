@@ -71,6 +71,22 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.kpiCard:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-text) 2.5%, transparent);
+}
+
+.kpiCard:active {
+  transform: translateY(1px);
 }
 
 .kpiCard_primary .kpiIcon { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
