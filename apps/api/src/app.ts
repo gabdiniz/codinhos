@@ -59,7 +59,7 @@ export async function createApp() {
       ('statusCode' in error &&
         'code' in error &&
         typeof (error as AppError).code === 'string' &&
-        [400, 401, 403, 404, 409, 422, 429].includes((error as AppError).statusCode))
+        [400, 401, 403, 404, 409, 422, 429, 503].includes((error as AppError).statusCode))
 
     if (isAppError) {
       const appErr = error as AppError

@@ -67,3 +67,10 @@ export class TooManyRequestsError extends AppError {
     super(429, 'TOO_MANY_REQUESTS', message)
   }
 }
+
+/** 503 — falha ao chamar o provedor de IA (chave inválida/ausente, rate limit, indisponibilidade) */
+export class AiServiceError extends AppError {
+  constructor(message = 'O tutor de IA está indisponível agora. Tente de novo em alguns instantes.') {
+    super(503, 'AI_SERVICE_ERROR', message)
+  }
+}
