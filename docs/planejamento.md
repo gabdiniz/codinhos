@@ -63,16 +63,18 @@ O coração do produto. O aluno escreve e executa código diretamente no browser
 
 ### Características
 
-- **Execução client-side** (WebAssembly) — barato, seguro, sem latência de servidor
-- **Autocomplete contextual** — baseado no vocabulário já ensinado na trilha, não no vocabulário completo da linguagem (menos intimidador)
-- **Feedback de erro humanizado** — mensagens em linguagem acessível para crianças
-- **Blocos visuais** — opcional, configurável pelo gestor por trilha; exibe o código gerado em tempo real como ponte para o modo texto
+- **Execução client-side** — implementado via Web Worker + `new Function()` (não WebAssembly); isolado do DOM principal, sem latência de servidor
+- **Autocomplete contextual** *(planejado, não implementado)* — baseado no vocabulário já ensinado na trilha, não no vocabulário completo da linguagem (menos intimidador)
+- **Feedback de erro humanizado** *(planejado, não implementado)* — hoje o aluno vê a mensagem de erro nativa do JavaScript; mensagens em linguagem acessível para crianças ainda não foram construídas
+- **Blocos visuais** *(planejado, não implementado)* — o campo de configuração por trilha (`visualBlocksEnabled`) já existe no backend e é lido pelo frontend, mas não há editor de blocos construído; o aluno sempre usa o modo texto
 
-### Modos de interface (configurável pelo gestor)
+### Modos de interface (configurável pelo gestor) — visão de produto, não implementada
 
 ```
 Modo Blocos → Modo Híbrido (blocos + código lado a lado) → Modo Texto
 ```
+
+> Hoje só o **Modo Texto** (CodeMirror) existe.
 
 ---
 
@@ -177,7 +179,7 @@ Um dos pilares principais do produto. Composta por múltiplas camadas para suste
 ### Competição social
 
 - Ranking **por turma** (não global — evita desmotivar iniciantes)
-- Desafio da semana com placar temporário
+- Desafio da semana com placar temporário *(backend pronto — módulo `weekly-challenges` completo; UI no app ainda pendente)*
 - Ranking pode ser desligado pelo gestor
 
 ### Streaks e missões
@@ -344,11 +346,11 @@ Login
 |---|---|
 | **Multi-tenant** | Super Admin + Gestor + Aluno; criação de tenants e turmas |
 | **Trilhas** | Catálogo fixo JS, seleção e ordenação pelo gestor, modo sequencial |
-| **Sandbox** | Execução JS client-side, autocomplete contextual, erros humanizados |
+| **Sandbox** | Execução JS client-side (Web Worker). Autocomplete contextual e erros humanizados ainda não implementados |
 | **Validação** | Automática por testes de comportamento; modo manual opcional |
-| **Gamificação** | XP, níveis, badges, ranking da turma, streak diário |
+| **Gamificação** | XP, níveis, badges, ranking da turma, streak diário. Desafio da semana com backend pronto, UI pendente |
 | **Chat IA** | Tutor com modo dica, contexto do desafio atual |
-| **Configurações gestor** | Modo de progressão, modo de validação, blocos visuais on/off |
+| **Configurações gestor** | Modo de progressão, modo de validação. Toggle de blocos visuais existe na config, mas editor de blocos ainda não foi construído |
 
 ### V2
 
@@ -383,7 +385,7 @@ Game design é tão crítico quanto o conteúdo técnico. A gamificação precis
 
 **MVP:**
 - E-mails críticos: convite de primeiro acesso e recuperação de senha
-- Notificações in-app: eventos de gamificação (novo badge, subiu de nível, streak atingido)
+- Notificações in-app: eventos de gamificação (novo badge, subiu de nível, streak atingido) — *backend pronto (módulo `notifications` completo); UI no app ainda pendente*
 
 **V2:**
 - E-mails de engajamento: aluno inativo há X dias (para gestor), resumo semanal de progresso da turma

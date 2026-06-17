@@ -496,58 +496,6 @@ Response: {
 
 ---
 
-## Tutor de IA — `/api/:slug/ai`
-
-> Acesso: `student`
-
-| Método | Rota | Auth | Descrição |
-|---|---|---|---|
-| POST | `/conversations` | student | Inicia conversa para um desafio |
-| GET | `/conversations/:conversationId` | student | Histórico da conversa |
-| POST | `/conversations/:conversationId/messages` | student | Envia mensagem ao tutor |
-| GET | `/usage/:challengeId` | student | Uso de IA do aluno hoje para este desafio |
-
-### POST `/conversations`
-```
-Request:  { challengeId }
-Response: { data: { conversation: { id, messages: [] } } }
-// Retorna conversa existente se já houver uma para este desafio
-```
-
-### GET `/conversations/:conversationId`
-```
-Response: {
-  data: {
-    conversation: {
-      id, challengeId,
-      messages: [{ id, role: 'user' | 'assistant', content, createdAt }]
-    }
-  }
-}
-// 404 se a conversa não pertence ao student autenticado (não vazar existência)
-```
-
-### POST `/conversations/:conversationId/messages`
-```
-Request:  { content }
-Response: { data: { message: { role: 'assistant', content } } }
-// 429 se limite diário atingido (tenants.settings.ai_messages_per_day)
-// Janela diária: reseta à meia-noite UTC. Verificado via ai_usage.date (DATE no banco = UTC)
-```
-
-### GET `/usage/:challengeId`
-```
-Response: {
-  data: {
-    used: N,
-    limit: N,   // de tenants.settings.ai_messages_per_day
-    remaining: N
-  }
-}
-```
-
----
-
 ## Notificações — `/api/:slug/notifications`
 
 > Acesso: `student` e `manager`
