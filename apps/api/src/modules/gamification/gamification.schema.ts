@@ -54,6 +54,8 @@ export const rankingResponseSchema = z.object({
   data: z.object({
     ranking: z.array(rankingEntrySchema),
     myPosition: z.number().nullable(),
+    // Se false, aluno não deve poder abrir o perfil de colegas (config do gestor)
+    allowProfileView: z.boolean(),
   }),
 })
 
@@ -86,10 +88,4 @@ const xpEventSchema = z.object({
 })
 
 export const xpEventsResponseSchema = z.object({
-  data: z.array(xpEventSchema),
-  meta: z.object({
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-  }),
-})
+  data: z

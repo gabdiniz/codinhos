@@ -20,6 +20,7 @@ export type TenantSettings = {
   ai_messages_per_day?: number
   max_students?: number
   ai_error_explanation_enabled?: boolean
+  allow_student_profile_view?: boolean
   gamification?: {
     xp_per_level?: number
     first_attempt_bonus_multiplier?: number
@@ -79,6 +80,7 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   avatarUrl: varchar('avatar_url', { length: 500 }),
+  birthDate: date('birth_date'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
@@ -340,5 +342,4 @@ export const notifications = pgTable('notifications', {
   readAt: timestamp('read_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [
-  index('notifications_tenant_user_read_idx').on(t.tenantId, t.userId, t.readAt),
-])
+  index('noti

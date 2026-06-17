@@ -8,6 +8,7 @@ import {
   countXpEvents,
   listXpEvents,
 } from './gamification.repository.js'
+import { findTenantSettings } from '../tenant-settings/tenant-settings.repository.js'
 
 // ─── /me ─────────────────────────────────────────────────────────────────────
 
@@ -62,7 +63,14 @@ export async function getClassRanking(
   const myIndex = rows.findIndex((r) => r.studentId === requesterId)
   const myPosition = myIndex >= 0 ? myIndex + 1 : null
 
-  return { ranking, myPosition }
+  // Gestor sempre pode abrir o perfil de um aluno — o toggle só restringe aluno-para-aluno
+  let allowProfileView = true
+  if (requesterRole === 'student') {
+    const tenant = await findTenantSettings(tenantId)
+    allowProfileView = tenant?.settings?.allow_student_profile_view ?? true
+  }
+
+  return { ranking, myPosition, allowProfileView }
 }
 
 // ─── /badges ─────────────────────────────────────────────────────────────────
@@ -91,21 +99,4 @@ export async function getXpEvents(
   page: number,
   limit: number,
 ) {
-  const offset = (page - 1) * limit
-
-  const [total, events] = await Promise.all([
-    countXpEvents(studentId, tenantId),
-    listXpEvents(studentId, tenantId, offset, limit),
-  ])
-
-  return {
-    data: events.map((e) => ({
-      id: e.id,
-      amount: e.amount,
-      reason: e.reason,
-      refId: e.refId ?? null,
-      createdAt: e.createdAt.toISOString(),
-    })),
-    meta: { total, page, limit },
-  }
-}
+  const off

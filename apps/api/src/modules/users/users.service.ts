@@ -79,6 +79,8 @@ export async function getUsers(tenantId: string, query: ListUsersQuery) {
   const { rows, total } = await listUsers({
     tenantId,
     role: query.role,
+    search: query.search,
+    isActive: query.isActive,
     page: query.page,
     limit: query.limit,
   })
@@ -147,6 +149,7 @@ export async function updateExistingUser(
     name: body.name,
     email: body.email,
     avatarUrl: body.avatarUrl,
+    birthDate: body.birthDate,
   })
 
   if (body.classId !== undefined) {
@@ -257,6 +260,4 @@ export async function updatePassword(
   const newHash = await bcrypt.hash(body.newPassword, 12)
   await updateUser(userId, tenantId, { passwordHash: newHash })
 
-  // Invalida todas as outras sessões — a sessão atual permanece
-  await deleteOtherSessions(userId, currentSessionId)
-}
+  // Invalida todas as outras sessões

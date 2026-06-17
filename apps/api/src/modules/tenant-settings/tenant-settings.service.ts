@@ -37,6 +37,8 @@ function mapSettings(tenant: {
     aiMessagesPerDay: tenant.settings?.ai_messages_per_day ?? null,
     maxStudents: tenant.settings?.max_students ?? null,
     aiErrorExplanationEnabled: tenant.settings?.ai_error_explanation_enabled ?? true,
+    // Default true (opt-out): alunos podem ver perfil de outros alunos a menos que o gestor desative
+    allowStudentProfileView: tenant.settings?.allow_student_profile_view ?? true,
   }
 }
 
@@ -65,13 +67,22 @@ export async function updateSettings(tenantId: string, body: UpdateSettingsBody)
   if (!current) throw new NotFoundError('Tenant')
 
   // Se não há nada a atualizar, retorna as configurações atuais sem write no banco
-  if (!body.theme && !body.gamification && body.aiErrorExplanationEnabled === undefined) {
+  if (
+    !body.theme &&
+    !body.gamification &&
+    body.aiErrorExplanationEnabled === undefined &&
+    body.allowStudentProfileView === undefined
+  ) {
     return { data: { settings: mapSettings(current) } }
   }
 
   // Merge parcial de settings (gamification em snake_case no banco)
   let newSettings: TenantSettings | undefined
-  if (body.gamification || body.aiErrorExplanationEnabled !== undefined) {
+  if (
+    body.gamification ||
+    body.aiErrorExplanationEnabled !== undefined ||
+    body.allowStudentProfileView !== undefined
+  ) {
     const g = body.gamification
     newSettings = {
       ...current.settings,
@@ -90,17 +101,3 @@ export async function updateSettings(tenantId: string, body: UpdateSettingsBody)
         },
       }),
       ...(body.aiErrorExplanationEnabled !== undefined && {
-        ai_error_explanation_enabled: body.aiErrorExplanationEnabled,
-      }),
-    }
-  }
-
-  const updated = await updateTenantSettings(tenantId, {
-    theme: body.theme,
-    settings: newSettings,
-  })
-
-  if (!updated) throw new NotFoundError('Tenant')
-
-  return { data: { settings: mapSettings(updated) } }
-}
