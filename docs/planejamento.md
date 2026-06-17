@@ -374,7 +374,7 @@ Crianças menores de 12 anos exigem consentimento parental explícito. O modelo 
 Chat IA por aluno escala o custo. Para portfólio/uso baixo: desprezível. Para produção: throttling obrigatório (ex: limite de mensagens por desafio ou por sessão) e uso de modelo eficiente (Claude Haiku ou equivalente). O limite de mensagens deve ser configurável pelo Super Admin por plano de tenant.
 
 ### Moderação de conteúdo
-Crianças testam os limites do chat. O prompt de sistema precisa de guardrails robustos. Considerar filtro de output antes de exibir respostas da IA.
+Crianças testam os limites do chat. O system prompt (`buildSystemPrompt` em `apps/api/.../ai-tutor.service.ts`) tem guardrails explícitos contra prompt injection — código do aluno e contexto de teste falho são tratados como dado, nunca como instrução —, contra extração do próprio prompt, e contra fuga de tema/conteúdo impróprio para a idade (recusa com redirecionamento ao desafio). Filtro de output (revisão automática da resposta da IA antes de exibir ao aluno) ainda não foi implementado — depende de validação real de custo/latência antes de entrar no MVP.
 
 ### Engajamento
 Game design é tão crítico quanto o conteúdo técnico. A gamificação precisa de progressão de dificuldade cuidadosa — fácil demais desmotiva, difícil demais abandona.
