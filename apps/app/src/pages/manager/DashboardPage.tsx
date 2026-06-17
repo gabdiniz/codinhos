@@ -76,17 +76,18 @@ interface KpiCardProps {
   value: number
   icon: React.ReactNode
   accent?: 'primary' | 'success' | 'secondary'
+  to: string
 }
 
-function KpiCard({ label, value, icon, accent = 'primary' }: KpiCardProps) {
+function KpiCard({ label, value, icon, accent = 'primary', to }: KpiCardProps) {
   return (
-    <div className={`${styles.kpiCard} ${styles[`kpiCard_${accent}`]}`}>
+    <Link to={to} className={`${styles.kpiCard} ${styles[`kpiCard_${accent}`]}`}>
       <div className={styles.kpiIcon}>{icon}</div>
       <div className={styles.kpiBody}>
         <span className={styles.kpiValue}>{value.toLocaleString('pt-BR')}</span>
         <span className={styles.kpiLabel}>{label}</span>
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -148,18 +149,21 @@ export default function ManagerDashboardPage() {
           value={overview.totalStudents}
           icon={<IconUsers />}
           accent="primary"
+          to={`/${slug}/manager/students`}
         />
         <KpiCard
           label="Ativos hoje"
           value={overview.activeToday}
           icon={<IconActivity />}
           accent="success"
+          to={`/${slug}/manager/students`}
         />
         <KpiCard
           label="Turmas"
           value={overview.totalClasses}
           icon={<IconLayers />}
           accent="secondary"
+          to={`/${slug}/manager/classes`}
         />
       </section>
 
