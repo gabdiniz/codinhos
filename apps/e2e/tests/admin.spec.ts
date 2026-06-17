@@ -67,16 +67,19 @@ test.describe('TenantsPage — CRUD de escolas', () => {
 test.describe('BadgesPage — CRUD de badges', () => {
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/__system__/admin/badges')
+    // Botão "Novo badge" só aparece após loading=false (API call)
+    await page.waitForLoadState('networkidle')
   })
 
   test('deve listar badges ou exibir estado vazio', async ({ adminPage: page }) => {
-    const hasCards = await page.locator('[class*="cardName"]').first().isVisible()
-    const isEmpty  = await page.getByText(/nenhuma conquista/i).isVisible()
-    expect(hasCards || isEmpty).toBe(true)
+    // Empty state: "Nenhum badge" | Com dados: cards com class cardName
+    const cards = page.locator('[class*="cardName"]').first()
+    const empty = page.getByText('Nenhum badge')
+    await expect(cards.or(empty)).toBeVisible()
   })
 
   test('deve abrir modal "Novo badge" com campos corretos', async ({ adminPage: page }) => {
-    await page.getByRole('button', { name: 'Novo badge' }).click()
+    await page.getByRole('button', { name: 'Novo badge' }).first().click()
     await expect(page.getByRole('dialog')).toBeVisible()
     // BadgesPage usa <label> sem htmlFor — busca por placeholder
     await expect(page.getByPlaceholder('primeiro-desafio')).toBeVisible() // Slug
@@ -84,7 +87,7 @@ test.describe('BadgesPage — CRUD de badges', () => {
   })
 
   test('deve criar um novo badge', async ({ adminPage: page }) => {
-    await page.getByRole('button', { name: 'Novo badge' }).click()
+    await page.getByRole('button', { name: 'Novo badge' }).first().click()
 
     const ts = Date.now()
     await page.getByPlaceholder('primeiro-desafio').fill(`badge-e2e-${ts}`)
@@ -105,8 +108,8 @@ test.describe('BadgesPage — CRUD de badges', () => {
 
     await dangerBtn.click()
     await expect(page.getByRole('dialog')).toBeVisible()
-    // Modal de confirmação tem texto sobre exclusão
-    await expect(page.getByText(/remover|excluir/i)).toBeVisible()
+    // Modal de confirmação tem heading "Remover badge" — .first() evita strict mode com múltiplos matches
+    await expect(page.getByText(/remover|excluir/i).first()).toBeVisible()
   })
 })
 
