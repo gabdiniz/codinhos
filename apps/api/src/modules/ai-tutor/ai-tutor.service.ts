@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { NotFoundError, TooManyRequestsError } from '../../shared/errors/index.js'
+import { AiServiceError, NotFoundError, TooManyRequestsError } from '../../shared/errors/index.js'
 import {
   findOrCreateConversation,
   listConversationMessages,
@@ -169,23 +169,32 @@ export async function sendMessage(
   const failedTest = tenant.aiErrorExplanationEnabled ? body.failedTest : undefined
 
   // 5. Chamar Anthropic
-  const aiResponse = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1024,
-    system: buildSystemPrompt({
-      studentName: student.name,
-      tenantName: tenant.name,
-      studentLevel: student.level,
-      challengeTitle: context.challengeTitle,
-      challengeDescription: context.challengeDescription ?? null,
-      difficulty: context.difficulty,
-      moduleConcept: context.moduleConcept ?? null,
-      language: context.language,
-      currentCode: body.currentCode,
-      failedTest,
-    }),
-    messages: apiMessages,
-  })
+  // Erros aqui (chave inválida/ausente, rate limit do provedor, indisponibilidade)
+  // não são bugs da nossa aplicação — mapeamos para AiServiceError (503) com uma
+  // mensagem amigável pro aluno, e logamos a causa original para diagnóstico.
+  let aiResponse: Anthropic.Message
+  try {
+    aiResponse = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      system: buildSystemPrompt({
+        studentName: student.name,
+        tenantName: tenant.name,
+        studentLevel: student.level,
+        challengeTitle: context.challengeTitle,
+        challengeDescription: context.challengeDescription ?? null,
+        difficulty: context.difficulty,
+        moduleConcept: context.moduleConcept ?? null,
+        language: context.language,
+        currentCode: body.currentCode,
+        failedTest,
+      }),
+      messages: apiMessages,
+    })
+  } catch (err) {
+    console.error('[ai-tutor] Falha ao chamar a API da Anthropic:', err)
+    throw new AiServiceError()
+  }
 
   const responseText =
     aiResponse.content[0]?.type === 'text' ? aiResponse.content[0].text : ''
