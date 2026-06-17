@@ -141,7 +141,7 @@ describe('auth.service', () => {
         role: activeUser.role,
         avatarUrl: null,
         isActive: true,
-        createdAt: new Date(),
+        tenantId: activeUser.tenantId,
       }
       vi.mocked(findUserById).mockResolvedValue(userData)
 

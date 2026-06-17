@@ -12,7 +12,15 @@ import {
 
 // ─── Stats do aluno ───────────────────────────────────────────────────────────
 
-export async function findStudentStats(studentId: string, tenantId: string) {
+export async function findStudentStats(
+  studentId: string,
+  tenantId: string,
+): Promise<{
+  totalXp: number
+  level: number
+  currentStreak: number
+  longestStreak: number
+} | null> {
   const [row] = await db
     .select({
       totalXp: studentStats.totalXp,
@@ -23,6 +31,8 @@ export async function findStudentStats(studentId: string, tenantId: string) {
     .from(studentStats)
     .where(and(eq(studentStats.tenantId, tenantId), eq(studentStats.studentId, studentId)))
     .limit(1)
+  // Anotação explícita acima: sem ela o TS prova (incorretamente) que `row` nunca
+  // é undefined e descarta o ramo `null`, quebrando o caso "aluno sem stats ainda".
   return row ?? null
 }
 
@@ -43,12 +53,16 @@ export async function findEarnedBadges(studentId: string, tenantId: string) {
 // ─── Ranking ─────────────────────────────────────────────────────────────────
 
 /** Verifica se a turma existe no tenant e retorna showRanking. */
-export async function findClassRankingConfig(classId: string, tenantId: string) {
+export async function findClassRankingConfig(
+  classId: string,
+  tenantId: string,
+): Promise<{ showRanking: boolean } | null> {
   const [row] = await db
     .select({ showRanking: classes.showRanking })
     .from(classes)
     .where(and(eq(classes.id, classId), eq(classes.tenantId, tenantId)))
     .limit(1)
+  // Mesmo padrão: anotação explícita pra TS não descartar o ramo `null`.
   return row ?? null
 }
 

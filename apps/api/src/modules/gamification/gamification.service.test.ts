@@ -89,7 +89,6 @@ describe('gamification.service', () => {
 
     it('deve lançar ForbiddenError quando showRanking=false e role=student', async () => {
       vi.mocked(findClassRankingConfig).mockResolvedValue({
-        id: 'class-id',
         showRanking: false,
       })
 
@@ -100,7 +99,6 @@ describe('gamification.service', () => {
 
     it('não deve lançar ForbiddenError quando showRanking=false e role=manager', async () => {
       vi.mocked(findClassRankingConfig).mockResolvedValue({
-        id: 'class-id',
         showRanking: false,
       })
       vi.mocked(listClassRanking).mockResolvedValue([])
@@ -112,13 +110,12 @@ describe('gamification.service', () => {
 
     it('deve calcular posições e myPosition corretamente', async () => {
       vi.mocked(findClassRankingConfig).mockResolvedValue({
-        id: 'class-id',
         showRanking: true,
       })
       vi.mocked(listClassRanking).mockResolvedValue([
-        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: '500', level: '6' },
-        { studentId: 'b', name: 'Bob', avatarUrl: null, totalXp: '300', level: '4' },
-        { studentId: 'c', name: 'Carol', avatarUrl: null, totalXp: '100', level: '2' },
+        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: 500, level: 6 },
+        { studentId: 'b', name: 'Bob', avatarUrl: null, totalXp: 300, level: 4 },
+        { studentId: 'c', name: 'Carol', avatarUrl: null, totalXp: 100, level: 2 },
       ])
 
       const result = await getClassRanking('class-id', 'tenant-id', 'b', 'student')
@@ -131,11 +128,10 @@ describe('gamification.service', () => {
 
     it('deve retornar myPosition=null quando requester não está no ranking', async () => {
       vi.mocked(findClassRankingConfig).mockResolvedValue({
-        id: 'class-id',
         showRanking: true,
       })
       vi.mocked(listClassRanking).mockResolvedValue([
-        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: '500', level: '6' },
+        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: 500, level: 6 },
       ])
 
       const result = await getClassRanking('class-id', 'tenant-id', 'manager-id', 'manager')
