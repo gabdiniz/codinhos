@@ -1,0 +1,592 @@
+/* ─── WeeklyChallengePage ────────────────────────────────────────────────────
+   Desafio da semana: card ativo (editor + envio) + histórico de desafios
+   encerrados com placar. Convenções de tipografia/cards seguem RankingPage
+   e ChallengePage (mesmo "design system" das páginas do aluno).
+──────────────────────────────────────────────────────────────────────────── */
+
+.root {
+  padding: 2.5rem;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Estados ─────────────────────────────────────────────────────────────── */
+
+.state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.stateText {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stateError {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-error);
+}
+
+.empty {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  opacity: 0.8;
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* ── Empty state (sem desafio ativo) ────────────────────────────────────── */
+
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.emptyText {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  max-width: 320px;
+}
+
+/* ── Card do desafio ativo ───────────────────────────────────────────────── */
+
+.activeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.activeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.diffBadge {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.diff_easy   { color: var(--color-success); background: color-mix(in srgb, var(--color-success) 10%, transparent); border: 1px solid color-mix(in srgb, var(--color-success) 22%, transparent); }
+.diff_medium { color: var(--color-accent);  background: color-mix(in srgb, var(--color-accent) 10%, transparent);  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent); }
+.diff_hard   { color: var(--color-error);   background: color-mix(in srgb, var(--color-error) 10%, transparent);   border: 1px solid color-mix(in srgb, var(--color-error) 22%, transparent); }
+
+.countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.challengeTitle {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.challengeDescription {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.statusValue {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.leaderboardToggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.leaderboardToggle:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ── Editor (mesma convenção do ChallengePage) ──────────────────────────── */
+
+.editorWrapper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.875rem;
+  background: var(--color-editor-gutter);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.editorFilename {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.editorDots {
+  display: flex;
+  gap: 5px;
+}
+
+.editorDots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.editorDots span:nth-child(1) { background: color-mix(in srgb, var(--color-error) 60%, var(--color-border)); }
+.editorDots span:nth-child(2) { background: color-mix(in srgb, var(--color-accent) 60%, var(--color-border)); }
+.editorDots span:nth-child(3) { background: color-mix(in srgb, var(--color-success) 60%, var(--color-border)); }
+
+.editorBody {
+  height: clamp(300px, 48vh, 560px);
+  background: var(--color-editor-bg);
+  overflow: hidden;
+}
+
+.editorInner {
+  height: 100%;
+}
+
+/* ── Ações ───────────────────────────────────────────────────────────────── */
+
+.actionBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.submitError {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--color-error);
+}
+
+/* ── Resultado do envio + lista de testes ───────────────────────────────── */
+
+.submitResult {
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.submitResultPassed {
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.submitResultFailed {
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 18%, transparent);
+}
+
+.submitResultHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.xpEarned {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-xp);
+  font-weight: 700;
+}
+
+.newBadges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badgesLabel {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.badge {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-xp);
+  background: color-mix(in srgb, var(--color-xp) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-xp) 25%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+}
+
+.resultsPanel {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.resultsPassed {
+  border-color: color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.resultsFailed {
+  border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
+.resultsSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.resultsIcon {
+  font-size: 1rem;
+}
+
+.resultsSummaryText {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.resultsList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.resultItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.resultItem:last-child {
+  border-bottom: none;
+}
+
+.resultItemPassed { background: color-mix(in srgb, var(--color-success) 4%, transparent); }
+.resultItemFailed { background: color-mix(in srgb, var(--color-error) 4%, transparent); }
+
+.resultIcon {
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.resultItemPassed .resultIcon { color: var(--color-success); }
+.resultItemFailed .resultIcon { color: var(--color-error); }
+
+.resultBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.resultDescription {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.resultDetail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.resultExpected,
+.resultActual {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.resultExpected code,
+.resultActual code {
+  color: var(--color-text);
+}
+
+.resultError {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-error);
+  line-height: 1.4;
+}
+
+.resultErrorBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.rawErrorToggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rawErrorToggle:hover {
+  color: var(--color-text);
+}
+
+.rawErrorText {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-error) 6%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 0.375rem 0.5rem;
+}
+
+/* ── Placar (leaderboard) ────────────────────────────────────────────────── */
+
+.leaderboardState {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding: 0.5rem 0;
+}
+
+.leaderboardStateError {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-error);
+  padding: 0.5rem 0;
+}
+
+.leaderboardList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+}
+
+.leaderboardRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.leaderboardRowMe {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-surface-raised) 85%, var(--color-primary));
+}
+
+.leaderboardPosition {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  min-width: 1.75rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.leaderboardName {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.leaderboardStatus {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Histórico ───────────────────────────────────────────────────────────── */
+
+.historySection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.historyTitle {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.historyList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem 1.125rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.historyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.historyChallengeTitle {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.historyTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.historyTopStudent {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.historyEmpty {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

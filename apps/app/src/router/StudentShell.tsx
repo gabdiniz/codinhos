@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.tsx'
 import { ClassProvider } from '../contexts/ClassContext.tsx'
 import { api } from '../lib/api.ts'
+import { NotificationBell } from '../components/NotificationBell/NotificationBell.tsx'
 import styles from './StudentShell.module.css'
 
 // ─── Ícones (inline SVG — sem dependência externa) ────────────────────────────
@@ -20,6 +21,14 @@ function IconUser() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
+    </svg>
+  )
+}
+
+function IconZap() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   )
 }
@@ -82,9 +91,10 @@ export function StudentShell() {
   }
 
   const navItems = [
-    { to: `/${slug}/learn`,   label: 'Trilhas',  icon: <IconBook /> },
-    { to: `/${slug}/profile`, label: 'Perfil',   icon: <IconUser /> },
-    { to: `/${slug}/ranking`, label: 'Ranking',  icon: <IconTrophy /> },
+    { to: `/${slug}/learn`,            label: 'Trilhas',  icon: <IconBook /> },
+    { to: `/${slug}/weekly-challenge`, label: 'Desafio',  icon: <IconZap /> },
+    { to: `/${slug}/profile`,          label: 'Perfil',   icon: <IconUser /> },
+    { to: `/${slug}/ranking`,          label: 'Ranking',  icon: <IconTrophy /> },
   ]
 
   return (
@@ -123,6 +133,7 @@ export function StudentShell() {
             <span className={styles.userName}>{user?.name}</span>
             <span className={styles.userRole}>Aluno</span>
           </div>
+          <NotificationBell />
           <button
             className={styles.logoutBtn}
             onClick={handleLogout}

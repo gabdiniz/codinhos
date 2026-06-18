@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.tsx'
 import { api } from '../lib/api.ts'
+import { NotificationBell } from '../components/NotificationBell/NotificationBell.tsx'
 import styles from './AdminShell.module.css'
 
 // ─── Ícones ───────────────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ export function AdminShell() {
             <span className={styles.userName}>{user?.name}</span>
             <span className={styles.userRole}>Super Admin</span>
           </div>
+          <NotificationBell />
           <button
             className={styles.logoutBtn}
             onClick={handleLogout}
