@@ -86,4 +86,10 @@ export const messageResponseSchema = z.object({
   data: z.object({ message: z.string() }),
 })
 
-// ─── Inferred types ──────────────────────────────────────────�
+// ─── Inferred types ────────────────────────────────────────────────────────
+
+export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>
+export type CreateUserBody = z.infer<typeof createUserBodySchema>
+export type UpdateUserBody = z.infer<typeof updateUserBodySchema>
+export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>
+export type UpdatePasswordBody = z.infer<typeof updatePasswordBodySchema>

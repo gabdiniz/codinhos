@@ -261,3 +261,5 @@ export async function updatePassword(
   await updateUser(userId, tenantId, { passwordHash: newHash })
 
   // Invalida todas as outras sessões
+  await deleteOtherSessions(userId, currentSessionId)
+}

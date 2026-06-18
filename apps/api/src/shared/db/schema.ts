@@ -342,4 +342,5 @@ export const notifications = pgTable('notifications', {
   readAt: timestamp('read_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [
-  index('noti
+  index('notifications_tenant_user_read_idx').on(t.tenantId, t.userId, t.readAt),
+])
