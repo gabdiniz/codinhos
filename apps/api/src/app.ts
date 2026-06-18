@@ -20,6 +20,7 @@ import { tenantSettingsRoutes } from './modules/tenant-settings/tenant-settings.
 import { studentProfileRoutes } from './modules/student-profile/student-profile.routes.js'
 import { adminRoutes } from './modules/admin/admin.routes.js'
 import { aiTutorRoutes } from './modules/ai-tutor/ai-tutor.routes.js'
+import { progressRoutes } from './modules/progress/progress.routes.js'
 import { AppError } from './shared/errors/index.js'
 
 export async function createApp() {
@@ -110,6 +111,7 @@ export async function createApp() {
   await app.register(studentProfileRoutes, { prefix: '/api' })
   await app.register(adminRoutes, { prefix: '/api' })
   await app.register(aiTutorRoutes, { prefix: '/api' })
+  await app.register(progressRoutes, { prefix: '/api' })
 
   return app
 }
