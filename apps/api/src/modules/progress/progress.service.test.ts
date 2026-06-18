@@ -92,7 +92,7 @@ describe('progress.service — unlockModule', () => {
 
     await unlockModule(tenantId, moduleId, { studentId, classId }, managerId)
 
-    expect(updateModuleProgressUnlock).toHaveBeenCalledWith('mp-1', managerId)
+    expect(updateModuleProgressUnlock).toHaveBeenCalledWith('mp-1', tenantId, managerId)
     expect(insertModuleProgress).not.toHaveBeenCalled()
   })
 

@@ -75,6 +75,18 @@ describe('users.service — importUsersFromCsv', () => {
     await expect(importUsersFromCsv(tenantId, slug, csv)).rejects.toThrow(UnprocessableError)
   })
 
+  it('deve processar corretamente um CSV exportado do Excel com BOM UTF-8 no início', async () => {
+    vi.mocked(findUserByEmailInTenant).mockResolvedValue(null)
+    vi.mocked(createUser).mockImplementation(async (input: any) => fakeCreatedUser(input) as any)
+    vi.mocked(createInviteToken).mockResolvedValue(undefined as any)
+
+    const csv = '﻿name,email\nJoão Silva,joao@escola.com'
+    const result = await importUsersFromCsv(tenantId, slug, csv)
+
+    expect(result.data.created).toBe(1)
+    expect(result.data.errors).toEqual([])
+  })
+
   it('deve criar alunos válidos com role "student" e enviar e-mail de convite para cada um', async () => {
     vi.mocked(findUserByEmailInTenant).mockResolvedValue(null)
     vi.mocked(createUser).mockImplementation(async (input: any) => fakeCreatedUser(input) as any)

@@ -47,7 +47,7 @@ export async function unlockModule(
     if (existing.status !== 'locked') {
       throw new ConflictError('Módulo já está desbloqueado ou concluído para este aluno')
     }
-    const updated = await updateModuleProgressUnlock(existing.id, unlockedByUserId)
+    const updated = await updateModuleProgressUnlock(existing.id, tenantId, unlockedByUserId)
     return { data: { moduleProgress: updated! } }
   }
 
