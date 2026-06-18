@@ -104,4 +104,8 @@ export async function createApp() {
   await app.register(weeklyChallengesRoutes, { prefix: '/api' })
   await app.register(tenantSettingsRoutes, { prefix: '/api' })
   await app.register(studentProfileRoutes, { prefix: '/api' })
-  await app.register(adminRoutes, { pre
+  await app.register(adminRoutes, { prefix: '/api' })
+  await app.register(aiTutorRoutes, { prefix: '/api' })
+
+  return app
+}
