@@ -41,7 +41,7 @@ export async function insertModuleProgress(input: InsertModuleProgressInput) {
   return row!
 }
 
-export async function updateModuleProgressUnlock(id: string, unlockedBy: string) {
+export async function updateModuleProgressUnlock(id: string, tenantId: string, unlockedBy: string) {
   const [row] = await db
     .update(moduleProgress)
     .set({
@@ -49,7 +49,7 @@ export async function updateModuleProgressUnlock(id: string, unlockedBy: string)
       unlockedBy,
       unlockedAt: new Date(),
     })
-    .where(eq(moduleProgress.id, id))
+    .where(and(eq(moduleProgress.id, id), eq(moduleProgress.tenantId, tenantId)))
     .returning()
   return row ?? null
 }

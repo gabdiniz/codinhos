@@ -282,7 +282,10 @@ export function generateUsersCsvTemplate(): string {
  * interrompem o processamento — o import roda até o fim e reporta tudo.
  */
 export async function importUsersFromCsv(tenantId: string, slug: string, csvContent: string) {
-  const lines = csvContent.split(/\r?\n/).filter((line) => line.trim().length > 0)
+  // Remove BOM (UTF-8) — comum em CSVs exportados do Excel no Windows, faria a
+  // validação de cabeçalho falhar mesmo com o conteúdo correto.
+  const cleanContent = csvContent.replace(/^﻿/, '')
+  const lines = cleanContent.split(/\r?\n/).filter((line) => line.trim().length > 0)
 
   if (lines.length === 0) {
     throw new UnprocessableError('Arquivo CSV vazio')
