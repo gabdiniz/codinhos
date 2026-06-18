@@ -86,6 +86,21 @@ export const messageResponseSchema = z.object({
   data: z.object({ message: z.string() }),
 })
 
+// ─── Importação CSV ───────────────────────────────────────────────────────────
+
+export const importErrorSchema = z.object({
+  row: z.number(),
+  reason: z.string(),
+})
+
+export const importUsersResponseSchema = z.object({
+  data: z.object({
+    created: z.number(),
+    skipped: z.number(),
+    errors: z.array(importErrorSchema),
+  }),
+})
+
 // ─── Inferred types ────────────────────────────────────────────────────────
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>
@@ -93,3 +108,4 @@ export type CreateUserBody = z.infer<typeof createUserBodySchema>
 export type UpdateUserBody = z.infer<typeof updateUserBodySchema>
 export type UpdateProfileBody = z.infer<typeof updateProfileBodySchema>
 export type UpdatePasswordBody = z.infer<typeof updatePasswordBodySchema>
+export type ImportError = z.infer<typeof importErrorSchema>

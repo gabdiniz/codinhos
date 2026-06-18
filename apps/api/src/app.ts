@@ -1,6 +1,7 @@
 import Fastify, { type FastifyError } from 'fastify'
 import cookie from '@fastify/cookie'
 import cors from '@fastify/cors'
+import multipart from '@fastify/multipart'
 import rateLimit from '@fastify/rate-limit'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 import { authRoutes } from './modules/auth/auth.routes.js'
@@ -35,6 +36,9 @@ export async function createApp() {
 
   // Plugins
   await app.register(cookie)
+  await app.register(multipart, {
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB — suficiente para CSV de importação de alunos
+  })
 
   const isDev = process.env.NODE_ENV !== 'production'
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) => o.trim())

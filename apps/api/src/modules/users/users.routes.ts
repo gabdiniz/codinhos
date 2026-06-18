@@ -3,6 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
+import { BadRequestError } from '../../shared/errors/index.js'
 import {
   getUsers,
   getUserById,
@@ -12,6 +13,8 @@ import {
   resendInvite,
   updateProfile,
   updatePassword,
+  generateUsersCsvTemplate,
+  importUsersFromCsv,
 } from './users.service.js'
 import {
   slugParamsSchema,
@@ -24,6 +27,7 @@ import {
   listUsersResponseSchema,
   userResponseSchema,
   messageResponseSchema,
+  importUsersResponseSchema,
 } from './users.schema.js'
 
 export async function usersRoutes(app: FastifyInstance) {
@@ -112,6 +116,49 @@ export async function usersRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const result = await createNewUser(req.tenantId, req.params.slug, req.body)
       return reply.status(201).send({ data: result })
+    },
+  )
+
+  /**
+   * GET /api/:slug/users/template
+   * Baixa o modelo CSV (colunas: name,email) para importação em massa.
+   */
+  f.get(
+    '/:slug/users/template',
+    {
+      schema: {
+        params: slugParamsSchema,
+      },
+      preHandler: managerGuard,
+    },
+    async (req, reply) => {
+      const csv = generateUsersCsvTemplate()
+      return reply.status(200).header('Content-Type', 'text/csv').send(csv)
+    },
+  )
+
+  /**
+   * POST /api/:slug/users/import
+   * Importa alunos via CSV (multipart/form-data, campo "file").
+   * Todos recebem role: 'student'. E-mails já existentes são ignorados (skipped).
+   * Erros por linha não interrompem o import.
+   */
+  f.post(
+    '/:slug/users/import',
+    {
+      schema: {
+        params: slugParamsSchema,
+        response: { 200: importUsersResponseSchema },
+      },
+      preHandler: managerGuard,
+    },
+    async (req, reply) => {
+      const file = await req.file()
+      if (!file) throw new BadRequestError('Arquivo CSV não enviado (campo "file")')
+
+      const buffer = await file.toBuffer()
+      const result = await importUsersFromCsv(req.tenantId, req.params.slug, buffer.toString('utf-8'))
+      return reply.status(200).send(result)
     },
   )
 

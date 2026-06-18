@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import { Resend } from 'resend'
+import { z } from 'zod'
 import {
   findUserById,
   findUserByIdOnly,
@@ -34,6 +35,7 @@ import type {
   UpdateUserBody,
   UpdateProfileBody,
   UpdatePasswordBody,
+  ImportError,
 } from './users.schema.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -262,4 +264,84 @@ export async function updatePassword(
 
   // Invalida todas as outras sessões
   await deleteOtherSessions(userId, currentSessionId)
+}
+
+// ─── Importação CSV ───────────────────────────────────────────────────────────
+
+const emailSchema = z.string().email()
+
+/** Gera o CSV-modelo para importação em massa de alunos (colunas: name,email) */
+export function generateUsersCsvTemplate(): string {
+  return 'name,email\nJoão Silva,joao@escola.com\n'
+}
+
+/**
+ * Importa alunos a partir do conteúdo de um CSV (linha a linha).
+ * Todos os usuários criados recebem role: 'student'. E-mails já cadastrados
+ * no tenant são ignorados (skipped), sem sobrescrever. Erros por linha não
+ * interrompem o processamento — o import roda até o fim e reporta tudo.
+ */
+export async function importUsersFromCsv(tenantId: string, slug: string, csvContent: string) {
+  const lines = csvContent.split(/\r?\n/).filter((line) => line.trim().length > 0)
+
+  if (lines.length === 0) {
+    throw new UnprocessableError('Arquivo CSV vazio')
+  }
+
+  const header = lines[0]!.trim().toLowerCase()
+  if (header !== 'name,email') {
+    throw new UnprocessableError('Cabeçalho do CSV inválido — esperado "name,email"')
+  }
+
+  let created = 0
+  let skipped = 0
+  const errors: ImportError[] = []
+
+  for (let i = 1; i < lines.length; i++) {
+    const row = i + 1 // linha 1 é o cabeçalho — mantém numeração igual à da planilha
+    const parts = lines[i]!.split(',')
+
+    if (parts.length < 2) {
+      errors.push({ row, reason: 'Formato inválido — esperado "name,email"' })
+      continue
+    }
+
+    const name = parts[0]!.trim()
+    const email = parts[1]!.trim().toLowerCase()
+
+    if (!name) {
+      errors.push({ row, reason: 'Nome em branco' })
+      continue
+    }
+
+    if (!emailSchema.safeParse(email).success) {
+      errors.push({ row, reason: 'E-mail inválido' })
+      continue
+    }
+
+    const existing = await findUserByEmailInTenant(email, tenantId)
+    if (existing) {
+      skipped++
+      continue
+    }
+
+    try {
+      const randomPassword = randomBytes(32).toString('hex')
+      const passwordHash = await bcrypt.hash(randomPassword, 12)
+      const user = await createUser({ tenantId, name, email, passwordHash, role: 'student' })
+
+      const rawToken = randomBytes(32).toString('hex')
+      const tokenHash = hashToken(rawToken)
+      const expiresAt = new Date(Date.now() + INVITE_TTL_MS)
+      await createInviteToken(user.id, tokenHash, expiresAt)
+      await sendInviteEmail({ to: user.email, name: user.name, slug, token: rawToken })
+
+      created++
+    } catch (err) {
+      console.error('[users] Falha ao importar linha do CSV:', err)
+      errors.push({ row, reason: 'Erro ao criar usuário' })
+    }
+  }
+
+  return { data: { created, skipped, errors } }
 }
