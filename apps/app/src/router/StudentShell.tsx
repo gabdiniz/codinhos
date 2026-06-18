@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.tsx'
 import { ClassProvider } from '../contexts/ClassContext.tsx'
 import { api } from '../lib/api.ts'
+import { NotificationBell } from '../components/NotificationBell/NotificationBell.tsx'
 import styles from './StudentShell.module.css'
 
 // ─── Ícones (inline SVG — sem dependência externa) ────────────────────────────
@@ -123,6 +124,7 @@ export function StudentShell() {
             <span className={styles.userName}>{user?.name}</span>
             <span className={styles.userRole}>Aluno</span>
           </div>
+          <NotificationBell />
           <button
             className={styles.logoutBtn}
             onClick={handleLogout}
