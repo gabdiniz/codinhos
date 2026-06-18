@@ -25,6 +25,14 @@ function IconUser() {
   )
 }
 
+function IconZap() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  )
+}
+
 function IconTrophy() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -83,9 +91,10 @@ export function StudentShell() {
   }
 
   const navItems = [
-    { to: `/${slug}/learn`,   label: 'Trilhas',  icon: <IconBook /> },
-    { to: `/${slug}/profile`, label: 'Perfil',   icon: <IconUser /> },
-    { to: `/${slug}/ranking`, label: 'Ranking',  icon: <IconTrophy /> },
+    { to: `/${slug}/learn`,            label: 'Trilhas',  icon: <IconBook /> },
+    { to: `/${slug}/weekly-challenge`, label: 'Desafio',  icon: <IconZap /> },
+    { to: `/${slug}/profile`,          label: 'Perfil',   icon: <IconUser /> },
+    { to: `/${slug}/ranking`,          label: 'Ranking',  icon: <IconTrophy /> },
   ]
 
   return (
