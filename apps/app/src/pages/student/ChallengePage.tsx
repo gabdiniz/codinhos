@@ -13,6 +13,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { javascript } from '@codemirror/lang-javascript'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { api, ApiError } from '../../lib/api.ts'
+import { humanizeSandboxError, extractRawSandboxError, type RawSandboxError } from '../../lib/humanizeSandboxError.ts'
 import { useClass } from '../../contexts/ClassContext.tsx'
 import styles from './ChallengePage.module.css'
 
@@ -34,6 +35,8 @@ interface TestResult {
   actual: unknown
   description: string
   error?: string
+  /** err.name (ex.: "TypeError") — só vem preenchido quando o teste roda no worker do navegador */
+  errorName?: string
 }
 
 interface Challenge {
@@ -397,6 +400,30 @@ function CodeEditor({ initialValue, onChange }: CodeEditorProps) {
   return <div ref={containerRef} className={styles.editorInner} />
 }
 
+// ─── SandboxErrorMessage ──────────────────────────────────────────────────────
+// Mostra a versão humanizada do erro por padrão; a mensagem técnica original
+// (stack/erro nativo) fica escondida atrás de um toggle, para quem quiser ver.
+
+function SandboxErrorMessage({ raw }: { raw: RawSandboxError }) {
+  const [showTechnical, setShowTechnical] = useState(false)
+  const friendly = humanizeSandboxError(raw.message)
+  const technical = raw.name ? `${raw.name}: ${raw.message}` : raw.message
+
+  return (
+    <div className={styles.resultErrorBlock}>
+      <span className={styles.resultError}>{friendly}</span>
+      <button
+        type="button"
+        className={styles.rawErrorToggle}
+        onClick={() => setShowTechnical((v) => !v)}
+      >
+        {showTechnical ? 'ocultar mensagem técnica' : 'ver mensagem técnica'}
+      </button>
+      {showTechnical && <code className={styles.rawErrorText}>{technical}</code>}
+    </div>
+  )
+}
+
 // ─── TestResultsPanel ─────────────────────────────────────────────────────────
 
 interface TestResultsPanelProps {
@@ -433,9 +460,12 @@ function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPane
               <span className={styles.resultDescription}>{r.description}</span>
               {!r.passed && (
                 <div className={styles.resultDetail}>
-                  {r.error
-                    ? <span className={styles.resultError}>Erro: {r.error}</span>
-                    : (
+                  {(() => {
+                    const rawError = extractRawSandboxError(r.error, r.errorName, r.actual)
+                    if (rawError) {
+                      return <SandboxErrorMessage raw={rawError} />
+                    }
+                    return (
                       <>
                         <span className={styles.resultExpected}>
                           esperado: <code>{JSON.stringify(r.expected)}</code>
@@ -445,7 +475,7 @@ function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPane
                         </span>
                       </>
                     )
-                  }
+                  })()}
                 </div>
               )}
               {!r.passed && aiHelpEnabled && onAskCodi && (
