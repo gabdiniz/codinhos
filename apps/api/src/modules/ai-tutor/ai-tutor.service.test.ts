@@ -8,7 +8,7 @@ import {
   countStudentMessagesToday,
   incrementUsage,
 } from './ai-tutor.repository.js'
-import { NotFoundError, TooManyRequestsError } from '../../shared/errors/index.js'
+import { AiServiceError, NotFoundError, TooManyRequestsError } from '../../shared/errors/index.js'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -249,6 +249,8 @@ describe('ai-tutor.service', () => {
       vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
       mockCreate.mockRejectedValue(new Error('Anthropic API indisponível'))
 
+      // O service mapeia qualquer falha do provedor para AiServiceError (503) com
+      // mensagem amigável — o erro original é apenas logado, não repassado ao aluno.
       await expect(
         sendMessage(
           'tenant-id',
@@ -258,7 +260,7 @@ describe('ai-tutor.service', () => {
           student,
           tenantEnabled,
         ),
-      ).rejects.toThrow('Anthropic API indisponível')
+      ).rejects.toThrow(AiServiceError)
 
       expect(insertMessage).not.toHaveBeenCalled()
       expect(incrementUsage).not.toHaveBeenCalled()
