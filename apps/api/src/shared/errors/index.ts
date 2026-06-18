@@ -9,6 +9,13 @@ export class AppError extends Error {
   }
 }
 
+/** 400 — requisição bloqueada por uma configuração que impede a operação */
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super(400, 'BAD_REQUEST', message)
+  }
+}
+
 /** 401 — sessão ausente, expirada ou inválida */
 export class UnauthorizedError extends AppError {
   constructor(message = 'Sessão ausente ou expirada') {
