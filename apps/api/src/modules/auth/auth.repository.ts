@@ -26,6 +26,7 @@ export async function findUserByEmailAndTenant(
   passwordHash: string
   isActive: boolean
   tenantId: string
+  birthDate: string | null
 } | null> {
   const [user] = await db
     .select({
@@ -36,6 +37,7 @@ export async function findUserByEmailAndTenant(
       passwordHash: users.passwordHash,
       isActive: users.isActive,
       tenantId: users.tenantId,
+      birthDate: users.birthDate,
     })
     .from(users)
     .where(and(eq(users.email, email), eq(users.tenantId, tenantId)))
@@ -127,7 +129,7 @@ export async function deleteSessionsByUserId(userId: string) {
 type CreateTokenInput = {
   userId: string
   tokenHash: string
-  type: 'invite' | 'reset'
+  type: 'invite' | 'reset' | 'parental_consent'
   expiresAt: Date
 }
 
