@@ -25,6 +25,8 @@ interface TestResult {
   actual: unknown
   description: string
   error?: string
+  /** err.name (ex.: "TypeError") — usado pra humanizar a mensagem no painel de resultado */
+  errorName?: string
 }
 
 interface InMessage {
@@ -90,6 +92,7 @@ function runFunctionTest(code: string, tc: TestCase): TestResult {
       actual: undefined,
       description: tc.description,
       error: err instanceof Error ? err.message : String(err),
+      errorName: err instanceof Error ? err.name : undefined,
     }
   }
 
@@ -130,6 +133,7 @@ function runTypeCheckTest(code: string, tc: TestCase): TestResult {
       actual: undefined,
       description: tc.description,
       error: err instanceof Error ? err.message : String(err),
+      errorName: err instanceof Error ? err.name : undefined,
     }
   }
 
@@ -161,6 +165,7 @@ self.addEventListener('message', (e: MessageEvent<InMessage>) => {
         actual: undefined,
         description: tc.description,
         error: err instanceof Error ? err.message : String(err),
+        errorName: err instanceof Error ? err.name : undefined,
       }
     }
   })
