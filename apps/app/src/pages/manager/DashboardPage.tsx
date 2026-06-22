@@ -5,7 +5,7 @@ import styles from './DashboardPage.module.css'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-type AlertType = 'pending_review' | 'no_activity_7d' | 'stuck_on_module'
+type AlertType = 'pending_review' | 'no_activity_7d' | 'stuck_on_module' | 'possible_plagiarism'
 
 interface Alert {
   type: AlertType
@@ -64,9 +64,10 @@ function IconChevronRight() {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const ALERT_META: Record<AlertType, { label: string; colorClass: string }> = {
-  pending_review:  { label: 'Revisão pendente',  colorClass: 'alertWarning' },
-  no_activity_7d:  { label: 'Sem atividade',     colorClass: 'alertInfo'    },
-  stuck_on_module: { label: 'Travado no desafio', colorClass: 'alertError'  },
+  pending_review:      { label: 'Revisão pendente',       colorClass: 'alertWarning' },
+  no_activity_7d:      { label: 'Sem atividade',          colorClass: 'alertInfo'    },
+  stuck_on_module:     { label: 'Travado no desafio',     colorClass: 'alertError'  },
+  possible_plagiarism: { label: 'Possível cola',          colorClass: 'alertError'  },
 }
 
 // ─── Componentes locais ───────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ export default function ManagerDashboardPage() {
       acc[a.type].push(a)
       return acc
     },
-    { pending_review: [], no_activity_7d: [], stuck_on_module: [] },
+    { pending_review: [], no_activity_7d: [], stuck_on_module: [], possible_plagiarism: [] },
   )
 
   return (

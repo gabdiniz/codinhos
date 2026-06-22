@@ -1,4 +1,5 @@
 import { NotFoundError } from '../../shared/errors/index.js'
+import { findPossiblePlagiarismCandidates } from '../integrity/integrity.service.js'
 import {
   countTenantStudents,
   countActiveTodayTenant,
@@ -18,15 +19,23 @@ import {
 // ─── GET / ────────────────────────────────────────────────────────────────────
 
 export async function getOverview(tenantId: string) {
-  const [totalStudents, activeToday, totalClasses, pendingAlerts, noActivityAlerts, stuckAlerts] =
-    await Promise.all([
-      countTenantStudents(tenantId),
-      countActiveTodayTenant(tenantId),
-      countTenantClasses(tenantId),
-      findPendingReviewAlerts(tenantId),
-      findNoActivityAlerts(tenantId),
-      findStuckOnModuleAlerts(tenantId),
-    ])
+  const [
+    totalStudents,
+    activeToday,
+    totalClasses,
+    pendingAlerts,
+    noActivityAlerts,
+    stuckAlerts,
+    plagiarismCandidates,
+  ] = await Promise.all([
+    countTenantStudents(tenantId),
+    countActiveTodayTenant(tenantId),
+    countTenantClasses(tenantId),
+    findPendingReviewAlerts(tenantId),
+    findNoActivityAlerts(tenantId),
+    findStuckOnModuleAlerts(tenantId),
+    findPossiblePlagiarismCandidates(tenantId),
+  ])
 
   const alerts = [
     ...pendingAlerts.map((a) => ({
@@ -49,6 +58,13 @@ export async function getOverview(tenantId: string) {
       studentName: a.studentName,
       classId: a.classId,
       message: `${Number(a.failCount)} tentativas falhas no mesmo desafio`,
+    })),
+    ...plagiarismCandidates.map((c) => ({
+      type: 'possible_plagiarism' as const,
+      studentId: c.studentId,
+      studentName: c.studentName,
+      classId: c.classId,
+      message: `Código ${Math.round(c.similarity * 100)}% similar ao de ${c.otherStudentName} no mesmo desafio`,
     })),
   ]
 

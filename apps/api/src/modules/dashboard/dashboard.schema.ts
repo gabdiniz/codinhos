@@ -19,7 +19,7 @@ export const classDetailParamsSchema = z.object({
 // ─── Response — GET / ─────────────────────────────────────────────────────────
 
 const alertSchema = z.object({
-  type: z.enum(['pending_review', 'no_activity_7d', 'stuck_on_module']),
+  type: z.enum(['pending_review', 'no_activity_7d', 'stuck_on_module', 'possible_plagiarism']),
   studentId: z.string().uuid(),
   studentName: z.string(),
   classId: z.string().uuid(),
