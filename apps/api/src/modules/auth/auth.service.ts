@@ -21,11 +21,23 @@ import {
   AccountDisabledError,
   UnprocessableError,
 } from '../../shared/errors/index.js'
-import type { LoginBody, AdminLoginBody, ForgotPasswordBody, ResetPasswordBody } from './auth.schema.js'
+import {
+  studentRequiresConsent,
+  recordConsent,
+} from '../parental-consent/parental-consent.service.js'
+import type {
+  LoginBody,
+  AdminLoginBody,
+  ForgotPasswordBody,
+  ResetPasswordBody,
+  SubmitParentalConsentBody,
+} from './auth.schema.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const SESSION_TTL_MS = parseInt(process.env.SESSION_TTL_SECONDS ?? '604800', 10) * 1000
+// Tempo para o responsável concluir o consentimento parental após o login ser bloqueado.
+const CONSENT_TOKEN_TTL_MS = 24 * 60 * 60 * 1000
 
 function hashToken(rawToken: string): string {
   return createHash('sha256').update(rawToken).digest('hex')
@@ -56,6 +68,39 @@ function clearCookieSession(reply: FastifyReply): void {
   })
 }
 
+/** Cria a sessão, seta o cookie e monta o usuário retornado ao client. Usado por login() e completeParentalConsent(). */
+async function finishLogin(
+  user: { id: string; email: string; name: string; role: 'super_admin' | 'manager' | 'professor' | 'student'; tenantId: string },
+  reply: FastifyReply,
+) {
+  await deleteExpiredSessions(user.id)
+
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
+  const session = await createSession({
+    userId: user.id,
+    tenantId: user.tenantId,
+    role: user.role,
+    expiresAt,
+  })
+
+  setCookieSession(reply, session.id, expiresAt)
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+  }
+}
+
+async function issueParentalConsentToken(userId: string): Promise<string> {
+  const rawToken = generateRawToken()
+  const tokenHash = hashToken(rawToken)
+  const expiresAt = new Date(Date.now() + CONSENT_TOKEN_TTL_MS)
+  await createPasswordResetToken({ userId, tokenHash, type: 'parental_consent', expiresAt })
+  return rawToken
+}
+
 // ─── Login (usuário de tenant) ────────────────────────────────────────────────
 
 /**
@@ -83,27 +128,58 @@ export async function login(
     throw new InvalidCredentialsError()
   }
 
-  // Limpa sessões expiradas silenciosamente (housekeeping)
-  await deleteExpiredSessions(user.id)
+  // Aluno menor de 12 anos sem consentimento parental registrado: login fica
+  // pendente até o responsável concluir o consentimento (LGPD / ECA Digital).
+  if (await studentRequiresConsent(user, tenantId)) {
+    const consentToken = await issueParentalConsentToken(user.id)
+    return {
+      requiresParentalConsent: true as const,
+      consentToken,
+      studentName: user.name,
+    }
+  }
 
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
-  const session = await createSession({
-    userId: user.id,
+  const authUser = await finishLogin(user, reply)
+  return { user: authUser }
+}
+
+// ─── Consentimento parental ───────────────────────────────────────────────────
+
+/**
+ * Conclui o login de um aluno bloqueado por exigência de consentimento
+ * parental: valida o token de uso único, registra o consentimento e cria a sessão.
+ */
+export async function completeParentalConsent(
+  tenantId: string,
+  body: SubmitParentalConsentBody,
+  reply: FastifyReply,
+) {
+  const tokenHash = hashToken(body.consentToken)
+  const tokenRecord = await findValidPasswordResetToken(tokenHash)
+
+  if (!tokenRecord || tokenRecord.type !== 'parental_consent') {
+    throw new UnprocessableError('Token de consentimento inválido ou expirado')
+  }
+
+  const user = await findUserById(tokenRecord.userId)
+  if (!user || user.tenantId !== tenantId) {
+    throw new UnprocessableError('Token de consentimento inválido ou expirado')
+  }
+
+  await recordConsent({
     tenantId,
-    role: user.role,
-    expiresAt,
+    studentId: user.id,
+    guardianName: body.guardianName,
+    guardianEmail: body.guardianEmail,
   })
 
-  setCookieSession(reply, session.id, expiresAt)
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(eq(passwordResetTokens.id, tokenRecord.id))
 
-  return {
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    },
-  }
+  const authUser = await finishLogin(user, reply)
+  return { user: authUser }
 }
 
 // ─── Login (Super Admin) ──────────────────────────────────────────────────────

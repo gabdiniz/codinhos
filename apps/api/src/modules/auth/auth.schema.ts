@@ -52,11 +52,32 @@ export const meUserSchema = z.object({
   tenantId: z.string().uuid(),
 })
 
-export const loginResponseSchema = z.object({
+export const loginSuccessResponseSchema = z.object({
   data: z.object({
     user: authUserSchema,
     redirectTo: z.string(),
   }),
+})
+
+// Resposta quando o aluno (<12 anos) ainda não tem consentimento parental
+// registrado — login fica pendente até /:slug/auth/parental-consent.
+export const parentalConsentRequiredResponseSchema = z.object({
+  data: z.object({
+    requiresParentalConsent: z.literal(true),
+    consentToken: z.string(),
+    studentName: z.string(),
+  }),
+})
+
+export const loginResponseSchema = z.union([
+  loginSuccessResponseSchema,
+  parentalConsentRequiredResponseSchema,
+])
+
+export const submitParentalConsentBodySchema = z.object({
+  consentToken: z.string().min(1, 'Token obrigatório'),
+  guardianName: z.string().min(1, 'Nome do responsável obrigatório').max(255),
+  guardianEmail: z.string().email('E-mail do responsável inválido'),
 })
 
 export const meResponseSchema = z.object({
@@ -78,3 +99,4 @@ export type AdminLoginBody = z.infer<typeof adminLoginBodySchema>
 export type ForgotPasswordBody = z.infer<typeof forgotPasswordBodySchema>
 export type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>
 export type AuthUser = z.infer<typeof authUserSchema>
+export type SubmitParentalConsentBody = z.infer<typeof submitParentalConsentBodySchema>

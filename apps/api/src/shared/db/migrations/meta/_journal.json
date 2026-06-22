@@ -15,6 +15,13 @@
       "when": 1781730192860,
       "tag": "0001_robust_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781902800000,
+      "tag": "0002_consentimento_parental",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import { AdminShell } from './AdminShell.tsx'
 import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('../pages/LoginPage.tsx'))
+const ParentalConsentPage = lazy(() => import('../pages/ParentalConsentPage.tsx'))
 
 // Student
 const StudentDashboardPage = lazy(() => import('../pages/student/DashboardPage.tsx'))
@@ -66,6 +67,12 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         element: <Page component={LoginPage} />,
+      },
+
+      // Consentimento parental (publico — aluno ainda sem sessão)
+      {
+        path: 'consentimento-parental',
+        element: <Page component={ParentalConsentPage} />,
       },
 
       // -- Area do aluno (layout route) -----------------------------------------

@@ -21,6 +21,12 @@ function errorMessage(err: unknown): string {
   return 'Algo deu errado. Tente novamente.'
 }
 
+// Login pode retornar o usuário direto, ou — para aluno <12 anos sem
+// consentimento parental registrado — bloquear o login e exigir consentimento.
+type LoginResponse =
+  | { data: { user: CurrentUser; redirectTo: string } }
+  | { data: { requiresParentalConsent: true; consentToken: string; studentName: string } }
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
@@ -41,10 +47,17 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await api.post<{ data: { user: CurrentUser } }>(
-        `/api/${slug}/auth/login`,
-        { email, password },
-      )
+      const res = await api.post<LoginResponse>(`/api/${slug}/auth/login`, { email, password })
+
+      if ('requiresParentalConsent' in res.data) {
+        const { consentToken, studentName } = res.data
+        navigate(`/${slug}/consentimento-parental`, {
+          replace: true,
+          state: { consentToken, studentName },
+        })
+        return
+      }
+
       const user = res.data.user
       setUser(user)
       navigate(redirectAfterLogin(slug, user.role), { replace: true })

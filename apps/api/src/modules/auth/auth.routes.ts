@@ -9,6 +9,7 @@ import {
   getMe,
   forgotPassword,
   resetPassword,
+  completeParentalConsent,
 } from './auth.service.js'
 import {
   slugParamsSchema,
@@ -17,6 +18,8 @@ import {
   forgotPasswordBodySchema,
   resetPasswordBodySchema,
   loginResponseSchema,
+  loginSuccessResponseSchema,
+  submitParentalConsentBodySchema,
   meResponseSchema,
   messageResponseSchema,
 } from './auth.schema.js'
@@ -48,6 +51,40 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const result = await login(req.resolvedTenantId, req.body, reply)
+
+      if ('requiresParentalConsent' in result) {
+        return reply.status(200).send({
+          data: {
+            requiresParentalConsent: result.requiresParentalConsent,
+            consentToken: result.consentToken,
+            studentName: result.studentName,
+          },
+        })
+      }
+
+      const redirectTo = buildRedirectTo(result.user.role, req.params.slug)
+      return reply.status(200).send({ data: { user: result.user, redirectTo } })
+    },
+  )
+
+  /**
+   * POST /api/:slug/auth/parental-consent
+   * Conclui o login de um aluno menor de 12 anos após o responsável registrar
+   * consentimento (LGPD / ECA Digital). Token de uso único emitido pelo login bloqueado.
+   * Sem `authenticate` — o aluno ainda não tem sessão criada nesse ponto.
+   */
+  f.post(
+    '/:slug/auth/parental-consent',
+    {
+      schema: {
+        params: slugParamsSchema,
+        body: submitParentalConsentBodySchema,
+        response: { 200: loginSuccessResponseSchema },
+      },
+      preHandler: [resolveTenant],
+    },
+    async (req, reply) => {
+      const result = await completeParentalConsent(req.resolvedTenantId, req.body, reply)
       const redirectTo = buildRedirectTo(result.user.role, req.params.slug)
       return reply.status(200).send({ data: { user: result.user, redirectTo } })
     },

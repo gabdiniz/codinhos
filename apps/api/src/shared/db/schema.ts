@@ -49,7 +49,7 @@ export type TestResult = {
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const roleEnum = pgEnum('role', ['super_admin', 'manager', 'professor', 'student'])
-export const tokenTypeEnum = pgEnum('token_type', ['invite', 'reset'])
+export const tokenTypeEnum = pgEnum('token_type', ['invite', 'reset', 'parental_consent'])
 export const languageEnum = pgEnum('language', ['javascript', 'python'])
 export const progressionModeEnum = pgEnum('progression_mode', ['free', 'sequential', 'controlled'])
 export const validationModeEnum = pgEnum('validation_mode', ['auto', 'auto_review', 'manual'])
@@ -109,6 +109,22 @@ export const passwordResetTokens = pgTable('password_reset_tokens', {
   usedAt: timestamp('used_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+
+// ─── 1.1 Consentimento Parental (LGPD / ECA Digital) ──────────────────────────
+// Auditoria de consentimento para alunos menores de 12 anos: quem consentiu,
+// quando e em qual versão dos termos. Verificado no login (ver auth.service.ts).
+export const parentalConsents = pgTable('parental_consents', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  studentId: uuid('student_id').references(() => users.id).notNull(),
+  guardianName: varchar('guardian_name', { length: 255 }).notNull(),
+  guardianEmail: varchar('guardian_email', { length: 255 }).notNull(),
+  termsVersion: varchar('terms_version', { length: 50 }).notNull(),
+  consentedAt: timestamp('consented_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('parental_consents_tenant_student_idx').on(t.tenantId, t.studentId),
+])
 
 // ─── 2. Catálogo de Conteúdo (sem tenant_id — gerenciado pelo Super Admin) ────
 
