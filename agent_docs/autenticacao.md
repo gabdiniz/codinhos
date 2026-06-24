@@ -11,7 +11,7 @@ interface Session {
   sessionId: string
   userId: string
   tenantId: string
-  role: 'super_admin' | 'manager' | 'student'
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   expiresAt: Date
 }
 ```
@@ -79,4 +79,4 @@ fastify.get('/dashboard', {
 }, handler)
 ```
 
-Roles disponíveis: `super_admin` > `manager` > `student`. Super Admin tem acesso a tudo, independente do slug.
+Roles disponíveis: `super_admin`, `manager` (gestor), `professor`, `student` (aluno) e `guardian` (responsável). Super Admin tem acesso a tudo, independente do slug. Professor é escopado às turmas atribuídas (via `class_teachers`); responsável é read-only e escopado aos filhos vinculados (via `guardian_students`). O escopo fino é aplicado na camada de service, não só no guard.

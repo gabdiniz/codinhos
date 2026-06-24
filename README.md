@@ -19,6 +19,55 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 
 ---
 
+## Papéis de usuário
+
+| Papel | Acesso | O que faz |
+|---|---|---|
+| **Super Admin** | global (tenant `__system__`) | Gerencia tenants (escolas), catálogo global de trilhas/módulos/desafios e badges. |
+| **Gestor** (`manager`) | tenant | Configura trilhas e turmas, cadastra/importa alunos, vincula professores e responsáveis, conecta o Google Classroom, acompanha o dashboard do tenant. |
+| **Professor** (`professor`) | turmas atribuídas | Acompanha só as turmas atribuídas a ele (alunos, progresso) e revisa submissões manuais. Sem acesso a configurações do tenant. |
+| **Aluno** (`student`) | próprio progresso | Aprende JavaScript via trilhas/desafios no sandbox, ganha XP/badges, usa o tutor de IA e baixa certificados. |
+| **Responsável** (`guardian`) | filhos vinculados | Portal **somente leitura**: acompanha progresso, badges e trilhas dos filhos. Sem sandbox/IA. |
+
+---
+
+## Funcionalidades
+
+**Conteúdo e aprendizado**
+- Catálogo global de **trilhas → módulos → desafios** (gerido pelo Super Admin), ativado por tenant.
+- **Sandbox JavaScript** com execução segura em Web Worker e editor CodeMirror 6.
+- **Autocomplete contextual** — sugere só o vocabulário já ensinado até o módulo atual.
+- **Editor de blocos visuais** (Blockly) por trilha (`visualBlocksEnabled`), gerando JS para o mesmo fluxo de submissão.
+- **Tutor de IA "Codi"** (Anthropic Claude) com histórico por desafio, limite diário e explicação de erros.
+- **Erros de sandbox humanizados** — traduz erros nativos do JS para linguagem acessível à idade.
+
+**Gamificação**
+- XP, níveis, **streak** diário, **badges** automáticas e **ranking** de turma. Regras configuráveis por tenant.
+- **Desafio da semana** por turma.
+
+**Gestão (escola)**
+- Turmas com modos de progressão (livre/sequencial/controlado) e validação (automática/auto+revisão/manual).
+- Cadastro individual ou **importação CSV** de alunos; **desbloqueio manual** de módulo no modo controlado.
+- **Dashboard** com KPIs e alertas (revisão pendente, inatividade, travamento, possível plágio).
+- **Rostering Google Classroom** — importa turma + alunos do Classroom (one-way).
+
+**Papéis e acompanhamento**
+- **Professor**: turmas atribuídas, detalhe de turma/aluno e **fila de revisão** de submissões.
+- **Portal do responsável**: visão read-only do progresso dos filhos.
+
+**Compliance e integridade**
+- **Consentimento parental** (LGPD / ECA Digital) para alunos menores de 12 anos.
+- **Detecção de similaridade** entre submissões (possível plágio) no dashboard do gestor.
+
+**Reconhecimento**
+- **Certificado em PDF** ao concluir uma trilha + **portfólio** do aluno (trilhas, badges).
+
+**Plataforma**
+- Multi-tenant B2B (escola = tenant com `slug` na URL, isolamento por `tenant_id`).
+- Notificações in-app; e-mails transacionais (convite, reset de senha) via Resend.
+
+---
+
 ## Pré-requisitos
 
 - Node.js 20+
