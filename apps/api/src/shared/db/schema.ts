@@ -385,3 +385,23 @@ export const notifications = pgTable('notifications', {
 }, (t) => [
   index('notifications_tenant_user_read_idx').on(t.tenantId, t.userId, t.readAt),
 ])
+
+// ─── 8. Integrações ───────────────────────────────────────────────────────────
+
+// Tokens OAuth do Google por tenant (Sprint 6 — rostering one-way do Classroom).
+// Um vínculo por tenant (uniqueIndex). refresh_token é sensível — em produção,
+// criptografar em repouso (ver agent_docs). connected_by = gestor que conectou.
+export const googleIntegrations = pgTable('google_integrations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  connectedBy: uuid('connected_by').references(() => users.id).notNull(),
+  googleEmail: varchar('google_email', { length: 255 }).notNull(),
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token').notNull(),
+  tokenExpiry: timestamp('token_expiry').notNull(),
+  scope: text('scope'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  uniqueIndex('google_integrations_tenant_idx').on(t.tenantId),
+])

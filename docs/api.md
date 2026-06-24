@@ -614,6 +614,33 @@ Response: {
 
 ---
 
+## Integrações — Google Classroom (`/api/:slug/integrations/google`)
+
+> Acesso: `manager`. Rostering **one-way**: importa uma turma do Classroom (turma + alunos)
+> para o Codinhos. Depois a gestão é manual. OAuth2 via conta Google do gestor; tokens por
+> tenant em `google_integrations`. Requer `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` (ver env).
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/status` | manager | Conexão atual (`{ connected, googleEmail }`) |
+| GET | `/auth-url` | manager | URL de consentimento Google (seta cookie de `state` CSRF) |
+| GET | `/api/integrations/google/callback` | sessão (gestor) | Callback do OAuth (path **fixo**, sem slug — exigência do Google). Valida `state`, troca o code, salva tokens e redireciona para `…/manager/settings?google=connected\|error` |
+| GET | `/courses` | manager | Lista cursos ativos do Classroom |
+| POST | `/import` | manager | Importa um curso → cria turma + alunos + matrículas |
+| DELETE | `/` (`/integrations/google`) | manager | Desconecta a conta Google (remove tokens) |
+
+### POST `/:slug/integrations/google/import`
+```
+Request:  { courseId, courseName }
+Response: { data: { classId, className, total, created, reused } }
+// created = alunos novos criados (recebem convite accept-invite)
+// reused  = alunos que já existiam no tenant (por e-mail) — apenas matriculados
+// Re-importar o mesmo curso cria uma NOVA turma (one-way; sem dedupe de turma)
+// 422 se a conta Google não estiver conectada
+```
+
+---
+
 ## Dashboard do Gestor — `/api/:slug/dashboard`
 
 > Visão geral do tenant: `manager`. Detalhe de turma/aluno: `manager` e `professor`.
