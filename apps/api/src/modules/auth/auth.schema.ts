@@ -32,7 +32,7 @@ export const resetPasswordBodySchema = z.object({
 
 // ─── Response schemas ─────────────────────────────────────────────────────────
 
-const roleEnum = z.enum(['super_admin', 'manager', 'professor', 'student'])
+const roleEnum = z.enum(['super_admin', 'manager', 'professor', 'student', 'guardian'])
 
 // Usuário retornado no login (sem avatarUrl — não necessário no momento do login)
 export const authUserSchema = z.object({

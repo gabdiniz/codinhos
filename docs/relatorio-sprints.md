@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 4
+# Relatório de Progresso — Sprints 1 a 5
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -51,6 +51,15 @@ Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submi
 - **ProfessorShell** (espelha o ManagerShell) + roteamento `/:slug/professor/*`; `LoginPage` e `ProtectedRoute` redirecionam o papel `professor`.
 - **Telas**: turmas atribuídas (lista), detalhe de turma (dashboard scoped: stats + alunos com nível/XP/pendências), detalhe de aluno (stats, badges, progresso por trilha) e **fila de revisão** (lista + painel com código/testes + aprovar/reprovar).
 - **Novo endpoint** `GET /:slug/dashboard/review-queue` (manager + professor, escopado): lista submissões `under_review`. A revisão reusa `PATCH /:slug/challenges/:challengeId/submissions/:submissionId/review`.
+
+## Sprint 5 — Portal para responsáveis ✅ (backend, 23/06/2026, `feat/guardian-portal`)
+
+- **Modelagem (N:N)**: papel `'guardian'` no enum role (migration `0004_portal_responsaveis`) + tabela `guardian_students` (`tenant_id` explícito, `UNIQUE (tenant_id, guardian_id, student_id)`). Decisão N:N: um responsável com vários filhos e um aluno com mais de um responsável. `'guardian'` propagado nos unions de role (8 arquivos) e enums zod (auth/admin/users).
+- **Gestor**: módulo novo `guardians` — `GET/POST /:slug/guardians`, `GET/POST/DELETE /:slug/guardians/:id/students`. `createGuardian` valida todos os `studentIds` **antes** de criar o usuário (evita responsável órfão), gera o convite reaproveitando `createUser`/`createInviteToken` de `users` e o fluxo `accept-invite`.
+- **Portal read-only**: `GET /:slug/guardian/children` (resumo) e `GET /:slug/guardian/children/:studentId` (detalhe — reaproveita o `dashboard.repository`). Guard `requireRole('guardian')`; sem sandbox/IA; escopo aos filhos vinculados (fora do escopo → 404).
+- Testes de serviço cobrindo criação (409/404/sucesso), vínculos e o escopo do portal. Migration validada (`generate` → "No schema changes").
+
+**Pendente**: UI do responsável (`GuardianShell` + telas) e e-mail de resumo semanal (opcional, V2).
 
 ---
 

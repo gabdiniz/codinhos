@@ -22,7 +22,7 @@ export async function findUserByEmailAndTenant(
   id: string
   email: string
   name: string
-  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   passwordHash: string
   isActive: boolean
   tenantId: string
@@ -71,7 +71,7 @@ export async function findUserById(id: string): Promise<{
   id: string
   email: string
   name: string
-  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   avatarUrl: string | null
   isActive: boolean
   tenantId: string
@@ -98,7 +98,7 @@ export async function findUserById(id: string): Promise<{
 type CreateSessionInput = {
   userId: string
   tenantId: string
-  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   expiresAt: Date
 }
 

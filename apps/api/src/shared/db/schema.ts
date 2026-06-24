@@ -48,7 +48,7 @@ export type TestResult = {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export const roleEnum = pgEnum('role', ['super_admin', 'manager', 'professor', 'student'])
+export const roleEnum = pgEnum('role', ['super_admin', 'manager', 'professor', 'student', 'guardian'])
 export const tokenTypeEnum = pgEnum('token_type', ['invite', 'reset', 'parental_consent'])
 export const languageEnum = pgEnum('language', ['javascript', 'python'])
 export const progressionModeEnum = pgEnum('progression_mode', ['free', 'sequential', 'controlled'])
@@ -124,6 +124,20 @@ export const parentalConsents = pgTable('parental_consents', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [
   uniqueIndex('parental_consents_tenant_student_idx').on(t.tenantId, t.studentId),
+])
+
+// Vínculo responsável↔aluno (Sprint 5). N:N — um responsável pode ter vários
+// filhos e um aluno pode ter mais de um responsável. tenant_id explícito para
+// escopo direto (responsável e aluno pertencem ao mesmo tenant).
+export const guardianStudents = pgTable('guardian_students', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  guardianId: uuid('guardian_id').references(() => users.id).notNull(),
+  studentId: uuid('student_id').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('guardian_students_tenant_guardian_student_idx').on(t.tenantId, t.guardianId, t.studentId),
+  index('guardian_students_tenant_guardian_idx').on(t.tenantId, t.guardianId),
 ])
 
 // ─── 2. Catálogo de Conteúdo (sem tenant_id — gerenciado pelo Super Admin) ────

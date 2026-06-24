@@ -10,6 +10,7 @@ import { usersRoutes } from './modules/users/users.routes.js'
 import { catalogRoutes } from './modules/catalog/catalog.routes.js'
 import { tenantTrailsRoutes } from './modules/tenant-trails/tenant-trails.routes.js'
 import { classesRoutes } from './modules/classes/classes.routes.js'
+import { guardiansRoutes } from './modules/guardians/guardians.routes.js'
 import { learnRoutes } from './modules/learn/learn.routes.js'
 import { submissionsRoutes } from './modules/submissions/submissions.routes.js'
 import { gamificationRoutes } from './modules/gamification/gamification.routes.js'
@@ -101,6 +102,7 @@ export async function createApp() {
   await app.register(catalogRoutes, { prefix: '/api' })
   await app.register(tenantTrailsRoutes, { prefix: '/api' })
   await app.register(classesRoutes, { prefix: '/api' })
+  await app.register(guardiansRoutes, { prefix: '/api' })
   await app.register(learnRoutes, { prefix: '/api' })
   await app.register(submissionsRoutes, { prefix: '/api' })
   await app.register(gamificationRoutes, { prefix: '/api' })

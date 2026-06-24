@@ -9,7 +9,7 @@ type UserCoreRow = {
   tenantId: string
   name: string
   email: string
-  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   avatarUrl: string | null
   birthDate: string | null
   isActive: boolean
@@ -117,7 +117,7 @@ type CreateUserInput = {
   name: string
   email: string
   passwordHash: string
-  role: 'student' | 'manager'
+  role: 'student' | 'manager' | 'professor' | 'guardian'
 }
 
 export async function createUser(input: CreateUserInput) {
