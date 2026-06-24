@@ -60,7 +60,7 @@ async function upsertUser(
   tenantId: string,
   email: string,
   password: string,
-  role: 'super_admin' | 'manager' | 'professor' | 'student',
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian',
   name: string,
 ) {
   const [existing] = await db

@@ -77,7 +77,7 @@ function clearCookieSession(reply: FastifyReply): void {
 
 /** Cria a sessão, seta o cookie e monta o usuário retornado ao client. Usado por login() e completeParentalConsent(). */
 async function finishLogin(
-  user: { id: string; email: string; name: string; role: 'super_admin' | 'manager' | 'professor' | 'student'; tenantId: string },
+  user: { id: string; email: string; name: string; role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'; tenantId: string },
   reply: FastifyReply,
 ) {
   await deleteExpiredSessions(user.id)

@@ -128,7 +128,7 @@ export async function deleteBadgeById(badgeId: string) {
 
 type ListAdminUsersOptions = {
   tenantId?: string
-  role?: 'super_admin' | 'manager' | 'professor' | 'student'
+  role?: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   isActive?: boolean
   page: number
   limit: number

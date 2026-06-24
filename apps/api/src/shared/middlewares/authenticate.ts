@@ -4,7 +4,7 @@ import { db } from '../db/index.js'
 import { sessions, users } from '../db/schema.js'
 import { UnauthorizedError, AccountDisabledError, NotFoundError } from '../errors/index.js'
 
-type Role = 'super_admin' | 'manager' | 'professor' | 'student'
+type Role = 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
 
 declare module 'fastify' {
   interface FastifyRequest {

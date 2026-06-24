@@ -14,7 +14,7 @@ export const userParamsSchema = z.object({
 // ─── Query ────────────────────────────────────────────────────────────────────
 
 export const listUsersQuerySchema = z.object({
-  role: z.enum(['student', 'manager', 'professor']).optional(),
+  role: z.enum(['student', 'manager', 'professor', 'guardian']).optional(),
   // Busca textual por nome ou e-mail (ILIKE)
   search: z.string().trim().min(1).max(255).optional(),
   // z.coerce.boolean() trataria "false" como true — por isso o enum explícito
@@ -54,7 +54,7 @@ export const updatePasswordBodySchema = z.object({
 
 // ─── Response schemas ─────────────────────────────────────────────────────────
 
-const roleEnum = z.enum(['super_admin', 'manager', 'professor', 'student'])
+const roleEnum = z.enum(['super_admin', 'manager', 'professor', 'student', 'guardian'])
 
 export const userRowSchema = z.object({
   id: z.string().uuid(),

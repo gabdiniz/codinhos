@@ -561,6 +561,59 @@ Response: { data: { count: N } }
 
 ---
 
+## Responsáveis — `/api/:slug/guardians` e `/api/:slug/guardian`
+
+> Gestão (`/guardians`): `manager`. Portal read-only (`/guardian`): `guardian`.
+> O responsável (`guardian`) é um usuário com papel próprio; recebe convite e define
+> senha pelo mesmo fluxo `accept-invite`. Vê **apenas** os filhos vinculados a ele
+> (via `guardian_students`); sem acesso a sandbox, chat de IA ou qualquer escrita.
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/guardians` | manager | Lista responsáveis do tenant (com contagem de filhos) |
+| POST | `/guardians` | manager | Cria responsável (envia convite) e vincula alunos opcionais |
+| GET | `/guardians/:guardianId/students` | manager | Alunos vinculados ao responsável |
+| POST | `/guardians/:guardianId/students` | manager | Vincula um aluno |
+| DELETE | `/guardians/:guardianId/students/:studentId` | manager | Desvincula um aluno |
+| GET | `/guardian/children` | guardian | Filhos vinculados (resumo: nível, XP, streak, atividade) |
+| GET | `/guardian/children/:studentId` | guardian | Detalhe read-only do filho (stats, badges, progresso por trilha) |
+
+### POST `/guardians`
+```
+Request:  { name, email, studentIds?: uuid[] }
+Response: { data: { guardian: { id, name, email, isActive, studentsCount, createdAt } } }
+// 409 se o e-mail já existe no tenant
+// 404 se algum studentId não for um aluno do tenant (responsável NÃO é criado nesse caso)
+// Envia convite (type 'invite') — responsável define senha via accept-invite
+```
+
+### POST `/guardians/:guardianId/students`
+```
+Request:  { studentId }
+Response: { data: { guardianStudent: { id, guardianId, studentId, createdAt } } }
+// 404 se studentId não for aluno do tenant; 409 se já vinculado
+```
+
+### GET `/guardian/children`
+```
+Response: { data: [{ id, name, avatarUrl, totalXp, level, currentStreak, lastActivity }] }
+```
+
+### GET `/guardian/children/:studentId`
+```
+Response: {
+  data: {
+    student: { id, name, avatarUrl },
+    stats: { totalXp, level, currentStreak },
+    badges: [{ slug, name, earnedAt }],
+    trails: [{ id, title, progress: { completed, total }, lastActivity }]
+  }
+}
+// 404 se o aluno não for um filho vinculado ao responsável autenticado
+```
+
+---
+
 ## Dashboard do Gestor — `/api/:slug/dashboard`
 
 > Visão geral do tenant: `manager`. Detalhe de turma/aluno: `manager` e `professor`.

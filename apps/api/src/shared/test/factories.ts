@@ -11,6 +11,7 @@ import {
   classes,
   classStudents,
   classTeachers,
+  guardianStudents,
   badges,
   studentStats,
   challengeSubmissions,
@@ -63,7 +64,7 @@ export async function makeTenant(overrides: MakeTenantOverrides = {}) {
 type MakeUserOverrides = {
   email?: string
   name?: string
-  role?: 'manager' | 'professor' | 'student'
+  role?: 'manager' | 'professor' | 'student' | 'guardian'
   password?: string
   isActive?: boolean
 }
@@ -102,7 +103,7 @@ export async function makeUser(
 export async function makeSession(
   userId: string,
   tenantId: string,
-  role: 'super_admin' | 'manager' | 'professor' | 'student',
+  role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian',
 ) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
 
@@ -223,6 +224,14 @@ export async function assignTeacherToClass(classId: string, teacherId: string) {
     .values({ classId, teacherId })
     .returning()
   return assignment!
+}
+
+export async function linkGuardianToStudent(tenantId: string, guardianId: string, studentId: string) {
+  const [link] = await db
+    .insert(guardianStudents)
+    .values({ tenantId, guardianId, studentId })
+    .returning()
+  return link!
 }
 
 // ─── Tenant Trail ─────────────────────────────────────────────────────────────

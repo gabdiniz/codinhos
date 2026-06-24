@@ -33,7 +33,7 @@ export const updateBadgeBodySchema = z.object({
 
 export const listAdminUsersQuerySchema = z.object({
   tenantId: z.string().uuid().optional(),
-  role: z.enum(['super_admin', 'manager', 'professor', 'student']).optional(),
+  role: z.enum(['super_admin', 'manager', 'professor', 'student', 'guardian']).optional(),
   isActive: z
     .enum(['true', 'false'])
     .optional()

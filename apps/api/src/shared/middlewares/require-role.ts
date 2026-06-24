@@ -1,7 +1,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { ForbiddenError } from '../errors/index.js'
 
-type Role = 'super_admin' | 'manager' | 'professor' | 'student'
+type Role = 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
 
 /**
  * Middleware factory: retorna um preHandler que exige um dos roles listados.

@@ -1,0 +1,36 @@
+.root { padding: 2rem; max-width: 900px; margin: 0 auto; }
+.pageHeader { margin-bottom: 1.75rem; }
+.pageTitle { font-family: var(--font-sans); font-size: 1.6rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.pageSubtitle { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0.35rem 0 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.card {
+  display: flex; flex-direction: column; gap: 0.9rem; text-decoration: none;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: 1.25rem;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.cardTop { display: flex; align-items: center; gap: 0.8rem; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-primary); color: var(--color-on-primary);
+  font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700;
+}
+.cardInfo { display: flex; flex-direction: column; min-width: 0; }
+.cardName { font-family: var(--font-sans); font-size: 1rem; font-weight: 650; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cardLevel { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-level); }
+
+.cardStats { display: flex; gap: 1rem; font-family: var(--font-mono); font-size: 0.85rem; }
+.xp { color: var(--color-xp); }
+.streak { color: var(--color-text-muted); }
+
+.empty { text-align: center; padding: 4rem 1rem; }
+.emptyTitle { font-family: var(--font-sans); font-size: 1.1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.4rem; }
+.emptyText { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0; }
+
+.state { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
+.stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }

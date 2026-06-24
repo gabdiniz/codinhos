@@ -29,6 +29,13 @@
       "when": 1782261621492,
       "tag": "0003_vinculo_professor_turma",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782304294445,
+      "tag": "0004_portal_responsaveis",
+      "breakpoints": true
     }
   ]
 }

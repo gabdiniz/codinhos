@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Próxima do plano: Sprint 5.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Próxima: Sprint 6 (SSO/Google Classroom).
 
 ---
 
@@ -77,14 +77,16 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 ---
 
-## Sprint 5 — Portal para responsáveis
+## Sprint 5 — Portal para responsáveis ✅ Backend concluído (23/06/2026)
 
-- Nova entidade `guardian` vinculada a um ou mais alunos (FK `guardian_id` → `users`, ou tabela de junção se um responsável puder ter vários filhos em turmas diferentes)
-- Novo fluxo de auth read-only: login do responsável vê progresso, badges, alertas de inatividade do(s) filho(s) — sem acesso a sandbox/chat IA
-- Gatilho natural para reaproveitar o sistema de notificações já existente (e-mail de resumo semanal, listado como V2 em `planejamento.md`)
+- ✅ Papel `'guardian'` adicionado ao enum role (migration `0004`) + tabela de junção **N:N** `guardian_students` (com `tenant_id` explícito) — um responsável tem vários filhos e um aluno pode ter mais de um responsável.
+- ✅ Gestor: `GET/POST /:slug/guardians`, `GET/POST/DELETE /:slug/guardians/:id/students`. Criação envia convite (reusa o fluxo `accept-invite` dos demais usuários).
+- ✅ Portal read-only do responsável: `GET /:slug/guardian/children` e `GET /:slug/guardian/children/:studentId` (stats, badges, progresso por trilha). Sem sandbox/chat IA (guards `requireRole('guardian')`); escopo aos filhos vinculados (fora do escopo → 404).
 - Branch: `feat/guardian-portal`
 
-**Critério de aceite:** responsável recebe convite, define senha, vê dashboard somente leitura do(s) filho(s) vinculados ao seu tenant.
+**Critério de aceite:** responsável recebe convite, define senha, vê dashboard somente leitura do(s) filho(s) vinculados ao seu tenant. — **Atingido no backend.**
+
+✅ **UI do responsável** (`feat/app-guardian-ui`): GuardianShell + telas de filhos (lista) e detalhe read-only (stats, badges, progresso por trilha). Login/ProtectedRoute redirecionam `guardian` → `/:slug/guardian`. Opcional/V2: e-mail de resumo semanal.
 
 ---
 
