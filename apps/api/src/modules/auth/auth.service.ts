@@ -31,7 +31,14 @@ import type {
   ForgotPasswordBody,
   ResetPasswordBody,
   SubmitParentalConsentBody,
+  AuthUser,
 } from './auth.schema.js'
+
+// ─── Resultado do login ────────────────────────────────────────────────────────
+
+type LoginResult =
+  | { requiresParentalConsent: true; consentToken: string; studentName: string }
+  | { user: AuthUser }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -111,7 +118,7 @@ export async function login(
   tenantId: string,
   body: LoginBody,
   reply: FastifyReply,
-) {
+): Promise<LoginResult> {
   const user = await findUserByEmailAndTenant(body.email, tenantId)
 
   // Erro genérico para não revelar existência do e-mail
@@ -153,7 +160,7 @@ export async function completeParentalConsent(
   tenantId: string,
   body: SubmitParentalConsentBody,
   reply: FastifyReply,
-) {
+): Promise<{ user: AuthUser }> {
   const tokenHash = hashToken(body.consentToken)
   const tokenRecord = await findValidPasswordResetToken(tokenHash)
 

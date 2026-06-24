@@ -178,7 +178,12 @@ export async function findStudentCurrentClass(studentId: string, tenantId: strin
   return row ?? null
 }
 
-export async function findClassStudent(classId: string, studentId: string) {
+// Anotação explícita: sem ela o TS prova (incorretamente) que o resultado da
+// destructuring de array nunca é undefined e descarta o ramo `null` do `?? null`.
+export async function findClassStudent(
+  classId: string,
+  studentId: string,
+): Promise<{ id: string; classId: string; studentId: string; joinedAt: Date } | null> {
   const [row] = await db
     .select({
       id: classStudents.id,
@@ -234,7 +239,14 @@ export async function listClassTrails(classId: string) {
   return rows
 }
 
-export async function findClassTrail(classId: string, trailId: string) {
+// Anotação explícita: sem ela o TS prova (incorretamente) que o resultado da
+// destructuring de array nunca é undefined e descarta o ramo `null` do `?? null`.
+export async function findClassTrail(
+  classId: string,
+  trailId: string,
+): Promise<
+  { id: string; classId: string; trailId: string; order: number; visualBlocksEnabled: boolean } | null
+> {
   const [row] = await db
     .select({
       id: classTrails.id,
