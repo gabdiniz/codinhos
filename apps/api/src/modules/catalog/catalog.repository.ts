@@ -191,6 +191,7 @@ export async function findModuleById(id: string) {
       title: trailModules.title,
       concept: trailModules.concept,
       exampleCode: trailModules.exampleCode,
+      vocabulary: trailModules.vocabulary,
       order: trailModules.order,
     })
     .from(trailModules)
@@ -215,6 +216,7 @@ type CreateModuleInput = {
   title: string
   concept?: string
   exampleCode?: string
+  vocabulary?: string[]
   order: number
 }
 
@@ -228,6 +230,7 @@ export async function createModule(input: CreateModuleInput) {
       title: trailModules.title,
       concept: trailModules.concept,
       exampleCode: trailModules.exampleCode,
+      vocabulary: trailModules.vocabulary,
       order: trailModules.order,
     })
   return mod!
@@ -237,6 +240,7 @@ type UpdateModuleInput = {
   title?: string
   concept?: string | null
   exampleCode?: string | null
+  vocabulary?: string[] | null
   order?: number
 }
 
@@ -247,6 +251,7 @@ export async function updateModule(id: string, input: UpdateModuleInput) {
       ...(input.title !== undefined && { title: input.title }),
       ...(input.concept !== undefined && { concept: input.concept }),
       ...(input.exampleCode !== undefined && { exampleCode: input.exampleCode }),
+      ...(input.vocabulary !== undefined && { vocabulary: input.vocabulary }),
       ...(input.order !== undefined && { order: input.order }),
     })
     .where(eq(trailModules.id, id))
@@ -256,6 +261,7 @@ export async function updateModule(id: string, input: UpdateModuleInput) {
       title: trailModules.title,
       concept: trailModules.concept,
       exampleCode: trailModules.exampleCode,
+      vocabulary: trailModules.vocabulary,
       order: trailModules.order,
     })
   return mod ?? null

@@ -1,0 +1,1 @@
+ALTER TABLE "trail_modules" ADD COLUMN "vocabulary" jsonb;

@@ -13,6 +13,7 @@
     "@codinhos/types": "workspace:*",
     "@codinhos/ui": "workspace:*",
     "@codemirror/commands": "^6.7.1",
+    "@codemirror/autocomplete": "^6.18.6",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/state": "^6.5.0",
     "@codemirror/theme-one-dark": "^6.1.2",

@@ -1,4 +1,4 @@
-import { eq, and, inArray, count, desc } from 'drizzle-orm'
+import { eq, and, inArray, count, desc, lte } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import {
   classes,
@@ -323,4 +323,30 @@ export async function findLastSubmission(
     .orderBy(desc(challengeSubmissions.submittedAt))
     .limit(1)
   return row ?? null
+}
+
+
+/**
+ * Vocabulário acumulado até um módulo (Sprint 7.1): união dos arrays `vocabulary`
+ * de todos os módulos da mesma trilha com `order <=` o do módulo informado. Usado
+ * para limitar o autocomplete contextual ao que o aluno já viu até aqui.
+ */
+export async function listVocabularyUpToModule(moduleId: string): Promise<string[]> {
+  const [mod] = await db
+    .select({ trailId: trailModules.trailId, order: trailModules.order })
+    .from(trailModules)
+    .where(eq(trailModules.id, moduleId))
+    .limit(1)
+  if (!mod) return []
+
+  const rows = await db
+    .select({ vocabulary: trailModules.vocabulary })
+    .from(trailModules)
+    .where(and(eq(trailModules.trailId, mod.trailId), lte(trailModules.order, mod.order)))
+
+  const set = new Set<string>()
+  for (const row of rows) {
+    for (const word of row.vocabulary ?? []) set.add(word)
+  }
+  return [...set].sort((a, b) => a.localeCompare(b))
 }

@@ -14,6 +14,7 @@ import {
   countStudentSubmissions,
   findChallengeWithTrail,
   findLastSubmission,
+  listVocabularyUpToModule,
 } from './learn.repository.js'
 import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js'
 
@@ -156,9 +157,12 @@ export async function getModuleDetail(
   const moduleStatus = statusMap.get(moduleId) ?? 'locked'
 
   // Contagem de tentativas (todas as submissões do aluno para o desafio)
-  const attempts = mod.challenge
-    ? await countStudentSubmissions(mod.challenge.id, studentId, tenantId)
-    : 0
+  const [attempts, availableVocabulary] = await Promise.all([
+    mod.challenge
+      ? countStudentSubmissions(mod.challenge.id, studentId, tenantId)
+      : Promise.resolve(0),
+    listVocabularyUpToModule(moduleId),
+  ])
 
   return {
     data: {
@@ -171,6 +175,7 @@ export async function getModuleDetail(
       challenge: mod.challenge,
       progress: { status: moduleStatus, attempts },
       visualBlocksEnabled: classTrail.visualBlocksEnabled,
+      availableVocabulary,
     },
   }
 }
@@ -198,7 +203,10 @@ export async function getChallengeDetail(
   const classTrail = await findClassTrail(membership.id, challenge.trailId)
   if (!classTrail) throw new NotFoundError('Desafio')
 
-  const lastSub = await findLastSubmission(challengeId, studentId, membership.id, tenantId)
+  const [lastSub, availableVocabulary] = await Promise.all([
+    findLastSubmission(challengeId, studentId, membership.id, tenantId),
+    listVocabularyUpToModule(challenge.moduleId),
+  ])
 
   return {
     data: {
@@ -211,6 +219,7 @@ export async function getChallengeDetail(
         baseXp: challenge.baseXp,
       },
       visualBlocksEnabled: classTrail.visualBlocksEnabled,
+      availableVocabulary,
       myLastSubmission: lastSub
         ? {
             id: lastSub.id,
