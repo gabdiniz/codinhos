@@ -107,6 +107,7 @@ export async function submissionsRoutes(app: FastifyInstance) {
       const result = await reviewSubmission(
         req.resolvedTenantId,
         req.user.id,
+        req.user.role,
         req.params.challengeId,
         req.params.submissionId,
         req.body,

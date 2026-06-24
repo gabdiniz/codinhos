@@ -19,28 +19,60 @@ import {
   updateClassTrail,
   removeTrailFromClass,
   removeAllTrailsFromClass,
+  listClassTeachers,
+  findClassTeacher,
+  addTeacherToClass,
+  removeTeacherFromClass,
+  removeAllTeachersFromClass,
+  listTeacherClassIds,
+  isClassAssignedToTeacher,
 } from './classes.repository.js'
 import { findUserById } from '../users/users.repository.js'
 import { findTenantTrail } from '../tenant-trails/tenant-trails.repository.js'
-import { ConflictError, NotFoundError } from '../../shared/errors/index.js'
+import { ConflictError, NotFoundError, UnprocessableError } from '../../shared/errors/index.js'
 import type {
   CreateClassBody,
   UpdateClassBody,
   AddStudentBody,
+  AssignTeacherBody,
   AssignTrailBody,
   UpdateClassTrailBody,
 } from './classes.schema.js'
 
+// Ator autenticado que chama um read de turma. O `professor` é escopado às turmas
+// atribuídas a ele; `manager`/`super_admin` enxergam todas as turmas do tenant.
+export type ClassActor = { role: string; userId: string }
+
+/**
+ * Garante que o professor só acessa turmas atribuídas a ele. Para outros papéis
+ * (manager/super_admin) não há restrição. Turma fora do escopo → 404 (NotFound),
+ * nunca 403 — mesmo padrão de "cross-tenant ou inexistente" usado no projeto.
+ */
+async function assertActorCanAccessClass(
+  classId: string,
+  tenantId: string,
+  actor: ClassActor,
+): Promise<void> {
+  if (actor.role !== 'professor') return
+  const assigned = await isClassAssignedToTeacher(classId, actor.userId, tenantId)
+  if (!assigned) throw new NotFoundError('Turma')
+}
+
 // ─── Classes ──────────────────────────────────────────────────────────────────
 
-export async function getClasses(tenantId: string) {
+export async function getClasses(tenantId: string, actor: ClassActor) {
   const rows = await listClasses(tenantId)
+  if (actor.role === 'professor') {
+    const assignedIds = new Set(await listTeacherClassIds(actor.userId, tenantId))
+    return { data: rows.filter((r) => assignedIds.has(r.id)) }
+  }
   return { data: rows }
 }
 
-export async function getClassDetail(classId: string, tenantId: string) {
+export async function getClassDetail(classId: string, tenantId: string, actor: ClassActor) {
   const cls = await findClassById(classId, tenantId)
   if (!cls) throw new NotFoundError('Turma')
+  await assertActorCanAccessClass(classId, tenantId, actor)
 
   const [studentsCount, trailsCount] = await Promise.all([
     countClassStudents(classId),
@@ -100,10 +132,11 @@ export async function removeClass(classId: string, tenantId: string) {
     throw new ConflictError('Turma possui submissões registradas — não é possível removê-la')
   }
 
-  // Cascade: weekly challenges → alunos → trilhas → turma
+  // Cascade: weekly challenges → alunos → professores → trilhas → turma
   try {
     await deleteClassWeeklyChallenges(classId)
     await removeAllStudentsFromClass(classId)
+    await removeAllTeachersFromClass(classId)
     await removeAllTrailsFromClass(classId)
     await deleteClass(classId, tenantId)
   } catch (err) {
@@ -118,9 +151,10 @@ export async function removeClass(classId: string, tenantId: string) {
 
 // ─── Class Students ───────────────────────────────────────────────────────────
 
-export async function getClassStudents(classId: string, tenantId: string) {
+export async function getClassStudents(classId: string, tenantId: string, actor: ClassActor) {
   const cls = await findClassById(classId, tenantId)
   if (!cls) throw new NotFoundError('Turma')
+  await assertActorCanAccessClass(classId, tenantId, actor)
 
   const rows = await listClassStudents(classId)
   return { data: rows, meta: { total: rows.length } }
@@ -153,11 +187,51 @@ export async function removeStudent(classId: string, studentId: string, tenantId
   await removeStudentFromClass(classId, studentId)
 }
 
-// ─── Class Trails ─────────────────────────────────────────────────────────────
+// ─── Class Teachers (vínculo professor↔turma) ─────────────────────────────────
 
-export async function getClassTrails(classId: string, tenantId: string) {
+export async function getClassTeachers(classId: string, tenantId: string, actor: ClassActor) {
   const cls = await findClassById(classId, tenantId)
   if (!cls) throw new NotFoundError('Turma')
+  await assertActorCanAccessClass(classId, tenantId, actor)
+
+  const rows = await listClassTeachers(classId)
+  return { data: rows, meta: { total: rows.length } }
+}
+
+export async function assignTeacher(classId: string, tenantId: string, body: AssignTeacherBody) {
+  const cls = await findClassById(classId, tenantId)
+  if (!cls) throw new NotFoundError('Turma')
+
+  // Professor deve pertencer ao mesmo tenant e ter papel 'professor'
+  const teacher = await findUserById(body.teacherId, tenantId)
+  if (!teacher) throw new NotFoundError('Usuário')
+  if (teacher.role !== 'professor') {
+    throw new UnprocessableError('Usuário não é um professor')
+  }
+
+  const existing = await findClassTeacher(classId, body.teacherId)
+  if (existing) throw new ConflictError('Professor já está vinculado à turma')
+
+  const classTeacher = await addTeacherToClass(classId, body.teacherId)
+  return { classTeacher }
+}
+
+export async function removeTeacher(classId: string, teacherId: string, tenantId: string) {
+  const cls = await findClassById(classId, tenantId)
+  if (!cls) throw new NotFoundError('Turma')
+
+  const existing = await findClassTeacher(classId, teacherId)
+  if (!existing) throw new NotFoundError('Professor')
+
+  await removeTeacherFromClass(classId, teacherId)
+}
+
+// ─── Class Trails ─────────────────────────────────────────────────────────────
+
+export async function getClassTrails(classId: string, tenantId: string, actor: ClassActor) {
+  const cls = await findClassById(classId, tenantId)
+  if (!cls) throw new NotFoundError('Turma')
+  await assertActorCanAccessClass(classId, tenantId, actor)
 
   const rows = await listClassTrails(classId)
   return { data: rows }

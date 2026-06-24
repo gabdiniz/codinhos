@@ -208,6 +208,21 @@
 
 ---
 
+### `class_teachers`
+
+Vínculo professor↔turma (Sprint 4). Sem coluna `tenant_id` própria — o escopo de tenant é garantido via join em `classes` (mesmo padrão de `class_students`).
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `class_id` | uuid FK → classes | |
+| `teacher_id` | uuid FK → users | usuário com `role = 'professor'` |
+| `assigned_at` | timestamp DEFAULT now() | |
+
+**Constraints:** `UNIQUE (class_id, teacher_id)`
+
+---
+
 ### `class_trails`
 
 | Coluna | Tipo | Notas |
@@ -505,6 +520,7 @@ tenants
   ├── tenant_trails → trails (N:N)
   ├── classes (1:N)
   │     ├── class_students → users (N:N)
+  │     ├── class_teachers → users (N:N)  [professor↔turma]
   │     ├── class_trails → trails (N:N)  [visual_blocks_enabled por turma]
   │     └── class_weekly_challenges → challenges (N:N)
   └── (via student)

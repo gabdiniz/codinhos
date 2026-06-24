@@ -3,6 +3,7 @@ import { db } from '../../shared/db/index.js'
 import {
   classes,
   classStudents,
+  classTeachers,
   classTrails,
   classWeeklyChallenges,
   challengeSubmissions,
@@ -219,6 +220,120 @@ export async function removeStudentFromClass(classId: string, studentId: string)
 
 export async function removeAllStudentsFromClass(classId: string) {
   await db.delete(classStudents).where(eq(classStudents.classId, classId))
+}
+
+// ─── Class Teachers (vínculo professor↔turma) ─────────────────────────────────
+
+export async function listClassTeachers(classId: string) {
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      isActive: users.isActive,
+    })
+    .from(classTeachers)
+    .innerJoin(users, eq(users.id, classTeachers.teacherId))
+    .where(eq(classTeachers.classId, classId))
+    .orderBy(users.name)
+  return rows
+}
+
+// Anotação explícita: sem ela o TS prova (incorretamente) que o resultado da
+// destructuring de array nunca é undefined e descarta o ramo `null` do `?? null`.
+export async function findClassTeacher(
+  classId: string,
+  teacherId: string,
+): Promise<{ id: string; classId: string; teacherId: string; assignedAt: Date } | null> {
+  const [row] = await db
+    .select({
+      id: classTeachers.id,
+      classId: classTeachers.classId,
+      teacherId: classTeachers.teacherId,
+      assignedAt: classTeachers.assignedAt,
+    })
+    .from(classTeachers)
+    .where(and(eq(classTeachers.classId, classId), eq(classTeachers.teacherId, teacherId)))
+    .limit(1)
+  return row ?? null
+}
+
+export async function addTeacherToClass(classId: string, teacherId: string) {
+  const [row] = await db
+    .insert(classTeachers)
+    .values({ classId, teacherId })
+    .returning({
+      id: classTeachers.id,
+      classId: classTeachers.classId,
+      teacherId: classTeachers.teacherId,
+      assignedAt: classTeachers.assignedAt,
+    })
+  // assignedAt vem do banco como Date — o response schema espera string ISO
+  return { ...row!, assignedAt: row!.assignedAt.toISOString() }
+}
+
+export async function removeTeacherFromClass(classId: string, teacherId: string) {
+  await db
+    .delete(classTeachers)
+    .where(and(eq(classTeachers.classId, classId), eq(classTeachers.teacherId, teacherId)))
+}
+
+export async function removeAllTeachersFromClass(classId: string) {
+  await db.delete(classTeachers).where(eq(classTeachers.classId, classId))
+}
+
+/** IDs das turmas atribuídas a um professor dentro do tenant (escopo via join em classes). */
+export async function listTeacherClassIds(teacherId: string, tenantId: string): Promise<string[]> {
+  const rows = await db
+    .select({ classId: classTeachers.classId })
+    .from(classTeachers)
+    .innerJoin(classes, eq(classes.id, classTeachers.classId))
+    .where(and(eq(classTeachers.teacherId, teacherId), eq(classes.tenantId, tenantId)))
+  return rows.map((r) => r.classId)
+}
+
+/** Verifica se a turma está atribuída ao professor (filtra tenant_id via join em classes). */
+export async function isClassAssignedToTeacher(
+  classId: string,
+  teacherId: string,
+  tenantId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: classTeachers.id })
+    .from(classTeachers)
+    .innerJoin(classes, eq(classes.id, classTeachers.classId))
+    .where(
+      and(
+        eq(classTeachers.classId, classId),
+        eq(classTeachers.teacherId, teacherId),
+        eq(classes.tenantId, tenantId),
+      ),
+    )
+    .limit(1)
+  return !!row
+}
+
+/** Verifica se o aluno pertence a alguma turma atribuída ao professor (escopo de tenant via join). */
+export async function isStudentInTeacherClasses(
+  studentId: string,
+  teacherId: string,
+  tenantId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: classStudents.id })
+    .from(classStudents)
+    .innerJoin(classTeachers, eq(classTeachers.classId, classStudents.classId))
+    .innerJoin(classes, eq(classes.id, classStudents.classId))
+    .where(
+      and(
+        eq(classStudents.studentId, studentId),
+        eq(classTeachers.teacherId, teacherId),
+        eq(classes.tenantId, tenantId),
+      ),
+    )
+    .limit(1)
+  return !!row
 }
 
 // ─── Class Trails ─────────────────────────────────────────────────────────────

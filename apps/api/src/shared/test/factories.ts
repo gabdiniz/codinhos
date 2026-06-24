@@ -10,6 +10,7 @@ import {
   tenantTrails,
   classes,
   classStudents,
+  classTeachers,
   badges,
   studentStats,
   challengeSubmissions,
@@ -212,6 +213,16 @@ export async function enrollStudent(classId: string, studentId: string) {
     .values({ classId, studentId })
     .returning()
   return enrollment!
+}
+
+// ─── Assignment (professor em turma) ──────────────────────────────────────────
+
+export async function assignTeacherToClass(classId: string, teacherId: string) {
+  const [assignment] = await db
+    .insert(classTeachers)
+    .values({ classId, teacherId })
+    .returning()
+  return assignment!
 }
 
 // ─── Tenant Trail ─────────────────────────────────────────────────────────────

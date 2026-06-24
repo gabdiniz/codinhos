@@ -1,6 +1,10 @@
 import { NotFoundError } from '../../shared/errors/index.js'
 import { findPossiblePlagiarismCandidates } from '../integrity/integrity.service.js'
 import {
+  isClassAssignedToTeacher,
+  isStudentInTeacherClasses,
+} from '../classes/classes.repository.js'
+import {
   countTenantStudents,
   countActiveTodayTenant,
   countTenantClasses,
@@ -73,9 +77,21 @@ export async function getOverview(tenantId: string) {
 
 // ─── GET /students/:studentId ─────────────────────────────────────────────────
 
-export async function getStudentDetail(studentId: string, tenantId: string) {
+type DashboardActor = { role: string; userId: string }
+
+export async function getStudentDetail(
+  studentId: string,
+  tenantId: string,
+  actor: DashboardActor,
+) {
   const student = await findStudentForDashboard(studentId, tenantId)
   if (!student) throw new NotFoundError('Aluno')
+
+  // Professor só acompanha alunos de turmas atribuídas a ele
+  if (actor.role === 'professor') {
+    const inScope = await isStudentInTeacherClasses(studentId, actor.userId, tenantId)
+    if (!inScope) throw new NotFoundError('Aluno')
+  }
 
   const [stats, earnedBadges, trailProgress] = await Promise.all([
     findStudentStatsForDashboard(studentId, tenantId),
@@ -115,9 +131,15 @@ export async function getStudentDetail(studentId: string, tenantId: string) {
 
 // ─── GET /classes/:classId ────────────────────────────────────────────────────
 
-export async function getClassDetail(classId: string, tenantId: string) {
+export async function getClassDetail(classId: string, tenantId: string, actor: DashboardActor) {
   const cls = await findClassForDashboard(classId, tenantId)
   if (!cls) throw new NotFoundError('Turma')
+
+  // Professor só vê o dashboard de turmas atribuídas a ele
+  if (actor.role === 'professor') {
+    const assigned = await isClassAssignedToTeacher(classId, actor.userId, tenantId)
+    if (!assigned) throw new NotFoundError('Turma')
+  }
 
   const [activeToday, students] = await Promise.all([
     countClassActiveToday(classId, tenantId),

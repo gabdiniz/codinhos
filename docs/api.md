@@ -174,19 +174,23 @@ Response: { data: { created: N, skipped: N, errors: [{ row, reason }] } }
 
 ## Turmas — `/api/:slug/classes`
 
-> Acesso: `manager`
+> Leitura (GET): `manager` e `professor`. Escrita (CRUD, vínculos): `manager`.
+> O `professor` enxerga **apenas as turmas atribuídas a ele** (via `class_teachers`); turma fora do escopo retorna **404**, não 403. O escopo é aplicado na camada de service, não só no guard.
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
-| GET | `/` | manager | Lista turmas do tenant |
+| GET | `/` | manager, professor | Lista turmas do tenant (professor: só as atribuídas) |
 | POST | `/` | manager | Cria turma |
-| GET | `/:classId` | manager | Detalhes da turma |
+| GET | `/:classId` | manager, professor | Detalhes da turma |
 | PATCH | `/:classId` | manager | Atualiza configurações |
-| DELETE | `/:classId` | manager | Remove turma (cascata: weekly challenges → alunos → trilhas; 409 se há submissões) |
-| GET | `/:classId/students` | manager | Alunos da turma |
+| DELETE | `/:classId` | manager | Remove turma (cascata: weekly challenges → alunos → professores → trilhas; 409 se há submissões) |
+| GET | `/:classId/students` | manager, professor | Alunos da turma |
 | POST | `/:classId/students` | manager | Adiciona aluno à turma |
 | DELETE | `/:classId/students/:studentId` | manager | Remove aluno da turma (preserva submissions e module_progress) |
-| GET | `/:classId/trails` | manager | Trilhas da turma |
+| GET | `/:classId/teachers` | manager, professor | Professores vinculados à turma |
+| POST | `/:classId/teachers` | manager | Vincula professor à turma |
+| DELETE | `/:classId/teachers/:teacherId` | manager | Desvincula professor da turma |
+| GET | `/:classId/trails` | manager, professor | Trilhas da turma |
 | POST | `/:classId/trails` | manager | Atribui trilha à turma |
 | PATCH | `/:classId/trails/:trailId` | manager | Atualiza ordem ou visual_blocks_enabled |
 | DELETE | `/:classId/trails/:trailId` | manager | Remove trilha da turma (preserva module_progress e submissions) |
@@ -236,6 +240,26 @@ Request:  { studentId }
 Response: { data: { classStudent } }
 // 409 se aluno já está na turma
 // 404 se studentId não pertence ao tenant
+```
+
+### GET `/:classId/teachers`
+```
+Response: { data: [{ id, name, email, avatarUrl, isActive }], meta: { total } }
+```
+
+### POST `/:classId/teachers`
+```
+Request:  { teacherId }
+Response: { data: { classTeacher: { id, classId, teacherId, assignedAt } } }
+// 422 se o usuário não tem papel 'professor'
+// 409 se o professor já está vinculado à turma
+// 404 se teacherId não pertence ao tenant
+```
+
+### DELETE `/:classId/teachers/:teacherId`
+```
+Response: { data: { message } }
+// 404 se o vínculo não existe
 ```
 
 ### POST `/:classId/trails`
@@ -361,14 +385,15 @@ Response: {
 
 ## Submissões — `/api/:slug/challenges/:challengeId/submissions`
 
-> Acesso: `student` (criar + ver as próprias), `manager` (ver todas da turma + revisar)
+> Acesso: `student` (criar + ver as próprias), `manager` e `professor` (ver da turma + revisar).
+> O `professor` só acessa submissões de turmas atribuídas a ele (fora do escopo → 404).
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | POST | `/` | student | Submete solução |
-| GET | `/` | student + manager | Lista submissões (student: só as próprias; manager: todas da turma) |
-| GET | `/:submissionId` | student + manager | Detalhes da submissão |
-| PATCH | `/:submissionId/review` | manager | Atribui nota e feedback (modo manual) |
+| GET | `/` | student, manager, professor | Lista submissões (student: só as próprias; manager/professor: todas da turma) |
+| GET | `/:submissionId` | student, manager, professor | Detalhes da submissão |
+| PATCH | `/:submissionId/review` | manager, professor | Atribui nota e feedback (modo manual) |
 
 ### POST `/`
 ```
@@ -538,13 +563,14 @@ Response: { data: { count: N } }
 
 ## Dashboard do Gestor — `/api/:slug/dashboard`
 
-> Acesso: `manager`
+> Visão geral do tenant: `manager`. Detalhe de turma/aluno: `manager` e `professor`.
+> O `professor` só vê detalhe de turmas atribuídas a ele e de alunos dessas turmas (fora do escopo → 404).
 
 | Método | Rota | Auth | Descrição |
 |---|---|---|---|
 | GET | `/` | manager | Visão geral: turmas, alunos ativos, alertas |
-| GET | `/students/:studentId` | manager | Progresso detalhado do aluno |
-| GET | `/classes/:classId` | manager | Progresso da turma |
+| GET | `/students/:studentId` | manager, professor | Progresso detalhado do aluno |
+| GET | `/classes/:classId` | manager, professor | Progresso da turma |
 
 ### GET `/`
 ```
