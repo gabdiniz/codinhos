@@ -3,6 +3,7 @@ import { TenantLayout } from './TenantLayout.tsx'
 import { ProtectedRoute } from './ProtectedRoute.tsx'
 import { StudentShell } from './StudentShell.tsx'
 import { ManagerShell } from './ManagerShell.tsx'
+import { ProfessorShell } from './ProfessorShell.tsx'
 import { AdminShell } from './AdminShell.tsx'
 
 // Pages -- lazy imports para code splitting
@@ -25,6 +26,12 @@ const ClassesPage = lazy(() => import('../pages/manager/ClassesPage.tsx'))
 const ClassDetailPage = lazy(() => import('../pages/manager/ClassDetailPage.tsx'))
 const StudentsPage = lazy(() => import('../pages/manager/StudentsPage.tsx'))
 const SettingsPage = lazy(() => import('../pages/manager/SettingsPage.tsx'))
+
+// Professor
+const ProfessorClassesPage = lazy(() => import('../pages/professor/ClassesPage.tsx'))
+const ProfessorClassDetailPage = lazy(() => import('../pages/professor/ClassDetailPage.tsx'))
+const ProfessorStudentDetailPage = lazy(() => import('../pages/professor/StudentDetailPage.tsx'))
+const ProfessorReviewPage = lazy(() => import('../pages/professor/ReviewPage.tsx'))
 
 // Admin
 const TenantsPage = lazy(() => import('../pages/admin/TenantsPage.tsx'))
@@ -137,6 +144,33 @@ export const router = createBrowserRouter([
           {
             path: 'manager/settings',
             element: <Page component={SettingsPage} />,
+          },
+        ],
+      },
+
+      // -- Area do professor (layout route) -------------------------------------
+      {
+        element: (
+          <ProtectedRoute role="professor">
+            <ProfessorShell />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            path: 'professor',
+            element: <Page component={ProfessorClassesPage} />,
+          },
+          {
+            path: 'professor/classes/:classId',
+            element: <Page component={ProfessorClassDetailPage} />,
+          },
+          {
+            path: 'professor/students/:studentId',
+            element: <Page component={ProfessorStudentDetailPage} />,
+          },
+          {
+            path: 'professor/review',
+            element: <Page component={ProfessorReviewPage} />,
           },
         ],
       },

@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) concluída no backend em 23/06/2026 (`feat/auth-teacher-role`), faltando a UI em `apps/app`. Próxima do plano: Sprint 5.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Próxima do plano: Sprint 5.
 
 ---
 
@@ -73,7 +73,7 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 **Critério de aceite:** professor loga, vê só as turmas atribuídas a ele, revisa submissões manuais, não tem acesso a configurações de tenant. — **Atingido no backend.**
 
-**Pendente:** UI do professor em `apps/app` (shell + telas de turmas/revisão).
+✅ **UI do professor** em `apps/app` (`feat/app-professor-ui`): ProfessorShell + telas de turmas atribuídas, detalhe de turma/aluno e fila de revisão (`GET /dashboard/review-queue` + aprovar/reprovar). Login e ProtectedRoute redirecionam `professor` → `/:slug/professor`.
 
 ---
 

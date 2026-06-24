@@ -28,8 +28,9 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
   if (role && user.role !== role) {
     // Redireciona para a area correta do usuario
     const redirectTo =
-      user.role === 'student'     ? `/${slug}/learn`   :
-      user.role === 'super_admin' ? `/${slug}/admin`   :
+      user.role === 'student'     ? `/${slug}/learn`     :
+      user.role === 'super_admin' ? `/${slug}/admin`     :
+      user.role === 'professor'   ? `/${slug}/professor` :
       `/${slug}/manager`
     return <Navigate to={redirectTo} replace />
   }

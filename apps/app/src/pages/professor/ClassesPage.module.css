@@ -1,0 +1,35 @@
+.root { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+.pageHeader { margin-bottom: 1.75rem; }
+.pageTitle { font-family: var(--font-sans); font-size: 1.6rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.pageSubtitle { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0.35rem 0 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+
+.card {
+  display: flex; flex-direction: column; gap: 0.85rem;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: 1.25rem; text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card:hover { border-color: var(--color-primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.cardTitle { font-family: var(--font-sans); font-size: 1.05rem; font-weight: 650; color: var(--color-text); margin: 0; }
+.studentsCount { font-family: var(--font-mono); font-size: 0.72rem; color: var(--color-text-muted); white-space: nowrap; padding-top: 0.2rem; }
+
+.cardBadges { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.badge {
+  font-family: var(--font-mono); font-size: 0.68rem; padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm); background: var(--color-surface-raised);
+  color: var(--color-text-muted); border: 1px solid var(--color-border);
+}
+.badgeMuted { font-family: var(--font-mono); font-size: 0.68rem; padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); color: var(--color-accent); }
+
+.empty { text-align: center; padding: 4rem 1rem; }
+.emptyTitle { font-family: var(--font-sans); font-size: 1.1rem; font-weight: 600; color: var(--color-text); margin: 0 0 0.4rem; }
+.emptyText { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0; }
+
+.state { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
+.stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
