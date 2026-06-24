@@ -159,7 +159,7 @@ describe('student-profile.service', () => {
         name: 'Escola',
         plan: 'basic',
         theme: null,
-        settings: null,
+        settings: {},
       })
       vi.mocked(findStudentCurrentClass).mockResolvedValue({ id: 'class-id', name: '6º Ano A' })
 

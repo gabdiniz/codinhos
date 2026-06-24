@@ -53,6 +53,7 @@ const activeUser = {
   passwordHash: 'hash-qualquer',
   isActive: true,
   tenantId: 'tenant-uuid',
+  birthDate: null,
 }
 
 // ─── Testes ───────────────────────────────────────────────────────────────────
@@ -104,6 +105,10 @@ describe('auth.service', () => {
         { email: activeUser.email, password: 'senha-certa' },
         mockReply as any,
       )
+
+      if (!('user' in result)) {
+        throw new Error('login deveria retornar user, não exigir consentimento parental')
+      }
 
       expect(result.user.id).toBe(activeUser.id)
       expect(result.user.email).toBe(activeUser.email)
