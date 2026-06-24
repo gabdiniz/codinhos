@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 6
+# Relatório de Progresso — Sprints 1 a 7.1
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -72,6 +72,16 @@ Decisão tomada: **sincronização one-way** (importa turma/alunos do Classroom;
 - Env vars `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` + setup do Google Cloud documentados em `agent_docs/variaveis-de-ambiente.md`.
 
 **Não testável no sandbox** (sem rede/credenciais) — validado por leitura + `drizzle-kit generate` ("No schema changes"). Requer provisionar OAuth Client no Google e testar o fluxo real. **Pendente**: UI da integração (botão conectar + lista de cursos + importar) e criptografia do refresh token.
+
+## Sprint 7.1 — Autocomplete contextual ✅ (24/06/2026, `feat/sandbox-autocomplete`)
+
+Decisão tomada para a fonte de vocabulário: **campo explícito `vocabulary` (jsonb `string[]`) em `trail_modules`**, curado pelo admin — em vez de auto-derivar de `exampleCode` (que traria ruído).
+
+- **Schema/migration `0006`**: coluna `vocabulary` em `trail_modules`. CRUD de módulo no `catalog` aceita/retorna o campo.
+- **`learn`**: `listVocabularyUpToModule(moduleId)` une o vocabulário de todos os módulos da trilha com `order <=` o do módulo atual; `getModuleDetail` e `getChallengeDetail` retornam `availableVocabulary`.
+- **Frontend**: `ChallengePage` passa `availableVocabulary` ao `CodeEditor`; `@codemirror/autocomplete` com `override` sugere **apenas** o vocabulário já ensinado (não o JS completo).
+
+**Pendente da Sprint 7**: 7.2 — editor de blocos visuais (maior esforço; `visualBlocksEnabled` já existe e é lido, falta construir o editor; sub-fases a/b/c).
 
 ---
 

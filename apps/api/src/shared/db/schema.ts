@@ -159,6 +159,9 @@ export const trailModules = pgTable('trail_modules', {
   title: varchar('title', { length: 255 }).notNull(),
   concept: text('concept'),
   exampleCode: text('example_code'),
+  // Vocabulário ensinado neste módulo (Sprint 7.1) — usado para limitar o
+  // autocomplete contextual ao que o aluno já viu até o módulo atual.
+  vocabulary: jsonb('vocabulary').$type<string[]>(),
   order: integer('order').notNull(),
   // V2
   videoUrl: varchar('video_url', { length: 500 }),

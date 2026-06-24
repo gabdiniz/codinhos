@@ -117,6 +117,7 @@ export async function createNewModule(trailId: string, body: CreateModuleBody) {
     title: body.title,
     concept: body.concept,
     exampleCode: body.exampleCode,
+    vocabulary: body.vocabulary,
     order,
   })
 
@@ -131,6 +132,7 @@ export async function updateExistingModule(moduleId: string, body: UpdateModuleB
     title: body.title,
     concept: body.concept,
     exampleCode: body.exampleCode,
+    vocabulary: body.vocabulary,
     order: body.order,
   })
 

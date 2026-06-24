@@ -48,6 +48,7 @@ export const createModuleBodySchema = z.object({
   title: z.string().min(1).max(255),
   concept: z.string().optional(),
   exampleCode: z.string().optional(),
+  vocabulary: z.array(z.string().min(1).max(100)).optional(),
   order: z.number().int().nonnegative().optional(),
 })
 
@@ -55,6 +56,7 @@ export const updateModuleBodySchema = z.object({
   title: z.string().min(1).max(255).optional(),
   concept: z.string().nullable().optional(),
   exampleCode: z.string().nullable().optional(),
+  vocabulary: z.array(z.string().min(1).max(100)).nullable().optional(),
   order: z.number().int().nonnegative().optional(),
 })
 
@@ -120,6 +122,7 @@ const moduleSchema = z.object({
   title: z.string(),
   concept: z.string().nullable(),
   exampleCode: z.string().nullable(),
+  vocabulary: z.array(z.string()).nullable(),
   order: z.number(),
 })
 

@@ -1084,3 +1084,10 @@ Response: {
 A tabela `ai_usage` registra `message_count` por `(tenant_id, student_id, challenge_id, date)`.
 O limite diário é verificado somando todos os desafios do aluno no dia atual.
 O frontend pode exibir `messagesUsedToday / dailyLimit` como barra de progresso.
+
+---
+
+## Vocabulário de módulo (Sprint 7.1 — autocomplete contextual)
+
+- `trail_modules.vocabulary` (jsonb `string[]`, opcional) — termos ensinados no módulo, curados pelo admin. Aceito em `POST/PATCH /admin/modules` (catalog) e retornado no módulo.
+- `GET /:slug/learn/modules/:moduleId` e `GET /:slug/learn/challenges/:challengeId` retornam `availableVocabulary: string[]` — união do vocabulário dos módulos da trilha com `order <=` o do módulo atual. O editor do aluno limita o autocomplete a essa lista.

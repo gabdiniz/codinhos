@@ -11,6 +11,7 @@ import {
 } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { javascript } from '@codemirror/lang-javascript'
+import { autocompletion, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { api, ApiError } from '../../lib/api.ts'
 import { humanizeSandboxError, extractRawSandboxError, type RawSandboxError } from '../../lib/humanizeSandboxError.ts'
@@ -54,6 +55,7 @@ interface ModuleDetail {
   challenge: Challenge | null
   progress: { status: ModuleStatus; attempts: number }
   visualBlocksEnabled: boolean
+  availableVocabulary: string[]
 }
 
 interface AiMessage {
@@ -360,9 +362,22 @@ function IconClose() {
 interface CodeEditorProps {
   initialValue: string
   onChange: (v: string) => void
+  vocabulary: string[]
 }
 
-function CodeEditor({ initialValue, onChange }: CodeEditorProps) {
+// Autocomplete contextual (Sprint 7.1): sugere SOMENTE o vocabulário já ensinado
+// até o módulo atual da trilha. `override` substitui o autocomplete padrão do JS.
+function makeVocabularyCompletion(vocabulary: string[]) {
+  const options = vocabulary.map((label) => ({ label, type: 'keyword' as const }))
+  return (context: CompletionContext): CompletionResult | null => {
+    const word = context.matchBefore(/\w+/)
+    if (!word || (word.from === word.to && !context.explicit)) return null
+    if (options.length === 0) return null
+    return { from: word.from, options }
+  }
+}
+
+function CodeEditor({ initialValue, onChange, vocabulary }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // onChange em ref para evitar recriação do editor a cada render
@@ -381,6 +396,7 @@ function CodeEditor({ initialValue, onChange }: CodeEditorProps) {
         history(),
         drawSelection(),
         javascript(),
+        autocompletion({ override: [makeVocabularyCompletion(vocabulary)] }),
         oneDark,
         buildEditorTheme(),
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
@@ -998,6 +1014,7 @@ export default function ChallengePage() {
                 key={challenge?.id ?? mod.id}
                 initialValue={starterCode}
                 onChange={(v) => { codeRef.current = v }}
+                vocabulary={moduleData?.availableVocabulary ?? []}
               />
             </div>
           </div>

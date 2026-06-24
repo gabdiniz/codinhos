@@ -114,6 +114,7 @@ export const moduleDetailResponseSchema = z.object({
       attempts: z.number(),
     }),
     visualBlocksEnabled: z.boolean(),
+    availableVocabulary: z.array(z.string()),
   }),
 })
 
@@ -128,6 +129,7 @@ export const challengeDetailResponseSchema = z.object({
       baseXp: z.number(),
     }),
     visualBlocksEnabled: z.boolean(),
+    availableVocabulary: z.array(z.string()),
     myLastSubmission: z
       .object({
         id: z.string().uuid(),
