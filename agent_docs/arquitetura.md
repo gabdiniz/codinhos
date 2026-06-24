@@ -51,10 +51,25 @@ schema.ts      → tipos TypeScript + validação de input/output (Fastify schem
 
 | Módulo | Responsabilidade |
 |---|---|
-| `auth` | Login, logout, sessões, reset de senha |
-| `tenants` | CRUD de tenants, configurações, theming |
-| `users` | CRUD de usuários (gestor, aluno), importação CSV |
-| `trails` | Trilhas, módulos, conteúdo de desafios |
-| `challenges` | Submissões, validação por testes, histórico |
+| `auth` | Login, logout, sessões, reset/convite de senha, consentimento parental no login |
+| `tenants` | CRUD de tenants (Super Admin), configurações, theming |
+| `tenant-settings` | Configurações e tema do tenant (`/settings`, `/theme` público) |
+| `users` | CRUD de usuários, importação CSV de alunos |
+| `catalog` | Catálogo global: trilhas, módulos (com `vocabulary`), desafios (Super Admin) |
+| `tenant-trails` | Trilhas ativadas por tenant |
+| `classes` | Turmas, alunos, **professores** (`class_teachers`), trilhas da turma |
+| `learn` | Aprendizado do aluno: dashboard, trilha, módulo, desafio (+ `availableVocabulary`) |
+| `submissions` | Submissões, validação por testes, revisão manual (gestor/professor) |
+| `progress` | Desbloqueio manual de módulo (modo controlado) |
 | `gamification` | XP, níveis, badges, ranking, streaks |
-| `ai-tutor` | Chat com IA, histórico de conversa, rate limiting |
+| `weekly-challenges` | Desafio da semana por turma |
+| `notifications` | Centro de notificações in-app |
+| `dashboard` | KPIs e alertas do tenant; detalhe de turma/aluno; fila de revisão |
+| `ai-tutor` | Chat com Codi, histórico por desafio, rate limiting |
+| `integrity` | Detecção de similaridade entre submissões (possível plágio) |
+| `parental-consent` | Registro de consentimento parental (LGPD / ECA) |
+| `guardians` | Gestão de responsáveis (gestor) + portal read-only do responsável |
+| `integrations` | OAuth + rostering do Google Classroom (one-way) |
+| `portfolio` | Trilhas concluídas, badges e certificado PDF do aluno |
+| `student-profile` | Perfil público do aluno |
+| `admin` | Operações de Super Admin |

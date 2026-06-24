@@ -111,6 +111,25 @@
 
 > Gerenciado pelo Super Admin. Tenants selecionam do catálogo — não criam conteúdo próprio.
 
+### `parental_consents`
+
+Auditoria de consentimento parental (LGPD / ECA Digital, Sprint 3.1) para alunos menores de 12 anos: quem consentiu, quando e qual versão dos termos. Verificado no login.
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `student_id` | uuid FK → users | |
+| `guardian_name` | varchar(255) | |
+| `guardian_email` | varchar(255) | |
+| `terms_version` | varchar(50) | |
+| `consented_at` | timestamp | |
+| `created_at` | timestamp | |
+
+**Constraints:** `UNIQUE (tenant_id, student_id)`
+
+---
+
 ### `trails`
 
 | Coluna | Tipo | Notas |
@@ -135,6 +154,7 @@
 | `title` | varchar(255) | |
 | `concept` | text | markdown com a explicação teórica |
 | `example_code` | text | código do exemplo guiado |
+| `vocabulary` | jsonb (`string[]`) | *(Sprint 7.1)* termos ensinados no módulo — usados no autocomplete contextual |
 | `order` | int | ordem dentro da trilha |
 | `video_url` | varchar(500) | *(V2)* link externo (YouTube, Vimeo) |
 | `video_storage_key` | varchar(500) | *(V2)* chave no Cloudflare R2 para upload |
@@ -220,6 +240,22 @@ Vínculo professor↔turma (Sprint 4). Sem coluna `tenant_id` própria — o esc
 | `assigned_at` | timestamp DEFAULT now() | |
 
 **Constraints:** `UNIQUE (class_id, teacher_id)`
+
+---
+
+### `guardian_students`
+
+Vínculo responsável↔aluno (Sprint 5). N:N — um responsável pode ter vários filhos e um aluno pode ter mais de um responsável. `tenant_id` explícito (responsável e aluno pertencem ao mesmo tenant).
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `guardian_id` | uuid FK → users | usuário com `role = 'guardian'` |
+| `student_id` | uuid FK → users | |
+| `created_at` | timestamp | |
+
+**Constraints:** `UNIQUE (tenant_id, guardian_id, student_id)`
 
 ---
 
@@ -426,6 +462,24 @@ Vínculo professor↔turma (Sprint 4). Sem coluna `tenant_id` própria — o esc
 
 ## 7. Notificações
 
+### `google_integrations`
+
+Tokens OAuth do Google por tenant (Sprint 6 — rostering one-way do Classroom). Um vínculo por tenant.
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | `UNIQUE` |
+| `connected_by` | uuid FK → users | gestor que conectou |
+| `google_email` | varchar(255) | |
+| `access_token` | text | |
+| `refresh_token` | text | **sensível** — criptografar em repouso (pendência) |
+| `token_expiry` | timestamp | |
+| `scope` | text | |
+| `created_at` / `updated_at` | timestamp | |
+
+---
+
 ### `notifications`
 
 | Coluna | Tipo | Notas |
@@ -517,6 +571,9 @@ tenants
   ├── users (1:N)
   │     └── sessions (1:N)
   │     └── password_reset_tokens (1:N)
+  │     └── parental_consents → users (auditoria <12 anos)
+  │     └── guardian_students → users (N:N, responsável↔aluno)
+  ├── google_integrations (1:1 por tenant — OAuth Google Classroom)
   ├── tenant_trails → trails (N:N)
   ├── classes (1:N)
   │     ├── class_students → users (N:N)
