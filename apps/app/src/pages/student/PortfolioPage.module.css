@@ -1,0 +1,55 @@
+.root { padding: 2rem; max-width: 860px; margin: 0 auto; }
+
+.pageHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.75rem; flex-wrap: wrap; }
+.pageTitle { font-family: var(--font-sans); font-size: 1.6rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.headerStats { display: flex; gap: 1rem; font-family: var(--font-mono); font-size: 0.85rem; }
+.level { color: var(--color-level); }
+.xp { color: var(--color-xp); }
+.streak { color: var(--color-text-muted); }
+
+.section { margin-bottom: 2rem; }
+.sectionTitle { font-family: var(--font-sans); font-size: 1rem; font-weight: 650; color: var(--color-text); margin: 0 0 0.9rem; }
+.muted { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0; }
+
+.trailList { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.certCard {
+  display: flex; align-items: center; gap: 1rem; padding: 1rem 1.2rem;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.certIcon {
+  width: 44px; height: 44px; border-radius: var(--radius-md); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-surface-raised); color: var(--color-primary);
+}
+.certInfo { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.certTitle { font-family: var(--font-sans); font-size: 1rem; font-weight: 600; color: var(--color-text); }
+.certMeta { font-family: var(--font-mono); font-size: 0.74rem; color: var(--color-text-muted); }
+
+.btnDownload {
+  font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+  padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid transparent;
+  background: var(--color-primary); color: var(--color-on-primary);
+}
+.btnDownload:disabled { opacity: 0.6; cursor: default; }
+
+.progressCard {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
+}
+.progressHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+.progressTrack { height: 8px; border-radius: 999px; background: var(--color-surface-raised); overflow: hidden; }
+.progressFill { height: 100%; background: var(--color-primary); border-radius: 999px; transition: width 0.3s ease; }
+
+.badgeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+.badge {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.badgeIcon { font-size: 1.2rem; }
+.badgeName { font-family: var(--font-sans); font-size: 0.82rem; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.formError { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-error); margin: 0 0 1rem; }
+.state { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
+.stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
