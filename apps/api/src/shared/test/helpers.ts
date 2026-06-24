@@ -1,5 +1,4 @@
-import type { FastifyInstance } from 'fastify'
-import type { InjectOptions } from 'fastify'
+import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fastify'
 import { createApp } from '../../app.js'
 
 // ─── App singleton para testes ────────────────────────────────────────────────
@@ -42,7 +41,12 @@ type InjectWithSession = InjectOptions & { sessionId?: string }
  *   sessionId: managerSessionId,
  * })
  */
-export async function inject(app: FastifyInstance, opts: InjectWithSession) {
+// Anotação explícita: o tipo de retorno de app.inject() vem de 'light-my-request'
+// e o TS não consegue nomear esse tipo sozinho (TS2742) sem essa importação direta.
+export async function inject(
+  app: FastifyInstance,
+  opts: InjectWithSession,
+): Promise<LightMyRequestResponse> {
   const { sessionId, ...rest } = opts
 
   return app.inject({

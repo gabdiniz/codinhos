@@ -4,7 +4,15 @@ import { moduleProgress, trailModules } from '../../shared/db/schema.js'
 
 // ─── Module Progress ────────────────────────────────────────────────────────
 
-export async function findModuleProgress(tenantId: string, studentId: string, moduleId: string) {
+type ModuleProgressRow = typeof moduleProgress.$inferSelect
+
+// Anotação explícita: sem ela o TS prova (incorretamente) que o resultado da
+// destructuring de array nunca é undefined e descarta o ramo `null` do `?? null`.
+export async function findModuleProgress(
+  tenantId: string,
+  studentId: string,
+  moduleId: string,
+): Promise<ModuleProgressRow | null> {
   const [row] = await db
     .select()
     .from(moduleProgress)
