@@ -60,7 +60,7 @@ export default function ParentalConsentPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!acceptedTerms) return
+    if (!acceptedTerms || !slug || !state) return
 
     setError(null)
     setLoading(true)
