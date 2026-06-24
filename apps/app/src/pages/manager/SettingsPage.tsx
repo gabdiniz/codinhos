@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import type { JSX } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
 import styles from './SettingsPage.module.css'
@@ -629,4 +630,86 @@ export default function SettingsPage() {
               </p>
 
               <div className={styles.toggleRow}>
-               
+                <div>
+                  <span className={styles.label}>Tutor explica o erro</span>
+                  <p className={styles.fieldHint}>
+                    Quando ativado, o botão "Pedir ajuda ao Codi" aparece nos testes que falharem,
+                    e o Codi recebe o teste como contexto para explicar o que deu errado.
+                  </p>
+                </div>
+                <label className={styles.switch}>
+                  <input
+                    type="checkbox"
+                    className={styles.switchInput}
+                    checked={aiHelpEnabled}
+                    onChange={(e) => setAiHelpEnabled(e.target.checked)}
+                    aria-label="Ativar explicação de erro pelo tutor de IA"
+                  />
+                  <span className={styles.switchTrack}>
+                    <span className={styles.switchThumb} />
+                  </span>
+                </label>
+              </div>
+
+              {aiHelpMsg && (
+                <p className={aiHelpMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {aiHelpMsg.text}
+                </p>
+              )}
+
+              <div className={styles.sectionFooter}>
+                <button className={styles.btnPrimary} onClick={handleSaveAiHelp} disabled={savingAiHelp}>
+                  {savingAiHelp ? 'Salvando...' : 'Salvar tutor de IA'}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── Privacidade ── */}
+          {activeTab === 'privacidade' && (
+            <>
+              <p className={styles.sectionDesc}>
+                Controle se alunos podem ver o perfil de outros colegas de turma (ranking e listagem).
+              </p>
+
+              <div className={styles.toggleRow}>
+                <div>
+                  <span className={styles.label}>Permitir aluno ver perfil de colega</span>
+                  <p className={styles.fieldHint}>
+                    Quando ativado, o aluno pode abrir o perfil de um colega de turma a partir do
+                    ranking, vendo nome, idade, conquistas e estatísticas (sem e-mail ou data de
+                    nascimento). O gestor sempre pode ver o perfil completo de qualquer aluno.
+                  </p>
+                </div>
+                <label className={styles.switch}>
+                  <input
+                    type="checkbox"
+                    className={styles.switchInput}
+                    checked={allowProfileView}
+                    onChange={(e) => setAllowProfileView(e.target.checked)}
+                    aria-label="Permitir que alunos vejam o perfil de colegas de turma"
+                  />
+                  <span className={styles.switchTrack}>
+                    <span className={styles.switchThumb} />
+                  </span>
+                </label>
+              </div>
+
+              {profileViewMsg && (
+                <p className={profileViewMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {profileViewMsg.text}
+                </p>
+              )}
+
+              <div className={styles.sectionFooter}>
+                <button className={styles.btnPrimary} onClick={handleSaveProfileView} disabled={savingProfileView}>
+                  {savingProfileView ? 'Salvando...' : 'Salvar privacidade'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
