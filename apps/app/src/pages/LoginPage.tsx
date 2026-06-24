@@ -10,6 +10,7 @@ import styles from './LoginPage.module.css'
 function redirectAfterLogin(slug: string, role: CurrentUser['role']): string {
   if (role === 'student') return `/${slug}/learn`
   if (role === 'professor') return `/${slug}/professor`
+  if (role === 'guardian') return `/${slug}/guardian`
   return `/${slug}/manager`
 }
 

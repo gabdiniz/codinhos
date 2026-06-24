@@ -10,7 +10,7 @@ import { api, ApiError } from '../lib/api.ts'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'super_admin' | 'manager' | 'professor' | 'student'
+export type UserRole = 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
 
 export interface CurrentUser {
   id: string

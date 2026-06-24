@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 5
+# Relatório de Progresso — Sprints 1 a 5 (backend + UI)
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -59,7 +59,7 @@ Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submi
 - **Portal read-only**: `GET /:slug/guardian/children` (resumo) e `GET /:slug/guardian/children/:studentId` (detalhe — reaproveita o `dashboard.repository`). Guard `requireRole('guardian')`; sem sandbox/IA; escopo aos filhos vinculados (fora do escopo → 404).
 - Testes de serviço cobrindo criação (409/404/sucesso), vínculos e o escopo do portal. Migration validada (`generate` → "No schema changes").
 
-**Pendente**: UI do responsável (`GuardianShell` + telas) e e-mail de resumo semanal (opcional, V2).
+UI entregue em `feat/app-guardian-ui`: **GuardianShell** + tela de filhos (lista com nível/XP/streak) e detalhe read-only (stats, badges, progresso por trilha). `LoginPage`/`ProtectedRoute` redirecionam o papel `guardian`. **Pendente/V2**: e-mail de resumo semanal (notificações).
 
 ---
 

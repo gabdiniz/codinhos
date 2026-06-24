@@ -31,6 +31,7 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
       user.role === 'student'     ? `/${slug}/learn`     :
       user.role === 'super_admin' ? `/${slug}/admin`     :
       user.role === 'professor'   ? `/${slug}/professor` :
+      user.role === 'guardian'    ? `/${slug}/guardian`  :
       `/${slug}/manager`
     return <Navigate to={redirectTo} replace />
   }

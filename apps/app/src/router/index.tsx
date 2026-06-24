@@ -4,6 +4,7 @@ import { ProtectedRoute } from './ProtectedRoute.tsx'
 import { StudentShell } from './StudentShell.tsx'
 import { ManagerShell } from './ManagerShell.tsx'
 import { ProfessorShell } from './ProfessorShell.tsx'
+import { GuardianShell } from './GuardianShell.tsx'
 import { AdminShell } from './AdminShell.tsx'
 
 // Pages -- lazy imports para code splitting
@@ -32,6 +33,10 @@ const ProfessorClassesPage = lazy(() => import('../pages/professor/ClassesPage.t
 const ProfessorClassDetailPage = lazy(() => import('../pages/professor/ClassDetailPage.tsx'))
 const ProfessorStudentDetailPage = lazy(() => import('../pages/professor/StudentDetailPage.tsx'))
 const ProfessorReviewPage = lazy(() => import('../pages/professor/ReviewPage.tsx'))
+
+// Guardian
+const GuardianChildrenPage = lazy(() => import('../pages/guardian/ChildrenPage.tsx'))
+const GuardianChildDetailPage = lazy(() => import('../pages/guardian/ChildDetailPage.tsx'))
 
 // Admin
 const TenantsPage = lazy(() => import('../pages/admin/TenantsPage.tsx'))
@@ -171,6 +176,25 @@ export const router = createBrowserRouter([
           {
             path: 'professor/review',
             element: <Page component={ProfessorReviewPage} />,
+          },
+        ],
+      },
+
+      // -- Area do responsavel (layout route) -----------------------------------
+      {
+        element: (
+          <ProtectedRoute role="guardian">
+            <GuardianShell />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            path: 'guardian',
+            element: <Page component={GuardianChildrenPage} />,
+          },
+          {
+            path: 'guardian/children/:studentId',
+            element: <Page component={GuardianChildDetailPage} />,
           },
         ],
       },

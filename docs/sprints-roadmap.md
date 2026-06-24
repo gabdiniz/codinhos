@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) concluída no backend. Próxima: Sprint 5 UI ou Sprint 6.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Próxima: Sprint 6 (SSO/Google Classroom).
 
 ---
 
@@ -86,7 +86,7 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 **Critério de aceite:** responsável recebe convite, define senha, vê dashboard somente leitura do(s) filho(s) vinculados ao seu tenant. — **Atingido no backend.**
 
-**Pendente:** UI do responsável em `apps/app` (GuardianShell + telas) e, opcional, e-mail de resumo semanal (notificações).
+✅ **UI do responsável** (`feat/app-guardian-ui`): GuardianShell + telas de filhos (lista) e detalhe read-only (stats, badges, progresso por trilha). Login/ProtectedRoute redirecionam `guardian` → `/:slug/guardian`. Opcional/V2: e-mail de resumo semanal.
 
 ---
 

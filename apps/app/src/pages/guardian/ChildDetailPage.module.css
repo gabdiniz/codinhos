@@ -1,0 +1,48 @@
+.root { padding: 2rem; max-width: 860px; margin: 0 auto; }
+
+.backLink {
+  display: inline-flex; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer;
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--color-text-muted);
+  margin-bottom: 1.25rem; padding: 0; transition: color 0.15s ease;
+}
+.backLink:hover { color: var(--color-primary); }
+
+.pageHeader { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+.avatar {
+  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--color-primary); color: var(--color-on-primary);
+  font-family: var(--font-sans); font-size: 1.1rem; font-weight: 700;
+}
+.pageTitle { font-family: var(--font-sans); font-size: 1.5rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.headerStats { display: flex; gap: 1rem; align-items: center; margin-top: 0.35rem; font-family: var(--font-mono); font-size: 0.85rem; }
+.level { color: var(--color-level); }
+.xp { color: var(--color-xp); }
+.streak { color: var(--color-text-muted); }
+
+.section { margin-bottom: 2rem; }
+.sectionTitle { font-family: var(--font-sans); font-size: 1rem; font-weight: 650; color: var(--color-text); margin: 0 0 0.9rem; }
+.muted { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text-muted); margin: 0; }
+
+.trailList { display: flex; flex-direction: column; gap: 0.85rem; }
+.trailRow {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 0.9rem 1.1rem;
+}
+.trailHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.55rem; }
+.trailTitle { font-family: var(--font-sans); font-size: 0.92rem; color: var(--color-text); font-weight: 500; }
+.trailCount { font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-text-muted); }
+.progressTrack { height: 8px; border-radius: 999px; background: var(--color-surface-raised); overflow: hidden; }
+.progressFill { height: 100%; background: var(--color-primary); border-radius: 999px; transition: width 0.3s ease; }
+
+.badgeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+.badge {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md);
+}
+.badgeIcon { font-size: 1.2rem; }
+.badgeName { font-family: var(--font-sans); font-size: 0.82rem; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.state { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
+.stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
