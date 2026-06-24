@@ -20,6 +20,7 @@ import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js'
 import { weeklyChallengesRoutes } from './modules/weekly-challenges/weekly-challenges.routes.js'
 import { tenantSettingsRoutes } from './modules/tenant-settings/tenant-settings.routes.js'
 import { studentProfileRoutes } from './modules/student-profile/student-profile.routes.js'
+import { portfolioRoutes } from './modules/portfolio/portfolio.routes.js'
 import { adminRoutes } from './modules/admin/admin.routes.js'
 import { aiTutorRoutes } from './modules/ai-tutor/ai-tutor.routes.js'
 import { progressRoutes } from './modules/progress/progress.routes.js'
@@ -113,6 +114,7 @@ export async function createApp() {
   await app.register(weeklyChallengesRoutes, { prefix: '/api' })
   await app.register(tenantSettingsRoutes, { prefix: '/api' })
   await app.register(studentProfileRoutes, { prefix: '/api' })
+  await app.register(portfolioRoutes, { prefix: '/api' })
   await app.register(adminRoutes, { prefix: '/api' })
   await app.register(aiTutorRoutes, { prefix: '/api' })
   await app.register(progressRoutes, { prefix: '/api' })

@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 7.1
+# Relatório de Progresso — Sprints 1 a 8
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -82,6 +82,13 @@ Decisão tomada para a fonte de vocabulário: **campo explícito `vocabulary` (j
 - **Frontend**: `ChallengePage` passa `availableVocabulary` ao `CodeEditor`; `@codemirror/autocomplete` com `override` sugere **apenas** o vocabulário já ensinado (não o JS completo).
 
 **Pendente da Sprint 7**: 7.2 — editor de blocos visuais (maior esforço; `visualBlocksEnabled` já existe e é lido, falta construir o editor; sub-fases a/b/c).
+
+## Sprint 8 — Reconhecimento e portfólio ✅ (24/06/2026, `feat/student-certificates`)
+
+- **Certificado PDF**: geração server-side com `pdfkit` (`shared/pdf/certificate.ts`) — A4 paisagem, com nome do aluno, título da trilha, tenant e data. Sem armazenamento: gerado on-the-fly e validado a cada download (422 se a trilha não está concluída).
+- **Módulo `portfolio`** (student): `GET /:slug/portfolio` (trilhas concluídas + em andamento + badges + stats) e `GET /:slug/portfolio/certificates/:trailId` (stream do PDF). Conclusão de trilha derivada de `module_progress` (`completed === total`, `total > 0`) — **sem migration**. Reaproveita `dashboard.repository` para badges/stats.
+- **Frontend**: `PortfolioPage` com trilhas concluídas (botão "Baixar certificado" → fetch com `credentials` → blob → download), em andamento (barra de progresso) e badges. Item "Portfólio" adicionado ao `StudentShell`.
+- Dep nova no `apps/api`: `pdfkit` (+ `@types/pdfkit`).
 
 ---
 

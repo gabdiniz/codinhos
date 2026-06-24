@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete contextual) concluída. Próxima: 7.2 (editor de blocos) ou Sprint 8.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Falta apenas a Sprint 7.2 (editor de blocos visuais).
 
 ---
 
@@ -114,13 +114,14 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 ---
 
-## Sprint 8 — Reconhecimento e portfólio
+## Sprint 8 — Reconhecimento e portfólio ✅ Concluída (24/06/2026)
 
-- Certificado em PDF ao concluir uma trilha (template + geração server-side)
-- Página de portfólio interno (lista de trilhas/badges conquistados, exportável)
+- ✅ Certificado em PDF ao concluir uma trilha — geração server-side com `pdfkit` (`shared/pdf/certificate.ts`), sem armazenamento (gerado on-the-fly e validado a cada download).
+- ✅ Página de portfólio do aluno (`PortfolioPage`): trilhas concluídas (com botão de baixar certificado), trilhas em andamento, badges e stats. Item "Portfólio" no `StudentShell`.
+- ✅ Módulo novo `portfolio` (student): `GET /:slug/portfolio` e `GET /:slug/portfolio/certificates/:trailId` (PDF). Conclusão derivada de `module_progress` (sem migration).
 - Branch: `feat/student-certificates`
 
-**Critério de aceite:** aluno conclui uma trilha, certificado em PDF fica disponível para download no perfil.
+**Critério de aceite:** aluno conclui uma trilha, certificado em PDF fica disponível para download no perfil. — **Atingido.** (download via portfólio; `GET /portfolio/certificates/:trailId` retorna 422 se a trilha não está concluída.)
 
 ---
 

@@ -46,6 +46,15 @@ function IconTrophy() {
   )
 }
 
+function IconAward() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="6" />
+      <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+    </svg>
+  )
+}
+
 function IconLogout() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -94,6 +103,7 @@ export function StudentShell() {
     { to: `/${slug}/learn`,            label: 'Trilhas',  icon: <IconBook /> },
     { to: `/${slug}/weekly-challenge`, label: 'Desafio',  icon: <IconZap /> },
     { to: `/${slug}/profile`,          label: 'Perfil',   icon: <IconUser /> },
+    { to: `/${slug}/portfolio`,        label: 'Portfólio', icon: <IconAward /> },
     { to: `/${slug}/ranking`,          label: 'Ranking',  icon: <IconTrophy /> },
   ]
 

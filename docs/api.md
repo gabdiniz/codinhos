@@ -1091,3 +1091,32 @@ O frontend pode exibir `messagesUsedToday / dailyLimit` como barra de progresso.
 
 - `trail_modules.vocabulary` (jsonb `string[]`, opcional) — termos ensinados no módulo, curados pelo admin. Aceito em `POST/PATCH /admin/modules` (catalog) e retornado no módulo.
 - `GET /:slug/learn/modules/:moduleId` e `GET /:slug/learn/challenges/:challengeId` retornam `availableVocabulary: string[]` — união do vocabulário dos módulos da trilha com `order <=` o do módulo atual. O editor do aluno limita o autocomplete a essa lista.
+
+---
+
+## Portfólio e certificados — `/api/:slug/portfolio`
+
+> Acesso: `student`. Reconhecimento (Sprint 8). Conclusão de trilha derivada de
+> `module_progress` (sem tabela nova). Certificado gerado on-the-fly (pdfkit).
+
+| Método | Rota | Auth | Descrição |
+|---|---|---|---|
+| GET | `/portfolio` | student | Trilhas concluídas + em andamento + badges + stats |
+| GET | `/portfolio/certificates/:trailId` | student | PDF do certificado da trilha (download) |
+
+### GET `/portfolio`
+```
+Response: { data: {
+  stats: { totalXp, level, currentStreak },
+  completedTrails: [{ id, title, completedAt }],
+  inProgressTrails: [{ id, title, progress: { completed, total } }],
+  badges: [{ slug, name, earnedAt }]
+} }
+```
+
+### GET `/portfolio/certificates/:trailId`
+```
+Response: application/pdf (Content-Disposition: attachment)
+// 422 se a trilha não está concluída (completed < total ou total = 0)
+// 404 se a trilha não existe/não está atribuída ao tenant
+```

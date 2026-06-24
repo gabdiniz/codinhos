@@ -20,6 +20,7 @@ const ChallengePage = lazy(() => import('../pages/student/ChallengePage.tsx'))
 const ProfilePage = lazy(() => import('../pages/student/ProfilePage.tsx'))
 const RankingPage = lazy(() => import('../pages/student/RankingPage.tsx'))
 const WeeklyChallengePage = lazy(() => import('../pages/student/WeeklyChallengePage.tsx'))
+const PortfolioPage = lazy(() => import('../pages/student/PortfolioPage.tsx'))
 
 // Manager
 const ManagerDashboardPage = lazy(() => import('../pages/manager/DashboardPage.tsx'))
@@ -118,6 +119,10 @@ export const router = createBrowserRouter([
           {
             path: 'weekly-challenge',
             element: <Page component={WeeklyChallengePage} />,
+          },
+          {
+            path: 'portfolio',
+            element: <Page component={PortfolioPage} />,
           },
         ],
       },
