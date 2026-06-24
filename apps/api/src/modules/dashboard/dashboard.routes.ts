@@ -16,8 +16,11 @@ import {
 export async function dashboardRoutes(app: FastifyInstance) {
   const f = app.withTypeProvider<ZodTypeProvider>()
   const guard = [resolveTenant, authenticate, requireRole('manager')]
+  // Visão da própria turma/aluno: gestor e professor. Escopo do professor às
+  // turmas atribuídas é aplicado na camada de service.
+  const readGuard = [resolveTenant, authenticate, requireRole('manager', 'professor')]
 
-  // GET /:slug/dashboard — visão geral do tenant
+  // GET /:slug/dashboard — visão geral do tenant (apenas gestor)
   f.get(
     '/:slug/dashboard',
     {
@@ -41,10 +44,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
         params: studentDetailParamsSchema,
         response: { 200: studentDetailResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getStudentDetail(req.params.studentId, req.resolvedTenantId)
+      const result = await getStudentDetail(req.params.studentId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send(result)
     },
   )
@@ -57,10 +63,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
         params: classDetailParamsSchema,
         response: { 200: classDetailResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getClassDetail(req.params.classId, req.resolvedTenantId)
+      const result = await getClassDetail(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send(result)
     },
   )

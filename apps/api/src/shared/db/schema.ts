@@ -204,6 +204,17 @@ export const classStudents = pgTable('class_students', {
   uniqueIndex('class_students_class_student_idx').on(t.classId, t.studentId),
 ])
 
+// Vínculo professor↔turma (Sprint 4). Sem coluna tenant_id própria — o escopo de
+// tenant é garantido via join em `classes` (mesmo padrão de `class_students`).
+export const classTeachers = pgTable('class_teachers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  classId: uuid('class_id').references(() => classes.id).notNull(),
+  teacherId: uuid('teacher_id').references(() => users.id).notNull(),
+  assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex('class_teachers_class_teacher_idx').on(t.classId, t.teacherId),
+])
+
 export const classTrails = pgTable('class_trails', {
   id: uuid('id').defaultRandom().primaryKey(),
   classId: uuid('class_id').references(() => classes.id).notNull(),

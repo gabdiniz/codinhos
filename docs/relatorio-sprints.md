@@ -1,9 +1,9 @@
-# Relatório de Progresso — Sprints 1 a 3
+# Relatório de Progresso — Sprints 1 a 4
 
-**Data:** 22/06/2026
-**Status do `main`:** sincronizado com `origin/main`, working tree limpo (exceto este arquivo e `docs/sprints-roadmap.md`, ainda não commitados).
+**Data:** 23/06/2026
+**Status do `main`:** sincronizado com `origin/main`. Sprint 4 e a reconstrução de snapshots entregues nas branches `feat/auth-teacher-role` e `chore/rebuild-drizzle-snapshots` (aguardando push/PR).
 
-Baseado em `docs/sprints-roadmap.md`. As três primeiras sprints do roadmap estão concluídas e mergeadas. Próxima do plano: Sprint 4 (Papel de Professor).
+Baseado em `docs/sprints-roadmap.md`. As quatro primeiras sprints do roadmap estão concluídas (backend). Próxima do plano: Sprint 5 (Portal para responsáveis).
 
 ---
 
@@ -35,6 +35,19 @@ Sem arquitetura nova — só UI consumindo módulos já completos. Diferente das
 
 Critério de aceite (nenhum aluno <12 conclui onboarding sem consentimento; gestor vê alerta de submissões muito parecidas) atingido.
 
+## Sprint 4 — Papel de Professor ✅ (backend, 23/06/2026, `feat/auth-teacher-role`)
+
+O valor `'professor'` já existia no enum `role` desde a migration inicial (`0000`) e em todos os tipos/middlewares — não foi preciso migration de enum. O que faltava era o vínculo e o escopo de acesso.
+
+- **Vínculo professor↔turma**: nova tabela `class_teachers` (migration `0003_vinculo_professor_turma`), espelhando `class_students` — sem coluna `tenant_id` própria, escopo de tenant garantido via join em `classes`. FK `RESTRICT`, com `removeAllTeachersFromClass` adicionado ao cascade de deleção de turma.
+- **Endpoints de atribuição (gestor)**: `GET/POST /:slug/classes/:classId/teachers` e `DELETE /:slug/classes/:classId/teachers/:teacherId`. `POST` valida que o usuário pertence ao tenant e tem papel `professor` (422 caso contrário), e bloqueia vínculo duplicado (409).
+- **Guards revisados**: leitura de `classes` (lista, detalhe, alunos, trilhas) e do `dashboard` (detalhe de turma e de aluno) agora aceitam `manager` + `professor`. CRUD de turma, atribuição de professor/trilha/aluno e a visão geral do tenant (`GET /:slug/dashboard`) seguem restritos a `manager`. Revisão de submissões já aceitava professor.
+- **Escopo do professor** (na camada de service, nunca só no guard): professor só enxerga as turmas atribuídas a ele e submissões/alunos dessas turmas. Acesso fora do escopo retorna 404 (mesmo padrão de "cross-tenant ou inexistente"), nunca 403. Aplicado em `classes` (list filtra; detail/students/trails validam), `dashboard` (class/student detail) e `submissions` (list/detail/review).
+- **Decisão**: o módulo `learn` (sandbox do próprio aluno, keyed em `req.user.id`) **não** foi aberto ao professor — não está no critério de aceite e o "acompanhamento" é servido pelo dashboard (detalhe de turma/aluno). Estender `/learn` para o professor ver a trilha de um aluno específico fica como refino futuro.
+- Testes unitários de serviço (`classes.service.test.ts`) cobrindo atribuição (sucesso, 404, 422, 409) e o escopo do professor nos reads.
+
+Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submissões manuais, sem acesso a configurações de tenant) atingido no backend. **Pendente**: UI do professor em `apps/app` (shell + telas) — próximo passo natural.
+
 ---
 
 ## Mapa de PRs (sprints 1–3)
@@ -55,6 +68,7 @@ Critério de aceite (nenhum aluno <12 conclui onboarding sem consentimento; gest
 
 ## Pendências / próximos passos
 
-- `docs/sprints-roadmap.md` e este relatório ainda estão untracked — commitar se quiser manter histórico.
-- `meta/0001_snapshot.json` e `meta/0002_snapshot.json` (drizzle-kit) nunca foram gerados. Sem eles, `db:generate` pode "redescobrir" migrations já aplicadas e gerar arquivos redundantes (aconteceu uma vez nesta sessão, com `birth_date`). Vale reconstruir os snapshots antes do próximo ciclo de migrations.
-- Próxima do roadmap: **Sprint 4 — Papel de Professor** (ainda não iniciada).
+- ✅ `meta/0001_snapshot.json` e `meta/0002_snapshot.json` reconstruídos (branch `chore/rebuild-drizzle-snapshots`). Validado: `drizzle-kit generate` contra o schema atual responde "No schema changes" — sem migration fantasma. `0003` (class_teachers) já encadeado em cima.
+- `docs/sprints-roadmap.md` e este relatório vão na branch `docs/atualiza-relatorio-sprint4`.
+- **UI do professor** em `apps/app` (Sprint 4 frontend): falta o shell e as telas (turmas atribuídas, detalhe de turma/aluno, fila de revisão de submissões).
+- Próxima do roadmap: **Sprint 5 — Portal para responsáveis** (fica mais simples após a 3.1, que já captura e-mail/consentimento do responsável).

@@ -12,6 +12,9 @@ import {
   getClassStudents,
   addStudent,
   removeStudent,
+  getClassTeachers,
+  assignTeacher,
+  removeTeacher,
   getClassTrails,
   assignTrail,
   updateExistingClassTrail,
@@ -21,10 +24,12 @@ import {
   slugParamsSchema,
   classParamsSchema,
   studentParamsSchema,
+  teacherParamsSchema,
   classTrailParamsSchema,
   createClassBodySchema,
   updateClassBodySchema,
   addStudentBodySchema,
+  assignTeacherBodySchema,
   assignTrailBodySchema,
   updateClassTrailBodySchema,
   listClassesResponseSchema,
@@ -32,6 +37,8 @@ import {
   classDetailResponseSchema,
   listStudentsResponseSchema,
   classStudentResponseSchema,
+  listTeachersResponseSchema,
+  classTeacherResponseSchema,
   listClassTrailsResponseSchema,
   classTrailResponseSchema,
   messageResponseSchema,
@@ -39,6 +46,9 @@ import {
 
 export async function classesRoutes(app: FastifyInstance) {
   const f = app.withTypeProvider<ZodTypeProvider>()
+  // Leitura: gestor e professor. Escrita (CRUD, vínculos): apenas gestor.
+  // O escopo do professor às suas turmas é aplicado na camada de service.
+  const readGuard = [resolveTenant, authenticate, requireRole('manager', 'professor')]
   const guard = [resolveTenant, authenticate, requireRole('manager')]
 
   // ── Classes ───────────────────────────────────────────────────────────────
@@ -50,10 +60,13 @@ export async function classesRoutes(app: FastifyInstance) {
         params: slugParamsSchema,
         response: { 200: listClassesResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getClasses(req.resolvedTenantId)
+      const result = await getClasses(req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send(result)
     },
   )
@@ -81,10 +94,13 @@ export async function classesRoutes(app: FastifyInstance) {
         params: classParamsSchema,
         response: { 200: classDetailResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getClassDetail(req.params.classId, req.resolvedTenantId)
+      const result = await getClassDetail(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send({ data: result })
     },
   )
@@ -133,10 +149,13 @@ export async function classesRoutes(app: FastifyInstance) {
         params: classParamsSchema,
         response: { 200: listStudentsResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getClassStudents(req.params.classId, req.resolvedTenantId)
+      const result = await getClassStudents(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send(result)
     },
   )
@@ -172,6 +191,57 @@ export async function classesRoutes(app: FastifyInstance) {
     },
   )
 
+  // ── Teachers (vínculo professor↔turma) ──────────────────────────────────────
+
+  f.get(
+    '/:slug/classes/:classId/teachers',
+    {
+      schema: {
+        params: classParamsSchema,
+        response: { 200: listTeachersResponseSchema },
+      },
+      preHandler: readGuard,
+    },
+    async (req, reply) => {
+      const result = await getClassTeachers(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
+      return reply.status(200).send(result)
+    },
+  )
+
+  f.post(
+    '/:slug/classes/:classId/teachers',
+    {
+      schema: {
+        params: classParamsSchema,
+        body: assignTeacherBodySchema,
+        response: { 201: classTeacherResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await assignTeacher(req.params.classId, req.resolvedTenantId, req.body)
+      return reply.status(201).send({ data: result })
+    },
+  )
+
+  f.delete(
+    '/:slug/classes/:classId/teachers/:teacherId',
+    {
+      schema: {
+        params: teacherParamsSchema,
+        response: { 200: messageResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      await removeTeacher(req.params.classId, req.params.teacherId, req.resolvedTenantId)
+      return reply.status(200).send({ data: { message: 'Professor desvinculado da turma' } })
+    },
+  )
+
   // ── Trails ────────────────────────────────────────────────────────────────
 
   f.get(
@@ -181,10 +251,13 @@ export async function classesRoutes(app: FastifyInstance) {
         params: classParamsSchema,
         response: { 200: listClassTrailsResponseSchema },
       },
-      preHandler: guard,
+      preHandler: readGuard,
     },
     async (req, reply) => {
-      const result = await getClassTrails(req.params.classId, req.resolvedTenantId)
+      const result = await getClassTrails(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
       return reply.status(200).send(result)
     },
   )

@@ -2,6 +2,7 @@ import { db } from '../../shared/db/index.js'
 import { computeModuleStatuses } from '../../shared/utils/progression.js'
 import { runTests } from '../../shared/utils/run-tests.js'
 import { ForbiddenError, NotFoundError, UnprocessableError } from '../../shared/errors/index.js'
+import { isClassAssignedToTeacher } from '../classes/classes.repository.js'
 import type { TenantSettings, TestResult } from '../../shared/db/schema.js'
 import {
   findChallengeForSubmission,
@@ -416,6 +417,12 @@ export async function listChallengeSubmissions(
   if (!cls) throw new NotFoundError('Turma')
   if (!inClass) throw new ForbiddenError()
 
+  // Professor só lista submissões de turmas atribuídas a ele
+  if (actorRole === 'professor') {
+    const assigned = await isClassAssignedToTeacher(classId, actorId, tenantId)
+    if (!assigned) throw new NotFoundError('Turma')
+  }
+
   const challengeInClass = await isChallengeInClass(challengeId, classId)
   if (!challengeInClass) throw new NotFoundError('Desafio')
 
@@ -451,6 +458,12 @@ export async function getSubmissionDetail(
   if (!submission || submission.challengeId !== challengeId) throw new NotFoundError('Submissão')
   if (actorRole === 'student' && submission.studentId !== actorId) throw new ForbiddenError()
 
+  // Professor só vê submissões de turmas atribuídas a ele
+  if (actorRole === 'professor') {
+    const assigned = await isClassAssignedToTeacher(submission.classId, actorId, tenantId)
+    if (!assigned) throw new NotFoundError('Submissão')
+  }
+
   const includeStudent = actorRole !== 'student'
 
   return {
@@ -473,12 +486,20 @@ export async function getSubmissionDetail(
 export async function reviewSubmission(
   tenantId: string,
   reviewerId: string,
+  reviewerRole: string,
   challengeId: string,
   submissionId: string,
   body: { status: 'passed' | 'failed'; reviewerNote?: string },
 ) {
   const submission = await findSubmissionById(submissionId, tenantId)
   if (!submission || submission.challengeId !== challengeId) throw new NotFoundError('Submissão')
+
+  // Professor só revisa submissões de turmas atribuídas a ele
+  if (reviewerRole === 'professor') {
+    const assigned = await isClassAssignedToTeacher(submission.classId, reviewerId, tenantId)
+    if (!assigned) throw new NotFoundError('Submissão')
+  }
+
   if (submission.status !== 'under_review') {
     throw new UnprocessableError('Submissão não está pendente de revisão')
   }

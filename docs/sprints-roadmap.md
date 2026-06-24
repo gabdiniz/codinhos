@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprint 1 concluída e mergeada na `main` em 18/06/2026 (PRs #26–#29 + PR de revisão `fix/ajustes-revisao-sprint1`). Próxima: Sprint 2.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) concluída no backend em 23/06/2026 (`feat/auth-teacher-role`), faltando a UI em `apps/app`. Próxima do plano: Sprint 5.
 
 ---
 
@@ -62,14 +62,18 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 ---
 
-## Sprint 4 — Papel de Professor
+## Sprint 4 — Papel de Professor ✅ Backend concluído (23/06/2026)
 
-- Adicionar `'teacher'` ao enum de role (hoje `super_admin > manager > student`)
-- Revisar `requireRole(...)` em todos os guards que devem aceitar professor: `submissions` (revisão), `classes` (leitura, não CRUD completo), `dashboard` (visão da própria turma), `learn` (acompanhamento)
-- Vínculo professor↔turma (tabela ou FK em `classes`)
+- ~~Adicionar `'professor'` ao enum de role~~ — já existia desde a migration `0000` (e em todos os tipos/middlewares); não precisou de migration de enum.
+- ✅ Vínculo professor↔turma: nova tabela `class_teachers` (migration `0003`), espelhando `class_students` (escopo de tenant via join em `classes`). Cascade de deleção de turma atualizado.
+- ✅ Endpoints de atribuição (gestor): `GET/POST /:slug/classes/:classId/teachers`, `DELETE .../teachers/:teacherId`.
+- ✅ Guards revisados: leitura de `classes` e detalhe de turma/aluno do `dashboard` aceitam `manager` + `professor`; CRUD e visão geral do tenant seguem manager-only. Escopo do professor às turmas atribuídas aplicado na camada de service (fora do escopo → 404), em `classes`, `dashboard` e `submissions`.
+- Decisão: `learn` (sandbox do próprio aluno) **não** foi aberto ao professor — fora do critério de aceite; acompanhamento é via dashboard. Estender depois se necessário.
 - Branch: `feat/auth-teacher-role`
 
-**Critério de aceite:** professor loga, vê só as turmas atribuídas a ele, revisa submissões manuais, não tem acesso a configurações de tenant.
+**Critério de aceite:** professor loga, vê só as turmas atribuídas a ele, revisa submissões manuais, não tem acesso a configurações de tenant. — **Atingido no backend.**
+
+**Pendente:** UI do professor em `apps/app` (shell + telas de turmas/revisão).
 
 ---
 
