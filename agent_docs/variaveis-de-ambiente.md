@@ -145,3 +145,19 @@ em subdomínios (ex: `COOKIE_DOMAIN=.codinhos.com.br`).
 | `R2_SECRET_ACCESS_KEY` | api | Upload de vídeos |
 | `R2_BUCKET` | api | Upload de vídeos |
 | `NEXT_PUBLIC_R2_PUBLIC_URL` | web/app | Leitura pública de vídeos |
+
+## Integração Google Classroom (Sprint 6)
+
+| Variável | Descrição |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Client ID do OAuth Client (Web) criado no Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Client secret do mesmo OAuth Client |
+| `GOOGLE_REDIRECT_URI` | URI de callback **exata** registrada no console (ex.: `http://localhost:3333/api/integrations/google/callback`). O Google exige correspondência exata — por isso o callback não usa `:slug` (o slug vai no `state`). |
+
+**Setup manual no Google Cloud Console:**
+1. Criar projeto → habilitar **Google Classroom API**.
+2. Tela de consentimento OAuth (escopos: `classroom.courses.readonly`, `classroom.rosters.readonly`, `classroom.profile.emails`, `openid`, `email`).
+3. Criar credencial **OAuth Client ID** tipo *Web application* com o redirect URI acima.
+4. Preencher as 3 variáveis no `.env`.
+
+> **Segurança:** o `refresh_token` é armazenado em `google_integrations`. Em produção, criptografar em repouso (pendência conhecida — escopo desta sprint foi o fluxo funcional).

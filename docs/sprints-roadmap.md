@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Próxima: Sprint 6 (SSO/Google Classroom).
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Próxima: UI da integração ou Sprint 7.
 
 ---
 
@@ -90,14 +90,18 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 
 ---
 
-## Sprint 6 — SSO / rostering com Google Classroom
+## Sprint 6 — SSO / rostering com Google Classroom ✅ Backend concluído (23/06/2026)
 
-- OAuth2 com Google na tela de login do gestor/professor
-- Sincronização de turmas e alunos via Classroom API → mapeamento para `classes`/`users` do tenant
-- Decisão de produto pendente: sincronização one-way (importa e mantém manual depois) ou contínua (re-sincroniza periodicamente)
+- ✅ **Decisão: sincronização one-way** (importa e mantém manual depois) — menor complexidade; contínua (job + conflito) fica para validação de demanda.
+- ✅ OAuth2 com Google (rostering, não login SSO): conectar conta → `auth-url`/`callback` (path fixo, state via cookie CSRF). Tokens por tenant em `google_integrations` (migration `0005`).
+- ✅ Classroom API via REST/`fetch` (`shared/integrations/google-classroom.ts`): cursos + alunos. Módulo `integrations`: status/auth-url/callback/courses/import/disconnect.
+- ✅ Import: curso → turma + alunos (cria por e-mail com convite, reaproveita existentes) + matrículas. Idempotente por aluno.
+- Decisão: **SSO de login com Google** ficou de fora (não está no critério de aceite); pode entrar como V2.
 - Branch: `feat/integrations-google-classroom`
 
-**Critério de aceite:** gestor conecta a conta Google do Classroom, escolhe uma turma do Classroom, e ela aparece populada em Codinhos sem cadastro manual de aluno por aluno.
+**Critério de aceite:** gestor conecta a conta Google do Classroom, escolhe uma turma do Classroom, e ela aparece populada em Codinhos sem cadastro manual de aluno por aluno. — **Atingido no backend** (requer credenciais Google + teste real; sandbox sem rede).
+
+**Pendente:** UI da integração em `apps/app` (botão conectar + lista de cursos + importar, na tela de Config.) e criptografia em repouso do `refresh_token`.
 
 ---
 

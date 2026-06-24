@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 5 (backend + UI)
+# Relatório de Progresso — Sprints 1 a 6
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -60,6 +60,18 @@ Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submi
 - Testes de serviço cobrindo criação (409/404/sucesso), vínculos e o escopo do portal. Migration validada (`generate` → "No schema changes").
 
 UI entregue em `feat/app-guardian-ui`: **GuardianShell** + tela de filhos (lista com nível/XP/streak) e detalhe read-only (stats, badges, progresso por trilha). `LoginPage`/`ProtectedRoute` redirecionam o papel `guardian`. **Pendente/V2**: e-mail de resumo semanal (notificações).
+
+## Sprint 6 — Rostering Google Classroom ✅ (backend, 23/06/2026, `feat/integrations-google-classroom`)
+
+Decisão tomada: **sincronização one-way** (importa turma/alunos do Classroom; depois manual). Contínua (job agendado + resolução de conflito) fica para quando houver demanda. Foco no critério de aceite (rostering), **não** SSO de login.
+
+- **OAuth2 (rostering)**: `shared/integrations/google-classroom.ts` — cliente REST via `fetch` (sem SDK): `buildAuthUrl`, troca de code, refresh de token, `listCourses`, `listCourseStudents`. Escopos read-only de Classroom + e-mail.
+- **Persistência**: tabela `google_integrations` (migration `0005`, um vínculo por tenant). `refresh_token` guardado — **pendência**: criptografar em repouso.
+- **Módulo `integrations`** (gestor): `status`, `auth-url` (state CSRF em cookie httpOnly), `callback` (path fixo `/api/integrations/google/callback` — Google exige redirect URI exato; slug vai no state, autentica pela sessão), `courses`, `import`, `disconnect`.
+- **Import one-way**: cria turma a partir do curso, cria alunos por e-mail (com convite `accept-invite`) ou reaproveita existentes, e matricula. Idempotente por aluno; re-importar cria nova turma.
+- Env vars `GOOGLE_CLIENT_ID/SECRET/REDIRECT_URI` + setup do Google Cloud documentados em `agent_docs/variaveis-de-ambiente.md`.
+
+**Não testável no sandbox** (sem rede/credenciais) — validado por leitura + `drizzle-kit generate` ("No schema changes"). Requer provisionar OAuth Client no Google e testar o fluxo real. **Pendente**: UI da integração (botão conectar + lista de cursos + importar) e criptografia do refresh token.
 
 ---
 
