@@ -7,7 +7,9 @@
     "dev:local": "concurrently -n api,app -c cyan,magenta \"pnpm --filter @codinhos/api dev\" \"pnpm --filter @codinhos/app dev\"",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "typecheck:direct": "pnpm -r --no-bail run typecheck",
     "test": "turbo test",
+    "build:direct": "pnpm -r --no-bail run build",
     "format": "biome format --write .",
     "test:e2e": "pnpm --filter @codinhos/e2e test",
     "test:e2e:ui": "pnpm --filter @codinhos/e2e test:ui"
