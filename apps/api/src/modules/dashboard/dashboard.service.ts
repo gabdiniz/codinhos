@@ -3,6 +3,7 @@ import { findPossiblePlagiarismCandidates } from '../integrity/integrity.service
 import {
   isClassAssignedToTeacher,
   isStudentInTeacherClasses,
+  listTeacherClassIds,
 } from '../classes/classes.repository.js'
 import {
   countTenantStudents,
@@ -18,6 +19,7 @@ import {
   findClassForDashboard,
   countClassActiveToday,
   findClassStudentsWithStats,
+  findReviewQueue,
 } from './dashboard.repository.js'
 
 // ─── GET / ────────────────────────────────────────────────────────────────────
@@ -171,5 +173,32 @@ export async function getClassDetail(classId: string, tenantId: string, actor: D
         pendingReview: Number(s.pendingReview),
       })),
     },
+  }
+}
+
+
+// ─── GET /review-queue ────────────────────────────────────────────────────────
+
+export async function getReviewQueue(tenantId: string, actor: DashboardActor) {
+  // Professor: restringe às turmas atribuídas. Gestor: todo o tenant.
+  const classIds =
+    actor.role === 'professor'
+      ? await listTeacherClassIds(actor.userId, tenantId)
+      : undefined
+
+  const rows = await findReviewQueue(tenantId, classIds)
+
+  return {
+    data: rows.map((r) => ({
+      submissionId: r.submissionId,
+      challengeId: r.challengeId,
+      challengeTitle: r.challengeTitle,
+      studentId: r.studentId,
+      studentName: r.studentName,
+      classId: r.classId,
+      className: r.className,
+      attemptNumber: r.attemptNumber,
+      submittedAt: r.submittedAt.toISOString(),
+    })),
   }
 }

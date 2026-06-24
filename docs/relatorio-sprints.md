@@ -1,7 +1,7 @@
 # Relatório de Progresso — Sprints 1 a 4
 
 **Data:** 23/06/2026
-**Status do `main`:** sincronizado com `origin/main`. Sprint 4 e a reconstrução de snapshots entregues nas branches `feat/auth-teacher-role` e `chore/rebuild-drizzle-snapshots` (aguardando push/PR).
+**Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
 
 Baseado em `docs/sprints-roadmap.md`. As quatro primeiras sprints do roadmap estão concluídas (backend). Próxima do plano: Sprint 5 (Portal para responsáveis).
 
@@ -46,7 +46,11 @@ O valor `'professor'` já existia no enum `role` desde a migration inicial (`000
 - **Decisão**: o módulo `learn` (sandbox do próprio aluno, keyed em `req.user.id`) **não** foi aberto ao professor — não está no critério de aceite e o "acompanhamento" é servido pelo dashboard (detalhe de turma/aluno). Estender `/learn` para o professor ver a trilha de um aluno específico fica como refino futuro.
 - Testes unitários de serviço (`classes.service.test.ts`) cobrindo atribuição (sucesso, 404, 422, 409) e o escopo do professor nos reads.
 
-Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submissões manuais, sem acesso a configurações de tenant) atingido no backend. **Pendente**: UI do professor em `apps/app` (shell + telas) — próximo passo natural.
+Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submissões manuais, sem acesso a configurações de tenant) atingido. UI entregue em `feat/app-professor-ui`:
+
+- **ProfessorShell** (espelha o ManagerShell) + roteamento `/:slug/professor/*`; `LoginPage` e `ProtectedRoute` redirecionam o papel `professor`.
+- **Telas**: turmas atribuídas (lista), detalhe de turma (dashboard scoped: stats + alunos com nível/XP/pendências), detalhe de aluno (stats, badges, progresso por trilha) e **fila de revisão** (lista + painel com código/testes + aprovar/reprovar).
+- **Novo endpoint** `GET /:slug/dashboard/review-queue` (manager + professor, escopado): lista submissões `under_review`. A revisão reusa `PATCH /:slug/challenges/:challengeId/submissions/:submissionId/review`.
 
 ---
 
@@ -70,5 +74,5 @@ Critério de aceite (professor loga, vê só as turmas atribuídas, revisa submi
 
 - ✅ `meta/0001_snapshot.json` e `meta/0002_snapshot.json` reconstruídos (branch `chore/rebuild-drizzle-snapshots`). Validado: `drizzle-kit generate` contra o schema atual responde "No schema changes" — sem migration fantasma. `0003` (class_teachers) já encadeado em cima.
 - `docs/sprints-roadmap.md` e este relatório vão na branch `docs/atualiza-relatorio-sprint4`.
-- **UI do professor** em `apps/app` (Sprint 4 frontend): falta o shell e as telas (turmas atribuídas, detalhe de turma/aluno, fila de revisão de submissões).
+- ✅ **UI do professor** em `apps/app` entregue (`feat/app-professor-ui`): shell, turmas atribuídas, detalhe de turma/aluno e fila de revisão.
 - Próxima do roadmap: **Sprint 5 — Portal para responsáveis** (fica mais simples após a 3.1, que já captura e-mail/consentimento do responsável).

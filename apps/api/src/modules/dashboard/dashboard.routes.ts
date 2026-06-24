@@ -3,7 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
-import { getOverview, getStudentDetail, getClassDetail } from './dashboard.service.js'
+import { getOverview, getStudentDetail, getClassDetail, getReviewQueue } from './dashboard.service.js'
 import {
   slugParamsSchema,
   studentDetailParamsSchema,
@@ -11,6 +11,7 @@ import {
   overviewResponseSchema,
   studentDetailResponseSchema,
   classDetailResponseSchema,
+  reviewQueueResponseSchema,
 } from './dashboard.schema.js'
 
 export async function dashboardRoutes(app: FastifyInstance) {
@@ -67,6 +68,25 @@ export async function dashboardRoutes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const result = await getClassDetail(req.params.classId, req.resolvedTenantId, {
+        role: req.user.role,
+        userId: req.user.id,
+      })
+      return reply.status(200).send(result)
+    },
+  )
+
+  // GET /:slug/dashboard/review-queue — submissões aguardando revisão (escopo do ator)
+  f.get(
+    '/:slug/dashboard/review-queue',
+    {
+      schema: {
+        params: slugParamsSchema,
+        response: { 200: reviewQueueResponseSchema },
+      },
+      preHandler: readGuard,
+    },
+    async (req, reply) => {
+      const result = await getReviewQueue(req.resolvedTenantId, {
         role: req.user.role,
         userId: req.user.id,
       })

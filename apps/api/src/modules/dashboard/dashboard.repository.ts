@@ -1,4 +1,4 @@
-import { eq, and, lt, count, sql, gte, desc } from 'drizzle-orm'
+import { eq, and, lt, count, sql, gte, desc, inArray } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import {
   users,
@@ -286,4 +286,40 @@ export async function findClassStudentsWithStats(classId: string, tenantId: stri
       studentStats.lastActivity,
     )
     .orderBy(desc(sql`coalesce(${studentStats.totalXp}, 0)`))
+}
+
+
+// ─── Fila de revisão ──────────────────────────────────────────────────────────
+
+/**
+ * Submissões aguardando revisão manual (status under_review) no escopo informado.
+ * classIds undefined → todo o tenant (gestor); array → restringe às turmas do professor.
+ */
+export async function findReviewQueue(tenantId: string, classIds?: string[]) {
+  const conditions = [
+    eq(challengeSubmissions.tenantId, tenantId),
+    eq(challengeSubmissions.status, 'under_review'),
+  ]
+  if (classIds) {
+    if (classIds.length === 0) return []
+    conditions.push(inArray(challengeSubmissions.classId, classIds))
+  }
+  return db
+    .select({
+      submissionId: challengeSubmissions.id,
+      challengeId: challengeSubmissions.challengeId,
+      challengeTitle: challenges.title,
+      studentId: challengeSubmissions.studentId,
+      studentName: users.name,
+      classId: challengeSubmissions.classId,
+      className: classes.name,
+      attemptNumber: challengeSubmissions.attemptNumber,
+      submittedAt: challengeSubmissions.submittedAt,
+    })
+    .from(challengeSubmissions)
+    .innerJoin(users, eq(users.id, challengeSubmissions.studentId))
+    .innerJoin(classes, eq(classes.id, challengeSubmissions.classId))
+    .innerJoin(challenges, eq(challenges.id, challengeSubmissions.challengeId))
+    .where(and(...conditions))
+    .orderBy(challengeSubmissions.submittedAt)
 }

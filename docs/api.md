@@ -571,6 +571,7 @@ Response: { data: { count: N } }
 | GET | `/` | manager | Visão geral: turmas, alunos ativos, alertas |
 | GET | `/students/:studentId` | manager, professor | Progresso detalhado do aluno |
 | GET | `/classes/:classId` | manager, professor | Progresso da turma |
+| GET | `/review-queue` | manager, professor | Submissões aguardando revisão manual (escopo do ator) |
 
 ### GET `/`
 ```
@@ -620,6 +621,18 @@ Response: {
 ```
 
 ---
+
+
+### GET `/review-queue`
+```
+Response: { data: [{
+  submissionId, challengeId, challengeTitle,
+  studentId, studentName, classId, className,
+  attemptNumber, submittedAt
+}] }
+// status under_review apenas; professor vê só as turmas atribuídas, gestor vê o tenant.
+// Para revisar: PATCH /:slug/challenges/:challengeId/submissions/:submissionId/review
+```
 
 ## Desafio da Semana — `/api/:slug/weekly-challenges`
 

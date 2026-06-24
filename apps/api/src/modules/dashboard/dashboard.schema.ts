@@ -98,3 +98,21 @@ export const classDetailResponseSchema = z.object({
     students: z.array(classStudentRowSchema),
   }),
 })
+
+// ─── Response — GET /review-queue ─────────────────────────────────────────────
+
+export const reviewQueueResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      submissionId: z.string().uuid(),
+      challengeId: z.string().uuid(),
+      challengeTitle: z.string(),
+      studentId: z.string().uuid(),
+      studentName: z.string(),
+      classId: z.string().uuid(),
+      className: z.string(),
+      attemptNumber: z.number(),
+      submittedAt: z.string().datetime(),
+    }),
+  ),
+})
