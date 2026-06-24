@@ -99,4 +99,21 @@ export async function getXpEvents(
   page: number,
   limit: number,
 ) {
-  const off
+  const offset = (page - 1) * limit
+
+  const [total, events] = await Promise.all([
+    countXpEvents(studentId, tenantId),
+    listXpEvents(studentId, tenantId, offset, limit),
+  ])
+
+  return {
+    data: events.map((e) => ({
+      id: e.id,
+      amount: e.amount,
+      reason: e.reason,
+      refId: e.refId ?? null,
+      createdAt: e.createdAt.toISOString(),
+    })),
+    meta: { total, page, limit },
+  }
+}

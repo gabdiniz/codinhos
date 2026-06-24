@@ -88,4 +88,10 @@ const xpEventSchema = z.object({
 })
 
 export const xpEventsResponseSchema = z.object({
-  data: z
+  data: z.array(xpEventSchema),
+  meta: z.object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+  }),
+})

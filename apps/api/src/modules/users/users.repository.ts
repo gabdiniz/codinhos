@@ -4,7 +4,22 @@ import { users, passwordResetTokens, sessions } from '../../shared/db/schema.js'
 
 // ─── Leitura ──────────────────────────────────────────────────────────────────
 
-export async function findUserById(id: string, tenantId: string) {
+type UserCoreRow = {
+  id: string
+  tenantId: string
+  name: string
+  email: string
+  role: 'super_admin' | 'manager' | 'professor' | 'student'
+  avatarUrl: string | null
+  birthDate: string | null
+  isActive: boolean
+  createdAt: Date
+  passwordHash: string
+}
+
+// Anotação explícita: sem ela o TS prova (incorretamente) que o resultado da
+// destructuring de array nunca é undefined e descarta o ramo `null` do `?? null`.
+export async function findUserById(id: string, tenantId: string): Promise<UserCoreRow | null> {
   const [user] = await db
     .select({
       id: users.id,
@@ -24,7 +39,7 @@ export async function findUserById(id: string, tenantId: string) {
   return user ?? null
 }
 
-export async function findUserByIdOnly(id: string) {
+export async function findUserByIdOnly(id: string): Promise<UserCoreRow | null> {
   const [user] = await db
     .select({
       id: users.id,
@@ -44,7 +59,10 @@ export async function findUserByIdOnly(id: string) {
   return user ?? null
 }
 
-export async function findUserByEmailInTenant(email: string, tenantId: string) {
+export async function findUserByEmailInTenant(
+  email: string,
+  tenantId: string,
+): Promise<{ id: string } | null> {
   const [user] = await db
     .select({ id: users.id })
     .from(users)
@@ -195,4 +213,16 @@ export async function createInviteToken(userId: string, tokenHash: string, expir
   })
 }
 
-// ─── Sessões ──────────────────────────────────────────────────
+// ─── Sessões ──────────────────────────────────────────────────────────────────
+
+/** Deleta todas as sessões do usuário exceto a sessão atual */
+export async function deleteOtherSessions(userId: string, currentSessionId: string) {
+  await db
+    .delete(sessions)
+    .where(and(eq(sessions.userId, userId), ne(sessions.id, currentSessionId)))
+}
+
+/** Deleta todas as sessões do usuário */
+export async function deleteAllSessions(userId: string) {
+  await db.delete(sessions).where(eq(sessions.userId, userId))
+}
