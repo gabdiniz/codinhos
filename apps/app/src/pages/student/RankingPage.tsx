@@ -181,4 +181,126 @@ export default function RankingPage() {
                       ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.avatarImg} />
                       : <div className={styles.avatar}>{initials(entry.student.name)}</div>
                     }
-    
+                  </div>
+
+                  <span className={styles.studentName}>
+                    {entry.student.name}
+                    {isMe && <span className={styles.meTag}>você</span>}
+                  </span>
+
+                  <div className={styles.rowStats}>
+                    <span className={styles.xp}>
+                      <IconStar />
+                      {entry.totalXp.toLocaleString('pt-BR')}
+                    </span>
+                    <span className={styles.level}>Nível {entry.level}</span>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+
+          {isLongList && myEntry && (
+            <div
+              className={styles.stickyMe}
+              onClick={() => openProfile(myEntry!.student.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  openProfile(myEntry!.student.id)
+                }
+              }}
+            >
+              <span className={styles.position}>
+                {MEDAL[myEntry.position] ?? `#${myEntry.position}`}
+              </span>
+
+              <div className={styles.avatarWrap}>
+                {myEntry.student.avatarUrl
+                  ? <img src={myEntry.student.avatarUrl} alt={myEntry.student.name} className={styles.avatarImg} />
+                  : <div className={styles.avatar}>{initials(myEntry.student.name)}</div>
+                }
+              </div>
+
+              <span className={styles.studentName}>
+                {myEntry.student.name}
+                <span className={styles.meTag}>você</span>
+              </span>
+
+              <div className={styles.rowStats}>
+                <span className={styles.xp}>
+                  <IconStar />
+                  {myEntry.totalXp.toLocaleString('pt-BR')}
+                </span>
+                <span className={styles.level}>Nível {myEntry.level}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {slug && (
+        <StudentProfileDrawer
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          slug={slug}
+          studentId={profileStudentId}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── PodiumSlot ───────────────────────────────────────────────────────────────
+
+function PodiumSlot({
+  entry,
+  myId,
+  allowProfileView,
+  onOpen,
+  first = false,
+}: {
+  entry: RankingEntry
+  myId?: string
+  allowProfileView: boolean
+  onOpen: (studentId: string) => void
+  first?: boolean
+}) {
+  const isMe = entry.student.id === myId
+  const canOpen = allowProfileView || isMe
+  const medal = MEDAL[entry.position] ?? ''
+
+  return (
+    <div
+      className={`${styles.podiumSlot} ${first ? styles.podiumFirst : ''} ${isMe ? styles.podiumMe : ''} ${canOpen ? styles.podiumClickable : ''}`}
+      onClick={canOpen ? () => onOpen(entry.student.id) : undefined}
+      role={canOpen ? 'button' : undefined}
+      tabIndex={canOpen ? 0 : undefined}
+      onKeyDown={
+        canOpen
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onOpen(entry.student.id)
+              }
+            }
+          : undefined
+      }
+    >
+      <span className={styles.podiumMedal}>{medal}</span>
+      <div className={styles.podiumAvatar}>
+        {entry.student.avatarUrl
+          ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.podiumAvatarImg} />
+          : <span className={styles.podiumInitials}>{initials(entry.student.name)}</span>
+        }
+      </div>
+      <span className={styles.podiumName}>{entry.student.name.split(' ')[0]}</span>
+      <span className={styles.podiumXp}>
+        <IconStar />
+        {entry.totalXp.toLocaleString('pt-BR')}
+      </span>
+    </div>
+  )
+}

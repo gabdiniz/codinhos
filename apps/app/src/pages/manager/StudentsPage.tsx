@@ -620,4 +620,85 @@ export default function StudentsPage() {
                 </button>
                 {!s.isActive && (
                   <button
-                    cla
+                    className={styles.actionBtn}
+                    onClick={() => handleResendInvite(s)}
+                    disabled={resendingId === s.id}
+                    title="Reenviar convite"
+                    aria-label={`Reenviar convite para ${s.name}`}
+                  >
+                    <IconRefresh />
+                  </button>
+                )}
+                {s.isActive && (
+                  <button
+                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                    onClick={() => setDeactivateTarget(s)}
+                    title="Desativar"
+                    aria-label={`Desativar ${s.name}`}
+                  >
+                    <IconSlash />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageBtn}
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page === 1}
+            aria-label="Anterior"
+          >
+            <IconChevronLeft />
+          </button>
+          <span className={styles.pageInfo}>{page} / {totalPages}</span>
+          <button
+            className={styles.pageBtn}
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page === totalPages}
+            aria-label="Proxima"
+          >
+            <IconChevronRight />
+          </button>
+        </div>
+      )}
+
+      {showInvite && slug && (
+        <InviteModal
+          slug={slug}
+          onClose={() => setShowInvite(false)}
+          onSave={handleInvite}
+        />
+      )}
+      {deactivateTarget && (
+        <DeactivateConfirm
+          student={deactivateTarget}
+          onConfirm={handleDeactivate}
+          onCancel={() => setDeactivateTarget(null)}
+        />
+      )}
+      {editTarget && slug && (
+        <EditStudentModal
+          slug={slug}
+          student={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSave={handleEditSave}
+        />
+      )}
+      {slug && (
+        <StudentProfileDrawer
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          slug={slug}
+          studentId={profileStudentId}
+        />
+      )}
+
+      {toast && <div className={styles.toast} role="status">{toast}</div>}
+    </div>
+  )
+}

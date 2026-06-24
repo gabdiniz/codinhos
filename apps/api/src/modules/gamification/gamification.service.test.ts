@@ -175,4 +175,60 @@ describe('gamification.service', () => {
       vi.mocked(listClassRanking).mockResolvedValue([])
       vi.mocked(findTenantSettings).mockResolvedValue({
         id: 'tenant-id',
-  
+        name: 'Escola',
+        plan: 'basic',
+        theme: null,
+        settings: {},
+      })
+
+      const result = await getClassRanking('class-id', 'tenant-id', 'student-id', 'student')
+
+      expect(result.allowProfileView).toBe(true)
+    })
+  })
+
+  // ── getBadges ──────────────────────────────────────────────────────────────
+
+  describe('getBadges', () => {
+    it('deve retornar earned=false para badges não conquistados', async () => {
+      vi.mocked(listBadgesWithEarnedStatus).mockResolvedValue([
+        {
+          id: 'badge-1',
+          slug: 'first-challenge',
+          name: 'Primeiro Desafio',
+          description: null,
+          iconUrl: null,
+          triggerType: 'challenge_count',
+          triggerValue: 1,
+          earnedAt: null,
+        },
+      ])
+
+      const result = await getBadges('student-id', 'tenant-id')
+
+      expect(result[0]!.earned).toBe(false)
+      expect(result[0]!.earnedAt).toBeNull()
+    })
+
+    it('deve retornar earned=true com earnedAt em ISO string para badges conquistados', async () => {
+      const earnedAt = new Date('2025-06-01T10:00:00Z')
+      vi.mocked(listBadgesWithEarnedStatus).mockResolvedValue([
+        {
+          id: 'badge-1',
+          slug: 'first-challenge',
+          name: 'Primeiro Desafio',
+          description: 'Completou o primeiro desafio',
+          iconUrl: '/icons/first.svg',
+          triggerType: 'challenge_count',
+          triggerValue: 1,
+          earnedAt,
+        },
+      ])
+
+      const result = await getBadges('student-id', 'tenant-id')
+
+      expect(result[0]!.earned).toBe(true)
+      expect(result[0]!.earnedAt).toBe(earnedAt.toISOString())
+    })
+  })
+})

@@ -101,3 +101,20 @@ export async function updateSettings(tenantId: string, body: UpdateSettingsBody)
         },
       }),
       ...(body.aiErrorExplanationEnabled !== undefined && {
+        ai_error_explanation_enabled: body.aiErrorExplanationEnabled,
+      }),
+      ...(body.allowStudentProfileView !== undefined && {
+        allow_student_profile_view: body.allowStudentProfileView,
+      }),
+    }
+  }
+
+  const updated = await updateTenantSettings(tenantId, {
+    theme: body.theme,
+    settings: newSettings,
+  })
+
+  if (!updated) throw new NotFoundError('Tenant')
+
+  return { data: { settings: mapSettings(updated) } }
+}
