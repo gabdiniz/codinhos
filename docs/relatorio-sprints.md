@@ -1,4 +1,4 @@
-# Relatório de Progresso — Sprints 1 a 8
+# Relatório de Progresso — Sprints 1 a 8 (+ 7.2 fase a)
 
 **Data:** 23/06/2026
 **Status do `main`:** Sprint 4 backend + snapshots mergeados (PRs #40). UI do professor na branch `feat/app-professor-ui` (aguardando push/PR).
@@ -89,6 +89,16 @@ Decisão tomada para a fonte de vocabulário: **campo explícito `vocabulary` (j
 - **Módulo `portfolio`** (student): `GET /:slug/portfolio` (trilhas concluídas + em andamento + badges + stats) e `GET /:slug/portfolio/certificates/:trailId` (stream do PDF). Conclusão de trilha derivada de `module_progress` (`completed === total`, `total > 0`) — **sem migration**. Reaproveita `dashboard.repository` para badges/stats.
 - **Frontend**: `PortfolioPage` com trilhas concluídas (botão "Baixar certificado" → fetch com `credentials` → blob → download), em andamento (barra de progresso) e badges. Item "Portfólio" adicionado ao `StudentShell`.
 - Dep nova no `apps/api`: `pdfkit` (+ `@types/pdfkit`).
+
+## Sprint 7.2 — Editor de blocos visuais, fase (a) ✅ (24/06/2026, `feat/sandbox-visual-blocks`)
+
+Fase (a) = **modo blocos isolado** (o toggle `visualBlocksEnabled` já existia e era lido, mas não havia editor). Frontend puro — nenhum endpoint novo; os blocos geram código que entra no fluxo de submissão/sandbox existente.
+
+- **`components/BlocklyEditor`**: workspace Blockly (renderer zelos, locale pt-br) com toolbox de lógica básica (Lógica, Laços, Matemática, Texto, Variáveis, Funções). `javascriptGenerator.workspaceToCode` gera o JS a cada mudança e alimenta o `codeRef` do `ChallengePage`. `text_print` sobrescrito para `console.log` (o que os testes/painel observam).
+- **`ChallengePage`**: render condicional — `BlocklyEditor` quando `visualBlocksEnabled`, senão o `CodeEditor` (CodeMirror) de sempre.
+- Dep nova no `apps/app`: `blockly`.
+
+**Não testável no sandbox** (sem `pnpm`/browser) — validado por leitura. Detalhes prováveis de ajuste ao rodar ao vivo: import do locale `blockly/msg/pt-br` e a API do `javascriptGenerator` (versão do Blockly). **Falta (backlog)**: fases (b) híbrido blocos+texto e (c) conversão bidirecional.
 
 ---
 

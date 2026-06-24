@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Falta apenas a Sprint 7.2 (editor de blocos visuais).
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Sprint 7.2 fase (a) concluída (editor de blocos isolado). Roadmap principal coberto; faltam só refinos (7.2 b/c) e o fechamento (docs + user case E2E).
 
 ---
 
@@ -108,7 +108,7 @@ Zero risco de arquitetura nova — é só construir a UI que falta em `apps/app`
 ## Sprint 7 — Editor avançado de sandbox
 
 **7.1 — Autocomplete contextual** ✅ (`feat/sandbox-autocomplete`, 24/06/2026) — novo campo `vocabulary` (jsonb `string[]`) em `trail_modules` (migration `0006`, curado pelo admin no catálogo). `learn` retorna `availableVocabulary` (união do vocab dos módulos com `order <=` o atual). No editor (CodeMirror 6) o `@codemirror/autocomplete` usa `override` para sugerir **só** esse vocabulário, não o JS inteiro.
-**7.2 — Editor de blocos visuais** — maior esforço do roadmap; o toggle `visualBlocksEnabled` já existe no backend e é lido pelo frontend, falta construir o editor. Recomenda-se tratar como sub-fases: (a) modo blocos isolado, (b) modo híbrido blocos+texto, (c) conversão bidirecional bloco↔texto
+**7.2 — Editor de blocos visuais** — ✅ **fase (a) concluída** (`feat/sandbox-visual-blocks`, 24/06/2026). Editor Blockly (modo blocos isolado) que aparece no `ChallengePage` quando `visualBlocksEnabled` está ligado, em vez do CodeMirror. Toolbox de lógica básica (Lógica, Laços, Matemática, Texto, Variáveis, Funções); os blocos geram JavaScript (`javascriptGenerator`) que alimenta o mesmo fluxo de submissão/sandbox (`text_print` → `console.log`). Locale pt-br. **Falta**: (b) modo híbrido blocos+texto e (c) conversão bidirecional bloco↔texto.
 
 **Critério de aceite:** trilha com `visualBlocksEnabled` ligado mostra editor de blocos funcional para ao menos os módulos de lógica básica.
 
