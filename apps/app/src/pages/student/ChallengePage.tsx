@@ -15,6 +15,7 @@ import { autocompletion, type CompletionContext, type CompletionResult } from '@
 import { oneDark } from '@codemirror/theme-one-dark'
 import { api, ApiError } from '../../lib/api.ts'
 import { humanizeSandboxError, extractRawSandboxError, type RawSandboxError } from '../../lib/humanizeSandboxError.ts'
+import { BlocklyEditor } from '../../components/BlocklyEditor/BlocklyEditor.tsx'
 import { useClass } from '../../contexts/ClassContext.tsx'
 import styles from './ChallengePage.module.css'
 
@@ -1010,12 +1011,19 @@ export default function ChallengePage() {
               </div>
             </div>
             <div className={styles.editorBody}>
-              <CodeEditor
-                key={challenge?.id ?? mod.id}
-                initialValue={starterCode}
-                onChange={(v) => { codeRef.current = v }}
-                vocabulary={moduleData?.availableVocabulary ?? []}
-              />
+              {moduleData?.visualBlocksEnabled ? (
+                <BlocklyEditor
+                  key={`blocks-${challenge?.id ?? mod.id}`}
+                  onChange={(v) => { codeRef.current = v }}
+                />
+              ) : (
+                <CodeEditor
+                  key={challenge?.id ?? mod.id}
+                  initialValue={starterCode}
+                  onChange={(v) => { codeRef.current = v }}
+                  vocabulary={moduleData?.availableVocabulary ?? []}
+                />
+              )}
             </div>
           </div>
 
