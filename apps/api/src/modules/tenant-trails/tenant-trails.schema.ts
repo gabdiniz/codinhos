@@ -54,6 +54,20 @@ export const tenantTrailResponseSchema = z.object({
   data: z.object({ tenantTrail: tenantTrailSchema }),
 })
 
+
+export const availableTrailsResponseSchema = z.object({
+  data: z.array(
+    z.object({
+      id: z.string().uuid(),
+      slug: z.string(),
+      title: z.string(),
+      description: z.string().nullable(),
+      language: z.enum(['javascript', 'python']),
+      activated: z.boolean(),
+    }),
+  ),
+})
+
 export const messageResponseSchema = z.object({
   data: z.object({ message: z.string() }),
 })

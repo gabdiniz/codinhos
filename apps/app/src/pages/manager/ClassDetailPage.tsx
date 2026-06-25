@@ -34,6 +34,23 @@ interface AvailableStudent {
   createdAt: string
 }
 
+interface ClassTrail {
+  id: string
+  slug: string
+  title: string
+  order: number
+  visualBlocksEnabled: boolean
+}
+
+interface TenantTrailOption {
+  id: string
+  slug: string
+  title: string
+  description: string | null
+  language: 'javascript' | 'python'
+  order: number
+}
+
 // ─── Labels ───────────────────────────────────────────────────────────────────
 
 const PROGRESSION_LABEL: Record<ProgressionMode, string> = {
@@ -281,6 +298,100 @@ function RemoveConfirm({ studentName, onConfirm, onCancel }: RemoveConfirmProps)
   )
 }
 
+// ─── Modal: atribuir trilha ───────────────────────────────────────────────────
+
+interface AssignTrailModalProps {
+  assignedIds: Set<string>
+  nextOrder: number
+  onClose: () => void
+  onAssign: (trailId: string, visualBlocksEnabled: boolean) => Promise<void>
+}
+
+function AssignTrailModal({ assignedIds, nextOrder, onClose, onAssign }: AssignTrailModalProps) {
+  const { slug } = useParams<{ slug: string }>()
+  const [options, setOptions] = useState<TenantTrailOption[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [addingId, setAddingId] = useState<string | null>(null)
+  const [visualBlocks, setVisualBlocks] = useState(false)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  useEffect(() => {
+    if (!slug) return
+    let active = true
+    api
+      .get<{ data: TenantTrailOption[] }>(`/api/${slug}/trails`)
+      .then((res) => { if (active) setOptions(res.data) })
+      .catch((err) => { if (active) setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar trilhas.') })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [slug])
+
+  const available = useMemo(() => options.filter((t) => !assignedIds.has(t.id)), [options, assignedIds])
+
+  async function handleAssign(trailId: string) {
+    setAddingId(trailId)
+    setError(null)
+    try {
+      await onAssign(trailId, visualBlocks)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao atribuir trilha.')
+      setAddingId(null)
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} aria-modal="true" role="dialog">
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Atribuir trilha à turma</h2>
+          <button className={styles.modalClose} onClick={onClose} aria-label="Fechar"><IconClose /></button>
+        </div>
+        <div className={styles.modalBody}>
+          <label className={styles.checkRow}>
+            <input type="checkbox" checked={visualBlocks} onChange={(e) => setVisualBlocks(e.target.checked)} />
+            Habilitar editor de blocos visuais nesta trilha
+          </label>
+          {error && <p className={styles.formError}>{error}</p>}
+          {loading ? (
+            <div className={styles.modalState}><span className={styles.stateText}>// carregando trilhas...</span></div>
+          ) : loadError ? (
+            <div className={styles.modalState}><span className={styles.stateError}>{loadError}</span></div>
+          ) : available.length === 0 ? (
+            <div className={styles.modalState}>
+              <span className={styles.stateText}>
+                {options.length === 0
+                  ? 'Nenhuma trilha ativada na escola. Ative trilhas em Trilhas.'
+                  : 'Todas as trilhas ativadas já estão nesta turma.'}
+              </span>
+            </div>
+          ) : (
+            <ul className={styles.candidateList}>
+              {available.map((t) => (
+                <li key={t.id} className={styles.candidateRow}>
+                  <div className={styles.candidateInfo}>
+                    <span className={styles.candidateName}>{t.title}</span>
+                    <span className={styles.candidateEmail}>{t.language === 'python' ? 'Python' : 'JavaScript'}</span>
+                  </div>
+                  <button className={styles.btnPrimarySm} onClick={() => handleAssign(t.id)} disabled={addingId !== null}>
+                    {addingId === t.id ? 'Atribuindo...' : 'Atribuir'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── ClassDetailPage ──────────────────────────────────────────────────────────
 
 export default function ClassDetailPage() {
@@ -291,6 +402,8 @@ export default function ClassDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [trails, setTrails] = useState<ClassTrail[]>([])
+  const [assignTrailOpen, setAssignTrailOpen] = useState(false)
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -298,14 +411,16 @@ export default function ClassDetailPage() {
     if (!slug || !classId) return
     setLoadError(null)
     try {
-      const [detailRes, studentsRes] = await Promise.all([
+      const [detailRes, studentsRes, trailsRes] = await Promise.all([
         api.get<{ data: { class: ClassDetail; studentsCount: number; trailsCount: number } }>(
           `/api/${slug}/classes/${classId}`,
         ),
         api.get<{ data: ClassStudent[] }>(`/api/${slug}/classes/${classId}/students`),
+        api.get<{ data: ClassTrail[] }>(`/api/${slug}/classes/${classId}/trails`),
       ])
       setCls(detailRes.data.class)
       setStudents(studentsRes.data)
+      setTrails(trailsRes.data)
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar turma.')
     } finally {
@@ -334,6 +449,25 @@ export default function ClassDetailPage() {
     await api.delete(`/api/${slug}/classes/${classId}/students/${removeTarget.id}`)
     setRemoveTarget(null)
     setToast('Aluno removido da turma.')
+    await load()
+  }
+
+  async function handleAssignTrail(trailId: string, visualBlocksEnabled: boolean) {
+    if (!slug || !classId) return
+    await api.post(`/api/${slug}/classes/${classId}/trails`, {
+      trailId,
+      order: trails.length,
+      visualBlocksEnabled,
+    })
+    setAssignTrailOpen(false)
+    setToast('Trilha atribuída à turma.')
+    await load()
+  }
+
+  async function handleRemoveTrail(trailId: string) {
+    if (!slug || !classId) return
+    await api.delete(`/api/${slug}/classes/${classId}/trails/${trailId}`)
+    setToast('Trilha removida da turma.')
     await load()
   }
 
@@ -431,7 +565,51 @@ export default function ClassDetailPage() {
         </div>
       )}
 
+      {/* ── Trilhas da turma ── */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Trilhas da turma</h2>
+        <button className={styles.btnSecondary} onClick={() => setAssignTrailOpen(true)}>
+          <IconPlus />
+          Atribuir trilha
+        </button>
+      </div>
+
+      {trails.length === 0 ? (
+        <div className={styles.emptyInline}>
+          <span>Nenhuma trilha atribuída. Atribua uma trilha ativada da escola.</span>
+        </div>
+      ) : (
+        <div className={styles.table}>
+          {trails.map((t) => (
+            <div key={t.id} className={styles.tableRow}>
+              <div className={styles.colName}>
+                <span className={styles.studentName}>{t.title}</span>
+                {t.visualBlocksEnabled && <span className={styles.blocksBadge}>blocos</span>}
+              </div>
+              <div className={styles.colActions}>
+                <button
+                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                  onClick={() => handleRemoveTrail(t.id)}
+                  aria-label={`Remover trilha ${t.title}`}
+                  title="Remover da turma"
+                >
+                  <IconTrash />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Modais ── */}
+      {assignTrailOpen && (
+        <AssignTrailModal
+          assignedIds={new Set(trails.map((t) => t.id))}
+          nextOrder={trails.length}
+          onClose={() => setAssignTrailOpen(false)}
+          onAssign={handleAssignTrail}
+        />
+      )}
       {addModalOpen && (
         <AddStudentModal
           excludeIds={excludeIds}

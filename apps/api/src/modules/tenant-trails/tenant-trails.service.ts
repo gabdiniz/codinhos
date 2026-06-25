@@ -6,7 +6,7 @@ import {
   updateTenantTrailOrder,
   deactivateTrail,
 } from './tenant-trails.repository.js'
-import { findTrailById } from '../catalog/catalog.repository.js'
+import { findTrailById, listTrails } from '../catalog/catalog.repository.js'
 import { ConflictError, NotFoundError } from '../../shared/errors/index.js'
 import type { ActivateTrailBody, ReorderTrailBody } from './tenant-trails.schema.js'
 
@@ -14,6 +14,26 @@ export async function getTenantTrails(tenantId: string) {
   const rows = await listTenantTrails(tenantId)
   return { data: rows }
 }
+
+export async function getAvailableTrails(tenantId: string) {
+  // Catálogo global + flag de já-ativada-no-tenant, para o gestor escolher o que ativar.
+  const [catalog, activated] = await Promise.all([
+    listTrails({ page: 1, limit: 200 }),
+    listTenantTrails(tenantId),
+  ])
+  const activatedIds = new Set(activated.map((t) => t.id))
+  return {
+    data: catalog.rows.map((t) => ({
+      id: t.id,
+      slug: t.slug,
+      title: t.title,
+      description: t.description,
+      language: t.language,
+      activated: activatedIds.has(t.id),
+    })),
+  }
+}
+
 
 export async function activateTenantTrail(tenantId: string, body: ActivateTrailBody) {
   const trail = await findTrailById(body.trailId)
