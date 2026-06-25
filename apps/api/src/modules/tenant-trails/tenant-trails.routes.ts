@@ -5,6 +5,7 @@ import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
 import {
   getTenantTrails,
+  getAvailableTrails,
   activateTenantTrail,
   reorderTenantTrail,
   deactivateTenantTrail,
@@ -15,6 +16,7 @@ import {
   activateTrailBodySchema,
   reorderTrailBodySchema,
   listTenantTrailsResponseSchema,
+  availableTrailsResponseSchema,
   tenantTrailResponseSchema,
   messageResponseSchema,
 } from './tenant-trails.schema.js'
@@ -41,6 +43,19 @@ export async function tenantTrailsRoutes(app: FastifyInstance) {
   )
 
   // POST /:slug/trails — ativa trilha do catálogo (manager)
+  // GET /:slug/trails/available — catálogo global p/ o gestor ativar (manager)
+  f.get(
+    '/:slug/trails/available',
+    {
+      schema: { params: slugParamsSchema, response: { 200: availableTrailsResponseSchema } },
+      preHandler: writeGuard,
+    },
+    async (req, reply) => {
+      const result = await getAvailableTrails(req.resolvedTenantId)
+      return reply.status(200).send(result)
+    },
+  )
+
   f.post(
     '/:slug/trails',
     {

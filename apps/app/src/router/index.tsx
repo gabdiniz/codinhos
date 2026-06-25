@@ -27,6 +27,7 @@ const PortfolioPage = lazy(() => import('../pages/student/PortfolioPage.tsx'))
 const ManagerDashboardPage = lazy(() => import('../pages/manager/DashboardPage.tsx'))
 const ClassesPage = lazy(() => import('../pages/manager/ClassesPage.tsx'))
 const ClassDetailPage = lazy(() => import('../pages/manager/ClassDetailPage.tsx'))
+const TrailsPage = lazy(() => import('../pages/manager/TrailsPage.tsx'))
 const StudentsPage = lazy(() => import('../pages/manager/StudentsPage.tsx'))
 const SettingsPage = lazy(() => import('../pages/manager/SettingsPage.tsx'))
 
@@ -157,6 +158,10 @@ export const router = createBrowserRouter([
           {
             path: 'manager/classes/:classId',
             element: <Page component={ClassDetailPage} />,
+          },
+          {
+            path: 'manager/trails',
+            element: <Page component={TrailsPage} />,
           },
           {
             path: 'manager/students',
