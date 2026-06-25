@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
 import styles from './TrailsPage.module.css'
 
@@ -102,9 +102,77 @@ function ActivateModal({ onClose, onActivated }: { onClose: () => void; onActiva
 
 // ─── TrailsPage ───────────────────────────────────────────────────────────────
 
+interface OwnTrail {
+  id: string
+  slug: string
+  title: string
+  description: string | null
+  language: Language
+  order: number
+}
+
+function CreateTrailModal({ onClose }: { onClose: () => void }) {
+  const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
+  const [title, setTitle] = useState('')
+  const [language, setLanguage] = useState<Language>('javascript')
+  const [description, setDescription] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!slug) return
+    setSaving(true); setError(null)
+    try {
+      const res = await api.post<{ data: { trail: { id: string } } }>(`/api/${slug}/authoring/trails`, {
+        title: title.trim(),
+        language,
+        description: description.trim() || undefined,
+      })
+      navigate(`/${slug}/manager/trails/edit/${res.data.trail.id}`)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao criar trilha.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
+      <form className={styles.modal} onClick={(e) => e.stopPropagation()} onSubmit={submit}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Criar trilha própria</h2>
+          <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Fechar">×</button>
+        </div>
+        <div className={styles.modalBody}>
+          <label className={styles.formLabel}>Título
+            <input className={styles.formInput} value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
+          </label>
+          <label className={styles.formLabel}>Linguagem
+            <select className={styles.formInput} value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+            </select>
+          </label>
+          <label className={styles.formLabel}>Descrição (opcional)
+            <textarea className={styles.formInput} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </label>
+          {error && <p className={styles.formError}>{error}</p>}
+          <div className={styles.formActions}>
+            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancelar</button>
+            <button type="submit" className={styles.btnPrimary} disabled={saving}>{saving ? 'Criando...' : 'Criar e editar'}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function TrailsPage() {
   const { slug } = useParams<{ slug: string }>()
   const [trails, setTrails] = useState<TenantTrail[]>([])
+  const [ownTrails, setOwnTrails] = useState<OwnTrail[]>([])
+  const [createOpen, setCreateOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -115,8 +183,12 @@ export default function TrailsPage() {
     if (!slug) return
     setLoadError(null)
     try {
-      const res = await api.get<{ data: TenantTrail[] }>(`/api/${slug}/trails`)
+      const [res, ownRes] = await Promise.all([
+        api.get<{ data: TenantTrail[] }>(`/api/${slug}/trails`),
+        api.get<{ data: OwnTrail[] }>(`/api/${slug}/authoring/trails`),
+      ])
       setTrails(res.data)
+      setOwnTrails(ownRes.data)
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar trilhas.')
     } finally {
@@ -140,6 +212,20 @@ export default function TrailsPage() {
       await load()
     } catch (err) {
       setToast(err instanceof ApiError ? err.message : 'Erro ao desativar.')
+    } finally {
+      setRemoving(null)
+    }
+  }
+
+  async function deleteOwn(trailId: string) {
+    if (!slug) return
+    setRemoving(trailId)
+    try {
+      await api.delete(`/api/${slug}/authoring/trails/${trailId}`)
+      setToast('Trilha removida.')
+      await load()
+    } catch (err) {
+      setToast(err instanceof ApiError ? err.message : 'Erro ao remover.')
     } finally {
       setRemoving(null)
     }
@@ -181,6 +267,32 @@ export default function TrailsPage() {
         </div>
       )}
 
+      {/* ── Minhas trilhas (autoria própria) ── */}
+      <div className={styles.ownHeader}>
+        <h2 className={styles.sectionTitle}>Minhas trilhas</h2>
+        <button className={styles.btnPrimary} onClick={() => setCreateOpen(true)}>+ Criar trilha própria</button>
+      </div>
+      {ownTrails.length === 0 ? (
+        <div className={styles.emptyInline}>Nenhuma trilha própria ainda. Crie trilhas exclusivas da sua escola.</div>
+      ) : (
+        <div className={styles.grid}>
+          {ownTrails.map((t) => (
+            <div key={t.id} className={styles.card}>
+              <div className={styles.cardHead}>
+                <h3 className={styles.cardTitle}>{t.title}</h3>
+                <span className={styles.badge}>{LANG_LABEL[t.language]}</span>
+              </div>
+              {t.description && <p className={styles.cardDesc}>{t.description}</p>}
+              <div className={styles.ownActions}>
+                <Link to={`/${slug}/manager/trails/edit/${t.id}`} className={styles.btnEdit}>Editar conteúdo</Link>
+                <button className={styles.btnDanger} onClick={() => deleteOwn(t.id)} disabled={removing === t.id}>Excluir</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {createOpen && <CreateTrailModal onClose={() => setCreateOpen(false)} />}
       {modalOpen && (
         <ActivateModal onClose={() => setModalOpen(false)} onActivated={() => { setModalOpen(false); setToast('Trilha ativada.'); load() }} />
       )}
