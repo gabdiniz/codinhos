@@ -95,6 +95,9 @@ export async function findTrailWithModules(trailId: string) {
     id: string
     moduleId: string
     title: string
+    description: string | null
+    starterCode: string | null
+    testCases: TestCase[] | null
     difficulty: 'easy' | 'medium' | 'hard'
     order: number
     baseXp: number
@@ -106,6 +109,9 @@ export async function findTrailWithModules(trailId: string) {
         id: challenges.id,
         moduleId: challenges.moduleId,
         title: challenges.title,
+        description: challenges.description,
+        starterCode: challenges.starterCode,
+        testCases: challenges.testCases,
         difficulty: challenges.difficulty,
         order: challenges.order,
         baseXp: challenges.baseXp,

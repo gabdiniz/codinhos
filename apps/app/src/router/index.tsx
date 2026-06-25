@@ -46,6 +46,8 @@ const GuardianChildDetailPage = lazy(() => import('../pages/guardian/ChildDetail
 const TenantsPage = lazy(() => import('../pages/admin/TenantsPage.tsx'))
 const BadgesPage = lazy(() => import('../pages/admin/BadgesPage.tsx'))
 const AdminUsersPage = lazy(() => import('../pages/admin/UsersPage.tsx'))
+const CatalogPage = lazy(() => import('../pages/admin/CatalogPage.tsx'))
+const AdminTrailPage = lazy(() => import('../pages/admin/AdminTrailPage.tsx'))
 
 // Fallback de carregamento
 function PageLoader() {
@@ -244,6 +246,14 @@ export const router = createBrowserRouter([
           {
             path: 'admin/users',
             element: <Page component={AdminUsersPage} />,
+          },
+          {
+            path: 'admin/catalog',
+            element: <Page component={CatalogPage} />,
+          },
+          {
+            path: 'admin/catalog/edit/:trailId',
+            element: <Page component={AdminTrailPage} />,
           },
           {
             path: 'admin',
