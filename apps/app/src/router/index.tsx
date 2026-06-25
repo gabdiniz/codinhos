@@ -12,6 +12,7 @@ import { lazy, Suspense } from 'react'
 
 const LoginPage = lazy(() => import('../pages/LoginPage.tsx'))
 const ParentalConsentPage = lazy(() => import('../pages/ParentalConsentPage.tsx'))
+const SetPasswordPage = lazy(() => import('../pages/SetPasswordPage.tsx'))
 
 // Student
 const StudentDashboardPage = lazy(() => import('../pages/student/DashboardPage.tsx'))
@@ -86,6 +87,16 @@ export const router = createBrowserRouter([
       {
         path: 'consentimento-parental',
         element: <Page component={ParentalConsentPage} />,
+      },
+
+      // Definição de senha (público): convite (accept-invite) e recuperação (reset-password)
+      {
+        path: 'accept-invite',
+        element: <Page component={SetPasswordPage} />,
+      },
+      {
+        path: 'reset-password',
+        element: <Page component={SetPasswordPage} />,
       },
 
       // -- Area do aluno (layout route) -----------------------------------------
