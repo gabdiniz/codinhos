@@ -9,6 +9,7 @@ import { tenantsRoutes } from './modules/tenants/tenants.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { catalogRoutes } from './modules/catalog/catalog.routes.js'
 import { tenantTrailsRoutes } from './modules/tenant-trails/tenant-trails.routes.js'
+import { authoringRoutes } from './modules/authoring/authoring.routes.js'
 import { classesRoutes } from './modules/classes/classes.routes.js'
 import { integrationsRoutes } from './modules/integrations/integrations.routes.js'
 import { guardiansRoutes } from './modules/guardians/guardians.routes.js'
@@ -103,6 +104,7 @@ export async function createApp() {
   await app.register(usersRoutes, { prefix: '/api' })
   await app.register(catalogRoutes, { prefix: '/api' })
   await app.register(tenantTrailsRoutes, { prefix: '/api' })
+  await app.register(authoringRoutes, { prefix: '/api' })
   await app.register(classesRoutes, { prefix: '/api' })
   await app.register(integrationsRoutes, { prefix: '/api' })
   await app.register(guardiansRoutes, { prefix: '/api' })

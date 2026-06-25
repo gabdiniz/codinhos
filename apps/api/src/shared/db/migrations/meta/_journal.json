@@ -50,6 +50,13 @@
       "when": 1782312690918,
       "tag": "0006_vocabulary_modulo",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1782415295110,
+      "tag": "0007_trail_tenant_autoria",
+      "breakpoints": true
     }
   ]
 }

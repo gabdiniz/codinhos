@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or, isNull } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import { tenantTrails, trails } from '../../shared/db/schema.js'
 
@@ -77,4 +77,29 @@ export async function deactivateTrail(tenantId: string, trailId: string) {
   await db
     .delete(tenantTrails)
     .where(and(eq(tenantTrails.tenantId, tenantId), eq(tenantTrails.trailId, trailId)))
+}
+
+/** Trilhas que o tenant pode ativar: catálogo global (tenant_id NULL) + as próprias. */
+export async function listAvailableTrailsForTenant(tenantId: string) {
+  return db
+    .select({
+      id: trails.id,
+      slug: trails.slug,
+      title: trails.title,
+      description: trails.description,
+      language: trails.language,
+    })
+    .from(trails)
+    .where(or(isNull(trails.tenantId), eq(trails.tenantId, tenantId)))
+    .orderBy(trails.order)
+}
+
+/** Valida que a trilha pode ser ativada por este tenant (global OU própria). */
+export async function findActivatableTrail(trailId: string, tenantId: string) {
+  const [row] = await db
+    .select({ id: trails.id })
+    .from(trails)
+    .where(and(eq(trails.id, trailId), or(isNull(trails.tenantId), eq(trails.tenantId, tenantId))))
+    .limit(1)
+  return row ?? null
 }

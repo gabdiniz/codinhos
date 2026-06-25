@@ -144,6 +144,9 @@ export const guardianStudents = pgTable('guardian_students', {
 
 export const trails = pgTable('trails', {
   id: uuid('id').defaultRandom().primaryKey(),
+  // tenant_id NULL = trilha do catálogo global (Super Admin); preenchido = trilha
+  // própria de uma escola (autoria do gestor, Sprint 9). Ver scoping no catalog/authoring.
+  tenantId: uuid('tenant_id').references(() => tenants.id),
   slug: varchar('slug', { length: 100 }).unique().notNull(),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
