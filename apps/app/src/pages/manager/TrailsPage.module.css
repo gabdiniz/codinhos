@@ -37,3 +37,25 @@
 .stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
 .stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--color-text); color: var(--color-background); font-family: var(--font-sans); font-size: 0.88rem; padding: 0.7rem 1.3rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 60; }
+
+/* ── Minhas trilhas (autoria) ── */
+.ownHeader { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 2.25rem 0 0.9rem; }
+.sectionTitle { font-family: var(--font-sans); font-size: 1.1rem; font-weight: 650; color: var(--color-text); margin: 0; }
+.emptyInline { padding: 1.25rem; text-align: center; border: 1px dashed var(--color-border); border-radius: var(--radius-md); font-family: var(--font-sans); font-size: 0.88rem; color: var(--color-text-muted); }
+.ownActions { display: flex; gap: 0.5rem; align-items: center; }
+.btnEdit { font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; text-decoration: none; background: var(--color-primary); color: var(--color-on-primary); border-radius: var(--radius-sm); padding: 0.4rem 0.85rem; }
+.formLabel { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-sans); font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 0.7rem; }
+.formInput { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-text); background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.55rem 0.7rem; box-sizing: border-box; width: 100%; }
+.formInput:focus { outline: none; border-color: var(--color-primary); }
+.formActions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.4rem; }
+.btnGhost { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; cursor: pointer; background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.5rem 1rem; }
+
+/* ── Ajuda / manual ── */
+.ownHeaderTitle { display: flex; align-items: center; gap: 0.75rem; }
+.helpBtn { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; background: none; color: var(--color-primary); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.25rem 0.7rem; }
+.helpBtn:hover { border-color: var(--color-primary); }
+.hint { font-family: var(--font-sans); font-size: 0.72rem; color: var(--color-text-muted); line-height: 1.4; }
+.manual { font-family: var(--font-sans); font-size: 0.88rem; color: var(--color-text); line-height: 1.55; display: flex; flex-direction: column; gap: 0.7rem; }
+.manual code { font-family: var(--font-mono); font-size: 0.82rem; background: var(--color-surface-raised); padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); }
+.manualList { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.manualFlow { background: var(--color-surface-raised); border-radius: var(--radius-md); padding: 0.7rem 0.9rem; }
