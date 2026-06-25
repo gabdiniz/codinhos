@@ -1,4 +1,4 @@
-import { count, eq, inArray } from 'drizzle-orm'
+import { count, eq, inArray, and, isNull } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import {
   trails,
@@ -21,7 +21,12 @@ type ListTrailsOptions = {
 }
 
 export async function listTrails({ language, page, limit }: ListTrailsOptions) {
-  const where = language !== undefined ? eq(trails.language, language) : undefined
+  // Catálogo = só trilhas globais (tenant_id NULL). Trilhas próprias de escola
+  // (autoria do gestor) NÃO aparecem aqui — evita vazamento entre tenants.
+  const where =
+    language !== undefined
+      ? and(isNull(trails.tenantId), eq(trails.language, language))
+      : isNull(trails.tenantId)
 
   const [rows, [{ value: total }]] = await Promise.all([
     db
@@ -55,7 +60,7 @@ export async function findTrailById(id: string) {
       order: trails.order,
     })
     .from(trails)
-    .where(eq(trails.id, id))
+    .where(and(eq(trails.id, id), isNull(trails.tenantId)))
     .limit(1)
   return trail ?? null
 }
