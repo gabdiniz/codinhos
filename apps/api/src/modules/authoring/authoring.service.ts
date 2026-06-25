@@ -29,6 +29,7 @@ import {
 } from '../catalog/catalog.repository.js'
 import { activateTrail, deactivateTrail, nextTenantTrailOrder, findTenantTrail } from '../tenant-trails/tenant-trails.repository.js'
 import { ConflictError, NotFoundError } from '../../shared/errors/index.js'
+import type { TestCase } from '../../shared/db/schema.js'
 import type {
   CreateTrailBody,
   UpdateTrailBody,
@@ -161,7 +162,7 @@ export async function addMyChallenge(tenantId: string, moduleId: string, body: C
     title: body.title,
     description: body.description,
     starterCode: body.starterCode,
-    testCases: body.testCases,
+    testCases: body.testCases as TestCase[] | undefined,
     difficulty: body.difficulty,
     baseXp: body.baseXp ?? 10,
     order,
@@ -176,7 +177,7 @@ export async function updateMyChallenge(tenantId: string, challengeId: string, b
     title: body.title,
     description: body.description,
     starterCode: body.starterCode,
-    testCases: body.testCases,
+    testCases: body.testCases as TestCase[] | null | undefined,
     difficulty: body.difficulty,
     baseXp: body.baseXp,
   })
