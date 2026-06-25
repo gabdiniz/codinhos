@@ -16,7 +16,7 @@ export const createBadgeBodySchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Slug deve conter apenas letras minúsculas, números e hífens'),
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  iconUrl: z.string().url().optional(),
+  iconUrl: z.string().url().max(500, 'URL do ícone muito longa (máx. 500) — use um link hospedado, não uma imagem embutida (data URL)').optional(),
   triggerType: z.string().min(1).max(100),
   triggerValue: z.number().int().nonnegative(),
 })
@@ -24,7 +24,7 @@ export const createBadgeBodySchema = z.object({
 export const updateBadgeBodySchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
-  iconUrl: z.string().url().optional(),
+  iconUrl: z.string().url().max(500, 'URL do ícone muito longa (máx. 500) — use um link hospedado, não uma imagem embutida (data URL)').optional(),
   triggerType: z.string().min(1).max(100).optional(),
   triggerValue: z.number().int().nonnegative().optional(),
 })
