@@ -72,10 +72,22 @@ function ModuleForm({ initial, onClose, onSave }: {
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <form className={styles.modal} onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <h2 className={styles.modalTitle}>{initial ? 'Editar módulo' : 'Novo módulo'}</h2>
-        <label className={styles.label}>Título<input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} required /></label>
-        <label className={styles.label}>Conceito (markdown)<textarea className={styles.textarea} value={concept} onChange={(e) => setConcept(e.target.value)} rows={3} /></label>
-        <label className={styles.label}>Código de exemplo<textarea className={`${styles.textarea} ${styles.mono}`} value={exampleCode} onChange={(e) => setExampleCode(e.target.value)} rows={3} /></label>
-        <label className={styles.label}>Vocabulário (separado por vírgula)<input className={styles.input} value={vocabulary} onChange={(e) => setVocabulary(e.target.value)} placeholder="let, const, if, console" /></label>
+        <label className={styles.label}>Título
+          <input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex.: Variáveis e tipos" />
+          <small className={styles.hint}>Nome da lição (o aluno vê na trilha).</small>
+        </label>
+        <label className={styles.label}>Conceito (markdown)
+          <textarea className={styles.textarea} value={concept} onChange={(e) => setConcept(e.target.value)} rows={3} placeholder="Ex.: Uma variável guarda um valor que pode mudar. Use let para declarar." />
+          <small className={styles.hint}>A teoria que aparece para o aluno antes de resolver o desafio.</small>
+        </label>
+        <label className={styles.label}>Código de exemplo
+          <textarea className={`${styles.textarea} ${styles.mono}`} value={exampleCode} onChange={(e) => setExampleCode(e.target.value)} rows={3} placeholder={"let nome = 'Ana'\nconsole.log(nome)"} />
+          <small className={styles.hint}>Um trecho curto demonstrando o conceito.</small>
+        </label>
+        <label className={styles.label}>Vocabulário (separado por vírgula)
+          <input className={styles.input} value={vocabulary} onChange={(e) => setVocabulary(e.target.value)} placeholder="let, const, if, console" />
+          <small className={styles.hint}>Termos que o autocomplete do aluno vai sugerir aqui (acumula com os módulos anteriores).</small>
+        </label>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.actions}>
           <button type="button" className={styles.btnGhost} onClick={onClose}>Cancelar</button>
@@ -132,22 +144,35 @@ function ChallengeForm({ initial, onClose, onSave }: {
     <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
       <form className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <h2 className={styles.modalTitle}>{initial ? 'Editar desafio' : 'Novo desafio'}</h2>
-        <label className={styles.label}>Título<input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} required /></label>
-        <label className={styles.label}>Descrição<textarea className={styles.textarea} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></label>
-        <label className={styles.label}>Código inicial (starter)<textarea className={`${styles.textarea} ${styles.mono}`} value={starterCode} onChange={(e) => setStarterCode(e.target.value)} rows={3} /></label>
+        <label className={styles.label}>Título
+          <input className={styles.input} value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ex.: Some dois números" />
+          <small className={styles.hint}>Nome do exercício.</small>
+        </label>
+        <label className={styles.label}>Descrição
+          <textarea className={styles.textarea} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Ex.: Escreva a função soma(a, b) que retorna a + b." />
+          <small className={styles.hint}>O enunciado que o aluno lê.</small>
+        </label>
+        <label className={styles.label}>Código inicial (starter)
+          <textarea className={`${styles.textarea} ${styles.mono}`} value={starterCode} onChange={(e) => setStarterCode(e.target.value)} rows={3} placeholder={"function soma(a, b) {\n  // seu código aqui\n}"} />
+          <small className={styles.hint}>Código que já vem preenchido no editor do aluno.</small>
+        </label>
         <div className={styles.rowTwo}>
           <label className={styles.label}>Dificuldade
             <select className={styles.input} value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)}>
               <option value="easy">Fácil</option><option value="medium">Médio</option><option value="hard">Difícil</option>
             </select>
           </label>
-          <label className={styles.label}>XP base<input className={styles.input} type="number" min={1} value={baseXp} onChange={(e) => setBaseXp(e.target.value)} /></label>
+          <label className={styles.label}>XP base
+            <input className={styles.input} type="number" min={1} value={baseXp} onChange={(e) => setBaseXp(e.target.value)} />
+            <small className={styles.hint}>Pontos ao concluir.</small>
+          </label>
         </div>
 
         <div className={styles.testsHead}>
-          <span className={styles.label}>Casos de teste (input/esperado em JSON)</span>
+          <span className={styles.label}>Casos de teste</span>
           <button type="button" className={styles.btnGhostSm} onClick={addRow}>+ caso</button>
         </div>
+        <small className={styles.hint}>O aluno escreve uma função; o sistema chama com o <b>input</b> e compara o retorno com o <b>esperado</b>. Use JSON: texto entre aspas (<code>&quot;oi&quot;</code>), números e listas sem aspas (<code>[2, 3]</code>, <code>5</code>).</small>
         {rows.map((r, i) => (
           <div key={i} className={styles.testRow}>
             <input className={`${styles.input} ${styles.mono}`} value={r.input} onChange={(e) => setRow(i, 'input', e.target.value)} placeholder='input (ex: [2,3])' />

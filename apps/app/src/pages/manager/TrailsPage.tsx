@@ -146,16 +146,19 @@ function CreateTrailModal({ onClose }: { onClose: () => void }) {
         </div>
         <div className={styles.modalBody}>
           <label className={styles.formLabel}>Título
-            <input className={styles.formInput} value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
+            <input className={styles.formInput} value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus placeholder="Ex.: Lógica com JavaScript" />
+            <small className={styles.hint}>Nome da trilha que o aluno vê na lista.</small>
           </label>
           <label className={styles.formLabel}>Linguagem
             <select className={styles.formInput} value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
             </select>
+            <small className={styles.hint}>Linguagem dos desafios desta trilha.</small>
           </label>
           <label className={styles.formLabel}>Descrição (opcional)
-            <textarea className={styles.formInput} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <textarea className={styles.formInput} value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Ex.: Primeiros passos em programação, com variáveis e condições." />
+            <small className={styles.hint}>Texto curto que resume a trilha.</small>
           </label>
           {error && <p className={styles.formError}>{error}</p>}
           <div className={styles.formActions}>
@@ -168,11 +171,40 @@ function CreateTrailModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+function ManualModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Como montar uma trilha</h2>
+          <button type="button" className={styles.modalClose} onClick={onClose} aria-label="Fechar">×</button>
+        </div>
+        <div className={styles.modalBody}>
+          <div className={styles.manual}>
+            <p><strong>Trilha</strong> é um curso — ex.: <em>"Lógica com JavaScript"</em>. Ela é dividida em módulos.</p>
+            <p><strong>Módulo</strong> é uma lição: tem um <em>conceito</em> (a teoria), um <em>código de exemplo</em> e o <em>vocabulário</em> ensinado. Ex.: <em>"Variáveis"</em>. Cada módulo tem um ou mais desafios.</p>
+            <p><strong>Desafio</strong> é o exercício prático: o aluno escreve código no editor e o sistema corrige automaticamente pelos <em>casos de teste</em>.</p>
+            <p><strong>Casos de teste</strong> — o coração da correção. O aluno escreve uma função; para cada caso, o sistema chama a função com o <code>input</code> e compara o retorno com o <code>esperado</code>. Escreva os dois em <strong>JSON</strong>:</p>
+            <ul className={styles.manualList}>
+              <li>Função que soma dois números → input <code>[2, 3]</code>, esperado <code>5</code></li>
+              <li>Função que deixa em maiúsculas → input <code>["oi"]</code>, esperado <code>"OI"</code></li>
+              <li>Texto entre aspas; números e listas sem aspas.</li>
+            </ul>
+            <p><strong>Vocabulário</strong> são os termos (ex.: <code>let</code>, <code>const</code>, <code>if</code>) que o autocomplete do aluno vai sugerir — só o que já foi ensinado até aquele módulo.</p>
+            <p className={styles.manualFlow}><strong>Fluxo:</strong> Criar trilha → adicionar módulos → adicionar desafios → a trilha já fica ativa → <em>Atribuir à turma</em> → o aluno aprende.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TrailsPage() {
   const { slug } = useParams<{ slug: string }>()
   const [trails, setTrails] = useState<TenantTrail[]>([])
   const [ownTrails, setOwnTrails] = useState<OwnTrail[]>([])
   const [createOpen, setCreateOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -269,7 +301,10 @@ export default function TrailsPage() {
 
       {/* ── Minhas trilhas (autoria própria) ── */}
       <div className={styles.ownHeader}>
-        <h2 className={styles.sectionTitle}>Minhas trilhas</h2>
+        <div className={styles.ownHeaderTitle}>
+          <h2 className={styles.sectionTitle}>Minhas trilhas</h2>
+          <button type="button" className={styles.helpBtn} onClick={() => setManualOpen(true)}>Como funciona?</button>
+        </div>
         <button className={styles.btnPrimary} onClick={() => setCreateOpen(true)}>+ Criar trilha própria</button>
       </div>
       {ownTrails.length === 0 ? (
@@ -292,6 +327,7 @@ export default function TrailsPage() {
         </div>
       )}
 
+      {manualOpen && <ManualModal onClose={() => setManualOpen(false)} />}
       {createOpen && <CreateTrailModal onClose={() => setCreateOpen(false)} />}
       {modalOpen && (
         <ActivateModal onClose={() => setModalOpen(false)} onActivated={() => { setModalOpen(false); setToast('Trilha ativada.'); load() }} />

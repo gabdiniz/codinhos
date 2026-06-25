@@ -50,3 +50,6 @@
 .stateText { font-family: var(--font-mono); font-size: 0.9rem; color: var(--color-text-muted); }
 .stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
 .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--color-text); color: var(--color-background); font-family: var(--font-sans); font-size: 0.88rem; padding: 0.7rem 1.3rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 60; }
+
+.hint { font-family: var(--font-sans); font-size: 0.72rem; color: var(--color-text-muted); line-height: 1.4; }
+.hint code { font-family: var(--font-mono); background: var(--color-surface-raised); padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); }

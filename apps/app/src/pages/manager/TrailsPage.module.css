@@ -49,3 +49,13 @@
 .formInput:focus { outline: none; border-color: var(--color-primary); }
 .formActions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.4rem; }
 .btnGhost { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; cursor: pointer; background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.5rem 1rem; }
+
+/* ── Ajuda / manual ── */
+.ownHeaderTitle { display: flex; align-items: center; gap: 0.75rem; }
+.helpBtn { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; background: none; color: var(--color-primary); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0.25rem 0.7rem; }
+.helpBtn:hover { border-color: var(--color-primary); }
+.hint { font-family: var(--font-sans); font-size: 0.72rem; color: var(--color-text-muted); line-height: 1.4; }
+.manual { font-family: var(--font-sans); font-size: 0.88rem; color: var(--color-text); line-height: 1.55; display: flex; flex-direction: column; gap: 0.7rem; }
+.manual code { font-family: var(--font-mono); font-size: 0.82rem; background: var(--color-surface-raised); padding: 0.05rem 0.3rem; border-radius: var(--radius-sm); }
+.manualList { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; }
+.manualFlow { background: var(--color-surface-raised); border-radius: var(--radius-md); padding: 0.7rem 0.9rem; }
