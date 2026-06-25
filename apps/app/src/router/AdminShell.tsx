@@ -35,6 +35,15 @@ function IconUsers() {
   )
 }
 
+function IconBook() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+  )
+}
+
 function IconLogout() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -76,6 +85,7 @@ export function AdminShell() {
   const navItems = [
     { to: `/${slug}/admin/tenants`, label: 'Escolas',   icon: <IconBuilding />, end: false },
     { to: `/${slug}/admin/badges`,  label: 'Badges',    icon: <IconAward />,    end: false },
+    { to: `/${slug}/admin/catalog`, label: 'Catálogo',  icon: <IconBook />,     end: false },
     { to: `/${slug}/admin/users`,   label: 'Usuários',  icon: <IconUsers />,    end: false },
   ]
 

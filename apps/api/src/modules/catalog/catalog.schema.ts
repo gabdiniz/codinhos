@@ -104,6 +104,9 @@ const trailSchema = z.object({
 const challengeSummarySchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
+  description: z.string().nullable(),
+  starterCode: z.string().nullable(),
+  testCases: z.any(),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   order: z.number(),
   baseXp: z.number(),
