@@ -73,7 +73,7 @@ export async function findUserByEmailInTenant(
 
 type ListUsersOptions = {
   tenantId: string
-  role?: 'student' | 'manager' | 'professor'
+  role?: 'student' | 'manager' | 'professor' | 'guardian'
   search?: string
   isActive?: boolean
   page: number
