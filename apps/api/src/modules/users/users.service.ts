@@ -53,6 +53,11 @@ async function sendInviteEmail(opts: {
   token: string
 }) {
   const inviteUrl = `${process.env.APP_URL}/${opts.slug}/accept-invite?token=${opts.token}`
+  if (process.env.NODE_ENV !== 'production') {
+    // Em dev não há entrega real de e-mail (Resend); logamos o link com o
+    // token cru para permitir testar o fluxo de convite localmente.
+    console.log(`[dev] Convite para ${opts.to}: ${inviteUrl}`)
+  }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
