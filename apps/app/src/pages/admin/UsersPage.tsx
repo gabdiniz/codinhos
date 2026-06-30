@@ -74,6 +74,11 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  const [resetting, setResetting] = useState<string | null>(null)
+  const [resetLink, setResetLink] = useState<{ name: string; url: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+
   const [roleFilter, setRoleFilter] = useState<UserRole | ''>('')
   const [statusFilter, setStatusFilter] = useState<'true' | 'false' | ''>('')
 
@@ -94,6 +99,36 @@ export default function UsersPage() {
   }, [])
 
   useEffect(() => { load(page, roleFilter, statusFilter) }, [load, page, roleFilter, statusFilter])
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  async function handleReset(u: AdminUser) {
+    setResetting(u.id)
+    try {
+      const res = await api.post<{ data: { message: string; resetUrl: string } }>(
+        `/api/admin/users/${u.id}/reset-password`,
+      )
+      setResetLink({ name: u.name, url: res.data.resetUrl })
+      setCopied(false)
+    } catch (err) {
+      setToast(err instanceof ApiError ? err.message : 'Erro ao disparar reset.')
+    } finally {
+      setResetting(null)
+    }
+  }
+
+  async function copyLink() {
+    if (!resetLink) return
+    try {
+      await navigator.clipboard.writeText(resetLink.url)
+      setCopied(true)
+    } catch {
+      setToast('Não foi possível copiar — selecione e copie manualmente.')
+    }
+  }
 
   function handleFilterChange(newRole: UserRole | '', newStatus: 'true' | 'false' | '') {
     setRoleFilter(newRole)
@@ -164,6 +199,7 @@ export default function UsersPage() {
             <span>Role</span>
             <span>Status</span>
             <span>Tenant ID</span>
+            <span>Ações</span>
           </div>
           {users.map((u) => (
             <div key={u.id} className={styles.tableRow}>
@@ -182,8 +218,41 @@ export default function UsersPage() {
               <span className={styles.tenantId} title={u.tenantId}>
                 {u.tenantId.slice(0, 8)}…
               </span>
+              <span>
+                <button
+                  className={styles.resetBtn}
+                  onClick={() => handleReset(u)}
+                  disabled={resetting === u.id}
+                  title="Disparar redefinição de senha"
+                >
+                  {resetting === u.id ? 'Enviando…' : 'Resetar senha'}
+                </button>
+              </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {resetLink && (
+        <div className={styles.modalOverlay} onClick={() => setResetLink(null)} role="dialog" aria-modal="true">
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Reset enviado</h2>
+              <button className={styles.modalClose} onClick={() => setResetLink(null)} aria-label="Fechar">×</button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.modalText}>
+                Um e-mail de redefinição foi enviado para <strong>{resetLink.name}</strong>. O link expira em 24 horas.
+                Você também pode copiá-lo e repassar por outro canal:
+              </p>
+              <div className={styles.linkBox}>
+                <code className={styles.linkText}>{resetLink.url}</code>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.copyBtn} onClick={copyLink}>{copied ? 'Copiado!' : 'Copiar link'}</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -208,6 +277,8 @@ export default function UsersPage() {
           </button>
         </div>
       )}
+
+      {toast && <div className={styles.toast}>{toast}</div>}
     </div>
   )
 }

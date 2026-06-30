@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
-import { getBadges, createBadge, editBadge, removeBadge, getAdminUsers } from './admin.service.js'
+import { getBadges, createBadge, editBadge, removeBadge, getAdminUsers, adminResetPassword } from './admin.service.js'
 import {
   badgeIdParamsSchema,
   createBadgeBodySchema,
@@ -12,6 +12,8 @@ import {
   badgeResponseSchema,
   messageResponseSchema,
   listAdminUsersResponseSchema,
+  adminUserIdParamsSchema,
+  resetPasswordResponseSchema,
 } from './admin.schema.js'
 
 export async function adminRoutes(app: FastifyInstance) {
@@ -95,6 +97,22 @@ export async function adminRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const result = await getAdminUsers(req.query)
       return reply.status(200).send(result)
+    },
+  )
+
+  // POST /admin/users/:userId/reset-password
+  f.post(
+    '/admin/users/:userId/reset-password',
+    {
+      schema: {
+        params: adminUserIdParamsSchema,
+        response: { 200: resetPasswordResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await adminResetPassword(req.params.userId)
+      return reply.status(200).send({ data: result })
     },
   )
 }

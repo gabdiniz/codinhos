@@ -1,6 +1,6 @@
-import { and, count, eq } from 'drizzle-orm'
+import { and, count, eq, isNull } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
-import { badges, studentBadges, users } from '../../shared/db/schema.js'
+import { badges, studentBadges, users, tenants, passwordResetTokens } from '../../shared/db/schema.js'
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
 
@@ -165,4 +165,39 @@ export async function listAdminUsers(opts: ListAdminUsersOptions) {
   ])
 
   return { rows, total: Number(total) }
+}
+
+// ─── Reset de senha iniciado pelo super admin (cross-tenant) ──────────────────
+
+export async function findUserWithTenantForReset(userId: string) {
+  const [row] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      isActive: users.isActive,
+      slug: tenants.slug,
+    })
+    .from(users)
+    .innerJoin(tenants, eq(tenants.id, users.tenantId))
+    .where(eq(users.id, userId))
+    .limit(1)
+  return row ?? null
+}
+
+export async function invalidateActiveResetTokens(userId: string) {
+  await db
+    .update(passwordResetTokens)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(passwordResetTokens.userId, userId),
+        eq(passwordResetTokens.type, 'reset'),
+        isNull(passwordResetTokens.usedAt),
+      ),
+    )
+}
+
+export async function createResetToken(input: { userId: string; tokenHash: string; expiresAt: Date }) {
+  await db.insert(passwordResetTokens).values({ ...input, type: 'reset' })
 }
