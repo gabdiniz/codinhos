@@ -216,6 +216,17 @@ export async function assignTeacher(classId: string, tenantId: string, body: Ass
   return { classTeacher }
 }
 
+export async function getTeacherClasses(teacherId: string, tenantId: string) {
+  // Valida que o alvo existe e é professor do tenant
+  const teacher = await findUserById(teacherId, tenantId)
+  if (!teacher) throw new NotFoundError('Usuário')
+  if (teacher.role !== 'professor') {
+    throw new UnprocessableError('Usuário não é um professor')
+  }
+  const classIds = await listTeacherClassIds(teacherId, tenantId)
+  return { data: classIds }
+}
+
 export async function removeTeacher(classId: string, teacherId: string, tenantId: string) {
   const cls = await findClassById(classId, tenantId)
   if (!cls) throw new NotFoundError('Turma')

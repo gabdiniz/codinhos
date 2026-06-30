@@ -30,6 +30,8 @@ const ClassDetailPage = lazy(() => import('../pages/manager/ClassDetailPage.tsx'
 const TrailsPage = lazy(() => import('../pages/manager/TrailsPage.tsx'))
 const AuthoringTrailPage = lazy(() => import('../pages/manager/AuthoringTrailPage.tsx'))
 const StudentsPage = lazy(() => import('../pages/manager/StudentsPage.tsx'))
+const ProfessorsPage = lazy(() => import('../pages/manager/ProfessorsPage.tsx'))
+const ProfessorDetailPage = lazy(() => import('../pages/manager/ProfessorDetailPage.tsx'))
 const SettingsPage = lazy(() => import('../pages/manager/SettingsPage.tsx'))
 
 // Professor
@@ -173,6 +175,14 @@ export const router = createBrowserRouter([
           {
             path: 'manager/students',
             element: <Page component={StudentsPage} />,
+          },
+          {
+            path: 'manager/professors',
+            element: <Page component={ProfessorsPage} />,
+          },
+          {
+            path: 'manager/professors/:userId',
+            element: <Page component={ProfessorDetailPage} />,
           },
           {
             path: 'manager/settings',

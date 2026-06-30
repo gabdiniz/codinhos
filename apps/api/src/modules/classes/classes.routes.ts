@@ -14,6 +14,7 @@ import {
   removeStudent,
   getClassTeachers,
   assignTeacher,
+  getTeacherClasses,
   removeTeacher,
   getClassTrails,
   assignTrail,
@@ -25,6 +26,7 @@ import {
   classParamsSchema,
   studentParamsSchema,
   teacherParamsSchema,
+  teacherClassesParamsSchema,
   classTrailParamsSchema,
   createClassBodySchema,
   updateClassBodySchema,
@@ -38,6 +40,7 @@ import {
   listStudentsResponseSchema,
   classStudentResponseSchema,
   listTeachersResponseSchema,
+  teacherClassesResponseSchema,
   classTeacherResponseSchema,
   listClassTrailsResponseSchema,
   classTrailResponseSchema,
@@ -239,6 +242,22 @@ export async function classesRoutes(app: FastifyInstance) {
     async (req, reply) => {
       await removeTeacher(req.params.classId, req.params.teacherId, req.resolvedTenantId)
       return reply.status(200).send({ data: { message: 'Professor desvinculado da turma' } })
+    },
+  )
+
+  // Turmas atribuídas a um professor (para a tela de professores do gestor)
+  f.get(
+    '/:slug/teachers/:teacherId/classes',
+    {
+      schema: {
+        params: teacherClassesParamsSchema,
+        response: { 200: teacherClassesResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await getTeacherClasses(req.params.teacherId, req.resolvedTenantId)
+      return reply.status(200).send(result)
     },
   )
 

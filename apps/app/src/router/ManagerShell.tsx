@@ -45,6 +45,15 @@ function IconBook() {
   )
 }
 
+function IconChalkboard() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="13" rx="1.5" />
+      <path d="M7 20l2-4M17 20l-2-4M12 16v4" />
+    </svg>
+  )
+}
+
 function IconSettings() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -97,6 +106,7 @@ export function ManagerShell() {
     { to: `/${slug}/manager/classes`,  label: 'Turmas',    icon: <IconLayers />,   end: false },
     { to: `/${slug}/manager/trails`,   label: 'Trilhas',   icon: <IconBook />,     end: false },
     { to: `/${slug}/manager/students`, label: 'Alunos',    icon: <IconUsers />,    end: false },
+    { to: `/${slug}/manager/professors`, label: 'Professores', icon: <IconChalkboard />, end: false },
     { to: `/${slug}/manager/settings`, label: 'Config.',   icon: <IconSettings />, end: false },
   ]
 
