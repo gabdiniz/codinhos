@@ -925,3 +925,10 @@
     height: clamp(240px, 42vh, 420px);
   }
 }
+
+/* ── Próximo desafio (após passar) ── */
+.nextActions { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; flex-wrap: wrap; }
+.btnNext { font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; text-decoration: none; background: var(--color-success); color: var(--color-text-inverse); border-radius: var(--radius-md); padding: 0.6rem 1.2rem; }
+.btnNext:hover { opacity: 0.9; }
+.btnBackTrail { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; text-decoration: none; color: var(--color-text-muted); }
+.btnBackTrail:hover { color: var(--color-primary); }
