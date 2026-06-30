@@ -392,6 +392,117 @@ function EditStudentModal({ slug, student, onClose, onSave }: EditStudentModalPr
 
 // ─── StudentsPage ─────────────────────────────────────────────────────────────
 
+interface ImportResult { created: number; skipped: number; errors: { row: number; reason: string }[] }
+
+function ImportModal({ slug, onClose, onDone }: { slug: string; onClose: () => void; onDone: (msg: string) => void }) {
+  const [file, setFile] = useState<File | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<ImportResult | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose])
+
+  async function downloadTemplate() {
+    setDownloading(true)
+    setError(null)
+    try {
+      const csv = await api.getText(`/api/${slug}/users/template`)
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'modelo-alunos.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao baixar o modelo.')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!file) return
+    setImporting(true)
+    setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await api.upload<{ data: ImportResult }>(`/api/${slug}/users/import`, fd)
+      setResult(res.data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Erro ao importar.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} aria-modal="true" role="dialog">
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>Importar alunos (CSV)</h2>
+          <button className={styles.modalClose} onClick={onClose} aria-label="Fechar"><IconClose /></button>
+        </div>
+
+        {result ? (
+          <div className={styles.modalForm}>
+            <div className={styles.importResult}>
+              <p className={styles.importResultLine}><strong>{result.created}</strong> criado(s) · <strong>{result.skipped}</strong> ignorado(s) · <strong>{result.errors.length}</strong> com erro</p>
+              {result.errors.length > 0 && (
+                <ul className={styles.importErrors}>
+                  {result.errors.map((er, i) => (
+                    <li key={i}>Linha {er.row}: {er.reason}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnPrimary} onClick={() => onDone(`Importação: ${result.created} criado(s), ${result.skipped} ignorado(s).`)}>Concluir</button>
+            </div>
+          </div>
+        ) : (
+          <form className={styles.modalForm} onSubmit={submit}>
+            <p className={styles.importIntro}>
+              Envie um arquivo <code>.csv</code> com as colunas <code>name,email</code> (uma linha por aluno). Todos entram como alunos; e-mails já cadastrados são ignorados.
+            </p>
+            <button type="button" className={styles.btnSecondary} onClick={downloadTemplate} disabled={downloading}>
+              {downloading ? 'Baixando...' : 'Baixar modelo CSV'}
+            </button>
+            <div className={styles.field}>
+              <label className={styles.label}>Arquivo CSV</label>
+              <input
+                ref={fileRef}
+                className={styles.input}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                required
+              />
+            </div>
+            {error && <p className={styles.formError}>{error}</p>}
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={importing}>Cancelar</button>
+              <button type="submit" className={styles.btnPrimary} disabled={importing || !file}>
+                {importing ? 'Importando...' : 'Importar'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function StudentsPage() {
   const { slug } = useParams<{ slug: string }>()
 
@@ -406,6 +517,7 @@ export default function StudentsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   const [showInvite, setShowInvite] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [deactivateTarget, setDeactivateTarget] = useState<Student | null>(null)
   const [editTarget, setEditTarget] = useState<Student | null>(null)
   const [highlightId, setHighlightId] = useState<string | null>(null)
@@ -528,10 +640,13 @@ export default function StudentsPage() {
           <h1 className={styles.pageTitle}>Alunos</h1>
           <p className={styles.pageSubtitle}>{meta.total} aluno{meta.total !== 1 ? 's' : ''} cadastrado{meta.total !== 1 ? 's' : ''}</p>
         </div>
-        <button className={styles.btnPrimary} onClick={() => setShowInvite(true)}>
-          <IconPlus />
-          Convidar aluno
-        </button>
+        <div className={styles.headerActions}>
+          <button className={styles.btnSecondary} onClick={() => setShowImport(true)}>Importar CSV</button>
+          <button className={styles.btnPrimary} onClick={() => setShowInvite(true)}>
+            <IconPlus />
+            Convidar aluno
+          </button>
+        </div>
       </header>
 
       <div className={styles.filters}>
@@ -672,6 +787,13 @@ export default function StudentsPage() {
           slug={slug}
           onClose={() => setShowInvite(false)}
           onSave={handleInvite}
+        />
+      )}
+      {showImport && slug && (
+        <ImportModal
+          slug={slug}
+          onClose={() => setShowImport(false)}
+          onDone={(msg) => { setShowImport(false); setToast(msg); load(page, debouncedSearch, statusFilter) }}
         />
       )}
       {deactivateTarget && (
