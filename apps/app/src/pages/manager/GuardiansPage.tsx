@@ -16,6 +16,22 @@ interface StudentOption {
   email: string
 }
 
+interface StudentsMeta { total: number; page: number; limit: number }
+
+async function fetchAllStudents(slug: string): Promise<StudentOption[]> {
+  const acc: StudentOption[] = []
+  let page = 1
+  for (;;) {
+    const res = await api.get<{ data: StudentOption[]; meta: StudentsMeta }>(
+      `/api/${slug}/users?role=student&page=${page}&limit=100`,
+    )
+    acc.push(...res.data)
+    if (res.data.length === 0 || acc.length >= res.meta.total) break
+    page++
+  }
+  return acc
+}
+
 // ─── Modal: criar responsável ─────────────────────────────────────────────────
 
 function CreateModal({ slug, onClose, onCreated }: { slug: string; onClose: () => void; onCreated: (name: string) => void }) {
@@ -29,9 +45,8 @@ function CreateModal({ slug, onClose, onCreated }: { slug: string; onClose: () =
 
   useEffect(() => {
     let active = true
-    api
-      .get<{ data: StudentOption[] }>(`/api/${slug}/users?role=student&limit=200`)
-      .then((res) => { if (active) setStudents(res.data) })
+    fetchAllStudents(slug)
+      .then((all) => { if (active) setStudents(all) })
       .catch(() => {})
     return () => { active = false }
   }, [slug])
