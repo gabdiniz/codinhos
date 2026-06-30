@@ -77,6 +77,17 @@ const adminUserSchema = z.object({
   createdAt: z.union([z.string(), z.date()]),
 })
 
+export const adminUserIdParamsSchema = z.object({
+  userId: z.string().uuid('ID de usuário inválido'),
+})
+
+export const resetPasswordResponseSchema = z.object({
+  data: z.object({
+    message: z.string(),
+    resetUrl: z.string(),
+  }),
+})
+
 export const listAdminUsersResponseSchema = z.object({
   data: z.array(adminUserSchema),
   meta: z.object({

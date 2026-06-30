@@ -91,7 +91,7 @@
 
 .tableHead {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px 80px 120px;
+  grid-template-columns: 1fr 1fr 100px 80px 120px 120px;
   padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface-raised);
@@ -108,7 +108,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px 80px 120px;
+  grid-template-columns: 1fr 1fr 100px 80px 120px 120px;
   align-items: center;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--color-border);
@@ -273,4 +273,85 @@
   }
   .userName { padding-right: 0; }
   .userEmail { padding-right: 0; }
+}
+
+/* ── Reset de senha (super admin) ── */
+.resetBtn {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.6rem;
+  white-space: nowrap;
+}
+.resetBtn:hover:not(:disabled) { border-color: var(--color-primary); }
+.resetBtn:disabled { opacity: 0.6; cursor: default; }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+.modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow: auto;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+.modalTitle { font-family: var(--font-sans); font-size: 1rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.modalClose { background: none; border: none; font-size: 1.4rem; line-height: 1; color: var(--color-text-muted); cursor: pointer; }
+.modalBody { padding: 1.25rem; }
+.modalText { font-family: var(--font-sans); font-size: 0.88rem; color: var(--color-text); line-height: 1.5; margin: 0 0 0.9rem; }
+.linkBox {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.8rem;
+  overflow-x: auto;
+}
+.linkText { font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-text); word-break: break-all; }
+.modalActions { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.copyBtn {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-md);
+  z-index: 60;
 }
