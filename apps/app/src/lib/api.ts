@@ -36,12 +36,15 @@ async function request<T>(
 ): Promise<T> {
   const url = `${BASE_URL}${path}`
 
+  const isFormData = options.body instanceof FormData
+
   const res = await fetch(url, {
     ...options,
     credentials: 'include', // envia o cookie sessionId httpOnly
     headers: {
-      // Content-Type só quando há body — evita FST_ERR_CTP_EMPTY_JSON_BODY no DELETE
-      ...(options.body !== undefined && { 'Content-Type': 'application/json' }),
+      // Content-Type só para JSON. FormData fica sem (o browser define o
+      // boundary do multipart). DELETE sem body também fica sem.
+      ...(options.body !== undefined && !isFormData && { 'Content-Type': 'application/json' }),
       ...options.headers,
     },
   })
@@ -97,5 +100,19 @@ export const api = {
 
   delete<T>(path: string): Promise<T> {
     return request<T>(path, { method: 'DELETE' })
+  },
+
+  /** Upload multipart (FormData) — usado para importação de CSV. */
+  upload<T>(path: string, formData: FormData): Promise<T> {
+    return request<T>(path, { method: 'POST', body: formData })
+  },
+
+  /** GET que retorna texto cru (ex.: CSV-modelo), não JSON. */
+  async getText(path: string): Promise<string> {
+    const res = await fetch(`${BASE_URL}${path}`, { credentials: 'include' })
+    if (!res.ok) {
+      throw new ApiError(res.status, 'DOWNLOAD_ERROR', `HTTP ${res.status}`)
+    }
+    return res.text()
   },
 }
