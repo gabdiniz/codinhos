@@ -38,6 +38,10 @@ async function sendGuardianInviteEmail(opts: {
   token: string
 }) {
   const inviteUrl = `${process.env.APP_URL}/${opts.slug}/accept-invite?token=${opts.token}`
+  if (process.env.NODE_ENV !== 'production') {
+    // Em dev não há entrega real de e-mail; logamos o link com o token cru.
+    console.log(`[dev] Convite (responsável) para ${opts.to}: ${inviteUrl}`)
+  }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
