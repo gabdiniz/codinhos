@@ -189,7 +189,10 @@ export async function findStudentTrailProgress(studentId: string, tenantId: stri
       trailOrder: tenantTrails.order,
       totalModules: sql<string>`count(distinct ${trailModules.id})`,
       completedModules: sql<string>`count(distinct ${moduleProgress.id}) filter (where ${moduleProgress.status} = 'completed')`,
-      lastActivity: sql<Date | null>`max(${challengeSubmissions.submittedAt})`,
+      // Agregação via sql cru: o postgres.js devolve string (sem o mapeador de
+      // coluna do Drizzle), por isso o tipo é string e a conversão p/ Date é feita
+      // no service via new Date(...).
+      lastActivity: sql<string | null>`max(${challengeSubmissions.submittedAt})`,
     })
     .from(tenantTrails)
     .innerJoin(trails, eq(trails.id, tenantTrails.trailId))

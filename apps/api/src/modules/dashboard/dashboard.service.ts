@@ -125,7 +125,7 @@ export async function getStudentDetail(
           completed: Number(t.completedModules),
           total: Number(t.totalModules),
         },
-        lastActivity: t.lastActivity ? t.lastActivity.toISOString() : null,
+        lastActivity: t.lastActivity ? new Date(t.lastActivity).toISOString() : null,
       })),
     },
   }
