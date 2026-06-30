@@ -28,7 +28,7 @@ export const listUsersQuerySchema = z.object({
 export const createUserBodySchema = z.object({
   name: z.string().min(1).max(255),
   email: z.string().email('E-mail inválido'),
-  role: z.enum(['student', 'manager']),
+  role: z.enum(['student', 'manager', 'professor']),
 })
 
 export const updateUserBodySchema = z.object({

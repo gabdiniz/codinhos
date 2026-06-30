@@ -29,6 +29,15 @@ export const teacherParamsSchema = z.object({
   teacherId: z.string().uuid('ID de professor inválido'),
 })
 
+export const teacherClassesParamsSchema = z.object({
+  slug: z.string(),
+  teacherId: z.string().uuid('ID de professor inválido'),
+})
+
+export const teacherClassesResponseSchema = z.object({
+  data: z.array(z.string().uuid()),
+})
+
 // ─── Bodies ───────────────────────────────────────────────────────────────────
 
 export const createClassBodySchema = z.object({

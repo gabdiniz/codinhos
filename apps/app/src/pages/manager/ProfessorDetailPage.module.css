@@ -1,0 +1,35 @@
+.root { padding: 2rem 2.5rem; max-width: 880px; }
+
+.backLink { display: inline-block; font-family: var(--font-sans); font-size: 0.82rem; color: var(--color-text-muted); text-decoration: none; margin-bottom: 1rem; }
+.backLink:hover { color: var(--color-primary); }
+
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.pageTitle { font-family: var(--font-sans); font-size: 1.5rem; font-weight: 700; color: var(--color-text); margin: 0; }
+.pageSubtitle { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-muted); margin: 0.25rem 0 0; }
+
+.badge { font-family: var(--font-sans); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: var(--radius-sm); white-space: nowrap; height: fit-content; }
+.badgeActive { background: color-mix(in srgb, var(--color-success) 18%, transparent); color: var(--color-success); }
+.badgeInactive { background: color-mix(in srgb, var(--color-text-muted) 18%, transparent); color: var(--color-text-muted); }
+
+.sectionTitle { font-family: var(--font-sans); font-size: 1.05rem; font-weight: 700; color: var(--color-text); margin: 0.5rem 0 0.25rem; }
+.sectionHint { font-family: var(--font-sans); font-size: 0.82rem; color: var(--color-text-muted); margin: 0 0 1rem; }
+
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
+.row { display: flex; align-items: center; gap: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 0.75rem 1.1rem; }
+.info { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.name { font-family: var(--font-sans); font-size: 0.92rem; font-weight: 600; color: var(--color-text); }
+.meta { font-family: var(--font-sans); font-size: 0.76rem; color: var(--color-text-muted); }
+
+.btnAssign { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; cursor: pointer; background: var(--color-primary); color: var(--color-on-primary); border: none; border-radius: var(--radius-sm); padding: 0.4rem 0.9rem; min-width: 92px; }
+.btnAssign:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btnRemove { font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; cursor: pointer; background: none; color: var(--color-error); border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent); border-radius: var(--radius-sm); padding: 0.4rem 0.9rem; min-width: 92px; }
+.btnRemove:hover:not(:disabled) { background: color-mix(in srgb, var(--color-error) 10%, transparent); }
+.btnAssign:disabled, .btnRemove:disabled { opacity: 0.6; cursor: default; }
+
+.empty { text-align: center; padding: 2.5rem 1rem; background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-muted); }
+
+.state { display: flex; align-items: center; justify-content: center; min-height: 50vh; }
+.stateText { font-family: var(--font-mono); font-size: 0.85rem; color: var(--color-text-muted); }
+.stateError { font-family: var(--font-sans); font-size: 0.9rem; color: var(--color-error); }
+
+.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--color-text); color: var(--color-surface); font-family: var(--font-sans); font-size: 0.85rem; padding: 0.6rem 1.1rem; border-radius: var(--radius-md); z-index: 60; }
