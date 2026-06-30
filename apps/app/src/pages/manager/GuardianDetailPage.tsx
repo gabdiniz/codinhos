@@ -6,6 +6,22 @@ import styles from './GuardianDetailPage.module.css'
 interface UserDetail { id: string; name: string; email: string; role: string; isActive: boolean }
 interface StudentOption { id: string; name: string; email: string }
 
+interface StudentsMeta { total: number; page: number; limit: number }
+
+async function fetchAllStudents(slug: string): Promise<StudentOption[]> {
+  const acc: StudentOption[] = []
+  let page = 1
+  for (;;) {
+    const res = await api.get<{ data: StudentOption[]; meta: StudentsMeta }>(
+      `/api/${slug}/users?role=student&page=${page}&limit=100`,
+    )
+    acc.push(...res.data)
+    if (res.data.length === 0 || acc.length >= res.meta.total) break
+    page++
+  }
+  return acc
+}
+
 export default function GuardianDetailPage() {
   const { slug, guardianId } = useParams<{ slug: string; guardianId: string }>()
   const [guardian, setGuardian] = useState<UserDetail | null>(null)
@@ -21,13 +37,13 @@ export default function GuardianDetailPage() {
     if (!slug || !guardianId) return
     setLoadError(null)
     try {
-      const [gRes, sRes, lRes] = await Promise.all([
+      const [gRes, allStudents, lRes] = await Promise.all([
         api.get<{ data: { user: UserDetail } }>(`/api/${slug}/users/${guardianId}`),
-        api.get<{ data: StudentOption[] }>(`/api/${slug}/users?role=student&limit=200`),
+        fetchAllStudents(slug),
         api.get<{ data: StudentOption[] }>(`/api/${slug}/guardians/${guardianId}/students`),
       ])
       setGuardian(gRes.data.user)
-      setStudents(sRes.data)
+      setStudents(allStudents)
       setLinked(new Set(lRes.data.map((s) => s.id)))
     } catch (err) {
       setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar responsável.')
