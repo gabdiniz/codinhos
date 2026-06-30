@@ -164,6 +164,13 @@ export async function getModuleDetail(
     listVocabularyUpToModule(moduleId),
   ])
 
+  // Próximo módulo na ordem da trilha (null se for o último)
+  const currentIdx = trailModulesList.findIndex((m) => m.id === moduleId)
+  const nextModuleId =
+    currentIdx >= 0 && currentIdx + 1 < trailModulesList.length
+      ? trailModulesList[currentIdx + 1].id
+      : null
+
   return {
     data: {
       module: {
@@ -176,6 +183,7 @@ export async function getModuleDetail(
       progress: { status: moduleStatus, attempts },
       visualBlocksEnabled: classTrail.visualBlocksEnabled,
       availableVocabulary,
+      nextModuleId,
     },
   }
 }

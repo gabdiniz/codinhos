@@ -115,6 +115,7 @@ export const moduleDetailResponseSchema = z.object({
     }),
     visualBlocksEnabled: z.boolean(),
     availableVocabulary: z.array(z.string()),
+    nextModuleId: z.string().uuid().nullable(),
   }),
 })
 

@@ -57,6 +57,7 @@ interface ModuleDetail {
   progress: { status: ModuleStatus; attempts: number }
   visualBlocksEnabled: boolean
   availableVocabulary: string[]
+  nextModuleId: string | null
 }
 
 interface AiMessage {
@@ -1055,6 +1056,25 @@ export default function ChallengePage() {
 
           {/* Resultado da submissão */}
           {submitResult && <SubmitResultPanel result={submitResult} />}
+          {submitResult?.submission.status === 'passed' && (
+            <div className={styles.nextActions}>
+              {moduleData?.nextModuleId ? (
+                <Link
+                  to={`/${slug}/learn/${trailId}/module/${moduleData.nextModuleId}`}
+                  className={styles.btnNext}
+                >
+                  Próximo desafio →
+                </Link>
+              ) : (
+                <Link to={`/${slug}/learn/${trailId}`} className={styles.btnNext}>
+                  🎉 Você concluiu a trilha!
+                </Link>
+              )}
+              <Link to={`/${slug}/learn/${trailId}`} className={styles.btnBackTrail}>
+                Voltar à trilha
+              </Link>
+            </div>
+          )}
           {submitError && <p className={styles.submitError}>{submitError}</p>}
 
           {/* Resultados dos testes */}
