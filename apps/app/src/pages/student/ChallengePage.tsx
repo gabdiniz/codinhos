@@ -19,6 +19,13 @@ import { BlocklyEditor } from '../../components/BlocklyEditor/BlocklyEditor.tsx'
 import { useClass } from '../../contexts/ClassContext.tsx'
 import styles from './ChallengePage.module.css'
 
+const QUICK_REPLIES = [
+  'Poderia me explicar o desafio?',
+  'Me dê uma dica, sem a resposta',
+  'Como posso melhorar meu código?',
+  'Por que meu código falhou?',
+]
+
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type Difficulty = 'easy' | 'medium' | 'hard'
@@ -551,6 +558,8 @@ interface CodiDrawerProps {
   conversation: AiConversationData | null
   /** Pedido de ajuda originado de um clique em "Pedir ajuda ao Codi" num teste falho */
   pendingHelpRequest: HelpRequest | null
+  /** Mensagem disparada automaticamente (ex.: botão "Me ajude com este desafio") */
+  autoMessage: { text: string; nonce: number } | null
 }
 
 function CodiDrawer({
@@ -561,6 +570,7 @@ function CodiDrawer({
   getCode,
   conversation,
   pendingHelpRequest,
+  autoMessage,
 }: CodiDrawerProps) {
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [input, setInput] = useState('')
@@ -587,13 +597,22 @@ function CodiDrawer({
     setInput('Por que esse teste falhou?')
   }, [pendingHelpRequest])
 
+  // Mensagem automática (botão "Me ajude com este desafio") — envia uma vez por nonce
+  const lastAutoNonce = useRef(0)
+  useEffect(() => {
+    if (!autoMessage || autoMessage.nonce === lastAutoNonce.current) return
+    lastAutoNonce.current = autoMessage.nonce
+    handleSend(autoMessage.text)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoMessage])
+
   // Scroll automático para o fim
   useEffect(() => {
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  async function handleSend() {
-    const text = input.trim()
+  async function handleSend(textArg?: string) {
+    const text = (typeof textArg === 'string' ? textArg : input).trim()
     if (!text || sending) return
 
     const userMsg: AiMessage = {
@@ -603,7 +622,7 @@ function CodiDrawer({
       createdAt: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, userMsg])
-    setInput('')
+    if (typeof textArg !== 'string') setInput('')
     setSending(true)
     setError(null)
 
@@ -679,6 +698,17 @@ function CodiDrawer({
         <div ref={bottomRef} />
       </div>
 
+      {/* Mensagens rápidas */}
+      {!limitReached && (
+        <div className={styles.codiChips}>
+          {QUICK_REPLIES.map((q) => (
+            <button key={q} type="button" className={styles.codiChip} onClick={() => handleSend(q)} disabled={sending}>
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className={styles.codiInputArea}>
         <textarea
@@ -742,6 +772,8 @@ export default function ChallengePage() {
   const [aiData, setAiData] = useState<AiConversationData | null>(null)
   const [helpRequest, setHelpRequest] = useState<HelpRequest | null>(null)
   const helpRequestSeq = useRef(0)
+  const [autoMsg, setAutoMsg] = useState<{ text: string; nonce: number } | null>(null)
+  const autoMsgSeq = useRef(0)
 
   // Carrega dados do módulo — reseta estado ao trocar de módulo
   useEffect(() => {
@@ -756,6 +788,7 @@ export default function ChallengePage() {
     setCodiOpen(false)
     setAiData(null)
     setHelpRequest(null)
+    setAutoMsg(null)
     api
       .get<{ data: ModuleDetail }>(`/api/${slug}/learn/modules/${moduleId}`)
       .then((res) => {
@@ -946,6 +979,16 @@ export default function ChallengePage() {
 
         <div className={styles.headerActions}>
           <button
+            className={styles.helpChallengeBtn}
+            onClick={() => {
+              setCodiOpen(true)
+              autoMsgSeq.current += 1
+              setAutoMsg({ text: 'Poderia me explicar o desafio?', nonce: autoMsgSeq.current })
+            }}
+          >
+            💡 Me ajude com este desafio
+          </button>
+          <button
             className={`${styles.codiToggle} ${codiOpen ? styles.codiToggleActive : ''}`}
             onClick={() => setCodiOpen((v) => !v)}
             aria-label="Abrir tutor Codi"
@@ -1106,6 +1149,7 @@ export default function ChallengePage() {
             getCode={() => codeRef.current}
             conversation={aiData}
             pendingHelpRequest={helpRequest}
+            autoMessage={autoMsg}
           />
         </>
       )}
