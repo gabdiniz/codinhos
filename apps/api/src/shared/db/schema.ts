@@ -204,6 +204,34 @@ export const tenantTrails = pgTable('tenant_trails', {
   uniqueIndex('tenant_trails_tenant_trail_idx').on(t.tenantId, t.trailId),
 ])
 
+// ─── Certificados por escola (Fase 4) ─────────────────────────────────────────
+// Template de certificado configurável por escola. trail_id NULL = template
+// padrão da escola (vale p/ cursos sem template específico); preenchido = curso.
+export type CertificateConfig = {
+  accentColor?: string
+  textColor?: string
+  backgroundColor?: string
+  title?: string
+  bodyText?: string
+  message?: string
+  signatureName?: string
+  signatureRole?: string
+  logoDataUrl?: string
+  showSchoolName?: boolean
+}
+
+export const certificateTemplates = pgTable('certificate_templates', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  trailId: uuid('trail_id').references(() => trails.id),
+  enabled: boolean('enabled').default(true).notNull(),
+  config: jsonb('config').$type<CertificateConfig>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  uniqueIndex('certificate_templates_tenant_trail_idx').on(t.tenantId, t.trailId),
+])
+
 export const classes = pgTable('classes', {
   id: uuid('id').defaultRandom().primaryKey(),
   tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
