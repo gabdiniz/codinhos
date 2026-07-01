@@ -122,6 +122,7 @@ interface InviteModalProps {
 function InviteModal({ slug, onClose, onSave }: InviteModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [birthDate, setBirthDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const firstRef = useRef<HTMLInputElement>(null)
@@ -142,6 +143,7 @@ function InviteModal({ slug, onClose, onSave }: InviteModalProps) {
         name: name.trim(),
         email: email.trim(),
         role: 'student',
+        ...(birthDate ? { birthDate } : {}),
       })
       onSave(res.data.user.id)
     } catch (err) {
@@ -182,6 +184,16 @@ function InviteModal({ slug, onClose, onSave }: InviteModalProps) {
               required
             />
             <span className={styles.inviteHint}>O aluno receberá um e-mail para criar sua senha.</span>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Data de nascimento (opcional)</label>
+            <input
+              className={styles.input}
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+            />
+            <span className={styles.inviteHint}>Alunos com menos de 12 anos precisam de consentimento parental no 1º acesso (LGPD). Pode preencher agora ou depois em Editar aluno.</span>
           </div>
           {error && <p className={styles.formError}>{error}</p>}
           <div className={styles.modalActions}>

@@ -29,6 +29,8 @@ export const createUserBodySchema = z.object({
   name: z.string().min(1).max(255),
   email: z.string().email('E-mail inválido'),
   role: z.enum(['student', 'manager', 'professor']),
+  // Opcional: usada para o gate de consentimento parental (<12 anos) no login.
+  birthDate: z.string().date('Data de nascimento inválida').nullable().optional(),
 })
 
 export const updateUserBodySchema = z.object({
