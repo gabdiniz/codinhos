@@ -25,7 +25,9 @@ interface TenantSettings {
   allowStudentProfileView: boolean
 }
 
-type TabId = 'geral' | 'tema' | 'gamificacao' | 'tutor-ia' | 'privacidade'
+type TabId = 'geral' | 'tema' | 'gamificacao' | 'tutor-ia' | 'privacidade' | 'integracoes'
+
+interface GoogleCourse { id: string; name: string; section: string | null }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -167,12 +169,22 @@ function IconShield() {
   )
 }
 
+function IconPlug() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0z" />
+      <path d="M12 16v6" />
+    </svg>
+  )
+}
+
 const TABS: { id: TabId; label: string; icon: () => JSX.Element }[] = [
   { id: 'geral',        label: 'Geral',        icon: IconBuilding },
   { id: 'tema',         label: 'Tema visual',  icon: IconPalette },
   { id: 'gamificacao',  label: 'Gamificação',  icon: IconZap },
   { id: 'tutor-ia',     label: 'Tutor de IA',  icon: IconBot },
   { id: 'privacidade',  label: 'Privacidade',  icon: IconShield },
+  { id: 'integracoes',  label: 'Integrações',  icon: IconPlug },
 ]
 
 // ─── Sub-componente: seletor de cor ──────────────────────────────────────────
@@ -250,6 +262,13 @@ export default function SettingsPage() {
   const [savingProfileView, setSavingProfileView] = useState(false)
   const [profileViewMsg, setProfileViewMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Integração Google Classroom
+  const [googleStatus, setGoogleStatus] = useState<{ connected: boolean; googleEmail: string | null } | null>(null)
+  const [googleBusy, setGoogleBusy] = useState(false)
+  const [courses, setCourses] = useState<GoogleCourse[] | null>(null)
+  const [importingId, setImportingId] = useState<string | null>(null)
+  const [googleMsg, setGoogleMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const load = useCallback(async () => {
     if (!slug) return
     setLoadError(null)
@@ -304,6 +323,39 @@ export default function SettingsPage() {
     const t = setTimeout(() => setProfileViewMsg(null), 3500)
     return () => clearTimeout(t)
   }, [profileViewMsg])
+
+  // Status da integração Google
+  const loadGoogleStatus = useCallback(async () => {
+    if (!slug) return
+    try {
+      const res = await api.get<{ data: { connected: boolean; googleEmail: string | null } }>(
+        `/api/${slug}/integrations/google/status`,
+      )
+      setGoogleStatus(res.data)
+    } catch {
+      // silencioso — a aba mostra "não conectado" se falhar
+    }
+  }, [slug])
+
+  useEffect(() => { loadGoogleStatus() }, [loadGoogleStatus])
+
+  // Volta do consentimento Google: ?google=connected|error → mostra aviso e limpa a URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const g = params.get('google')
+    if (!g) return
+    if (g === 'connected') {
+      setGoogleMsg({ type: 'success', text: 'Google Classroom conectado com sucesso!' })
+      setActiveTab('integracoes')
+      loadGoogleStatus()
+    } else if (g === 'error') {
+      setGoogleMsg({ type: 'error', text: 'Não foi possível conectar ao Google. Tente novamente.' })
+      setActiveTab('integracoes')
+    }
+    params.delete('google')
+    const qs = params.toString()
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
+  }, [loadGoogleStatus])
 
   function setColor(key: string, value: string) {
     setThemeValues((prev) => ({ ...prev, [key]: value }))
@@ -417,6 +469,63 @@ export default function SettingsPage() {
   }
 
   if (!settings) return null
+
+  async function handleConnectGoogle() {
+    if (!slug) return
+    setGoogleBusy(true)
+    try {
+      const res = await api.get<{ data: { url: string } }>(`/api/${slug}/integrations/google/auth-url`)
+      window.location.href = res.data.url
+    } catch (err) {
+      setGoogleMsg({ type: 'error', text: err instanceof ApiError ? err.message : 'Erro ao iniciar a conexão.' })
+      setGoogleBusy(false)
+    }
+  }
+
+  async function handleDisconnectGoogle() {
+    if (!slug) return
+    setGoogleBusy(true)
+    try {
+      await api.delete(`/api/${slug}/integrations/google`)
+      setGoogleStatus({ connected: false, googleEmail: null })
+      setCourses(null)
+      setGoogleMsg({ type: 'success', text: 'Google desconectado.' })
+    } catch (err) {
+      setGoogleMsg({ type: 'error', text: err instanceof ApiError ? err.message : 'Erro ao desconectar.' })
+    } finally {
+      setGoogleBusy(false)
+    }
+  }
+
+  async function handleListCourses() {
+    if (!slug) return
+    setGoogleBusy(true)
+    try {
+      const res = await api.get<{ data: GoogleCourse[] }>(`/api/${slug}/integrations/google/courses`)
+      setCourses(res.data)
+    } catch (err) {
+      setGoogleMsg({ type: 'error', text: err instanceof ApiError ? err.message : 'Erro ao listar cursos.' })
+    } finally {
+      setGoogleBusy(false)
+    }
+  }
+
+  async function handleImportCourse(course: GoogleCourse) {
+    if (!slug) return
+    setImportingId(course.id)
+    try {
+      const res = await api.post<{ data: { className: string; total: number; created: number; reused: number } }>(
+        `/api/${slug}/integrations/google/import`,
+        { courseId: course.id, courseName: course.name },
+      )
+      const r = res.data
+      setGoogleMsg({ type: 'success', text: `Turma "${r.className}" criada — ${r.total} aluno(s): ${r.created} novo(s), ${r.reused} reaproveitado(s).` })
+    } catch (err) {
+      setGoogleMsg({ type: 'error', text: err instanceof ApiError ? err.message : 'Erro ao importar o curso.' })
+    } finally {
+      setImportingId(null)
+    }
+  }
 
   return (
     <div className={styles.root}>
@@ -706,6 +815,72 @@ export default function SettingsPage() {
                   {savingProfileView ? 'Salvando...' : 'Salvar privacidade'}
                 </button>
               </div>
+            </>
+          )}
+
+          {/* ── Integrações ── */}
+          {activeTab === 'integracoes' && (
+            <>
+              <p className={styles.sectionDesc}>
+                Conecte o Google Classroom para importar turmas e alunos. Cada curso importado vira uma
+                turma no Codinhos, com os alunos correspondentes.
+              </p>
+
+              {googleMsg && (
+                <p className={googleMsg.type === 'success' ? styles.feedbackSuccess : styles.feedbackError}>
+                  {googleMsg.text}
+                </p>
+              )}
+
+              {!googleStatus?.connected ? (
+                <div className={styles.sectionFooter}>
+                  <button className={styles.btnPrimary} onClick={handleConnectGoogle} disabled={googleBusy}>
+                    {googleBusy ? 'Redirecionando...' : 'Conectar Google'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Conta conectada</span>
+                      <span className={styles.infoValue}>{googleStatus.googleEmail ?? '—'}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.sectionFooter}>
+                    <button className={styles.btnSecondary} onClick={handleListCourses} disabled={googleBusy}>
+                      {googleBusy ? 'Carregando...' : 'Listar cursos'}
+                    </button>
+                    <button className={styles.btnDanger} onClick={handleDisconnectGoogle} disabled={googleBusy}>
+                      Desconectar
+                    </button>
+                  </div>
+
+                  {courses && (
+                    courses.length === 0 ? (
+                      <p className={styles.fieldHint}>Nenhum curso encontrado nesta conta do Google Classroom.</p>
+                    ) : (
+                      <div className={styles.courseList}>
+                        {courses.map((c) => (
+                          <div key={c.id} className={styles.courseRow}>
+                            <div className={styles.courseInfo}>
+                              <span className={styles.courseName}>{c.name}</span>
+                              {c.section && <span className={styles.courseSection}>{c.section}</span>}
+                            </div>
+                            <button
+                              className={styles.btnPrimary}
+                              onClick={() => handleImportCourse(c)}
+                              disabled={importingId !== null}
+                            >
+                              {importingId === c.id ? 'Importando...' : 'Importar turma'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  )}
+                </>
+              )}
             </>
           )}
         </div>
