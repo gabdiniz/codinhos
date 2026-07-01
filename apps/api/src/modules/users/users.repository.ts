@@ -118,6 +118,7 @@ type CreateUserInput = {
   email: string
   passwordHash: string
   role: 'student' | 'manager' | 'professor' | 'guardian'
+  birthDate?: string | null
 }
 
 export async function createUser(input: CreateUserInput) {
