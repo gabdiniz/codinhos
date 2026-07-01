@@ -25,7 +25,7 @@ export async function listStudentTrailCompletion(studentId: string, tenantId: st
       trailTitle: trails.title,
       totalModules: sql<string>`count(distinct ${trailModules.id})`,
       completedModules: sql<string>`count(distinct ${moduleProgress.id}) filter (where ${moduleProgress.status} = 'completed')`,
-      lastActivity: sql<Date | null>`max(${challengeSubmissions.submittedAt})`,
+      lastActivity: sql<string | null>`max(${challengeSubmissions.submittedAt})`,
     })
     .from(classStudents)
     .innerJoin(classTrails, eq(classTrails.classId, classStudents.classId))

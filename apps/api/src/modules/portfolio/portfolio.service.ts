@@ -28,7 +28,7 @@ export async function getPortfolio(studentId: string, tenantId: string) {
       title: t.trailTitle,
       progress: { completed, total },
       isComplete: total > 0 && completed >= total,
-      lastActivity: t.lastActivity ? t.lastActivity.toISOString() : null,
+      lastActivity: t.lastActivity ? new Date(t.lastActivity).toISOString() : null,
     }
   })
 
