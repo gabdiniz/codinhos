@@ -34,7 +34,9 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 ## Funcionalidades
 
 **Conteúdo e aprendizado**
-- Catálogo global de **trilhas → módulos → desafios** (gerido pelo Super Admin), ativado por tenant.
+- Catálogo global de **trilhas → módulos → desafios** (gerido pelo Super Admin via UI de catálogo), ativado por tenant.
+- **Trilha própria da escola** — o gestor pode criar suas próprias trilhas/módulos/desafios (autoria híbrida; `trails.tenant_id`).
+- **Trilha embutida "JavaScript: do Fundamento ao Algoritmo"** — 84 desafios do básico ao avançado (`pnpm --filter @codinhos/api db:seed:trilha`).
 - **Sandbox JavaScript** com execução segura em Web Worker e editor CodeMirror 6.
 - **Autocomplete contextual** — sugere só o vocabulário já ensinado até o módulo atual.
 - **Editor de blocos visuais** (Blockly) por trilha (`visualBlocksEnabled`), gerando JS para o mesmo fluxo de submissão.
@@ -60,7 +62,7 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 - **Detecção de similaridade** entre submissões (possível plágio) no dashboard do gestor.
 
 **Reconhecimento**
-- **Certificado em PDF** ao concluir uma trilha + **portfólio** do aluno (trilhas, badges).
+- **Certificado em PDF** ao concluir uma trilha, **personalizável por escola** (cores, textos, assinatura, logo; ligável/desligável por curso) + **portfólio** do aluno (trilhas, badges).
 
 **Plataforma**
 - Multi-tenant B2B (escola = tenant com `slug` na URL, isolamento por `tenant_id`).

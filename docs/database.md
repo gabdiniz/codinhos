@@ -135,6 +135,7 @@ Auditoria de consentimento parental (LGPD / ECA Digital, Sprint 3.1) para alunos
 | Coluna | Tipo | Notas |
 |---|---|---|
 | `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants (nullable) | *(Sprint 9.1)* **NULL** = trilha do catálogo global (Super Admin); **preenchida** = trilha própria da escola (autoria do gestor). Todo acesso filtra por esse escopo |
 | `slug` | varchar(100) UNIQUE | |
 | `title` | varchar(255) | |
 | `description` | text | |
@@ -564,6 +565,23 @@ student_inventory
 
 ---
 
+### `certificate_templates` *(Sprint 4 — certificado por escola, migration 0008)*
+
+Personalização do certificado por escola. `trail_id` **NULL** = template padrão da escola (vale para todos os cursos sem template específico); preenchido = override daquele curso.
+
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | escola dona do template |
+| `trail_id` | uuid FK → trails (nullable) | NULL = padrão da escola; preenchido = curso específico |
+| `enabled` | boolean (default `true`) | se `false`, o certificado NÃO é emitido para o escopo (ligado por padrão) |
+| `config` | jsonb | `{ accentColor, textColor, backgroundColor, title, bodyText, message, signatureName, signatureRole, logoDataUrl, showSchoolName }` — campos ausentes usam os padrões do PDF |
+| `created_at` / `updated_at` | timestamp | |
+
+**Constraints:** `UNIQUE (tenant_id, trail_id)`. Resolução na emissão: template do curso → template padrão da escola → layout embutido (sempre habilitado). Ver `shared/pdf/certificate.ts` e módulo `certificates`.
+
+---
+
 ## Diagrama de Relacionamentos
 
 ```
@@ -574,6 +592,7 @@ tenants
   │     └── parental_consents → users (auditoria <12 anos)
   │     └── guardian_students → users (N:N, responsável↔aluno)
   ├── google_integrations (1:1 por tenant — OAuth Google Classroom)
+  ├── certificate_templates → trails (1:N; trail_id NULL = padrão da escola)
   ├── tenant_trails → trails (N:N)
   ├── classes (1:N)
   │     ├── class_students → users (N:N)

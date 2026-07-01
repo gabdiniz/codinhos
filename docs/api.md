@@ -309,6 +309,23 @@ Response: { data: { tenantTrail } }
 
 ---
 
+## Autoria de trilhas (gestor) — `/api/:slug/authoring` *(Sprint 9.1)*
+
+O gestor cria e edita **trilhas próprias da escola** (`trails.tenant_id` = tenant). Mesma modelagem do catálogo, mas escopada ao tenant. Guard: `manager`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/authoring/trails` | Lista as trilhas próprias da escola |
+| POST | `/authoring/trails` | Cria trilha própria (slugify + auto-ativa no tenant) |
+| GET | `/authoring/trails/:trailId` | Detalhe (módulos + desafios completos) |
+| PATCH/DELETE | `/authoring/trails/:trailId` | Edita / remove trilha própria |
+| POST | `/authoring/trails/:trailId/modules` · PATCH/DELETE `/authoring/modules/:moduleId` | Módulos |
+| POST | `/authoring/modules/:moduleId/challenges` · PATCH/DELETE `/authoring/challenges/:challengeId` | Desafios |
+
+**Professores — turmas de um professor (gestor):** `GET /:slug/teachers/:teacherId/classes` → IDs das turmas atribuídas (usado na tela de Professores para marcar/desmarcar turmas).
+
+---
+
 ## Aprendizado — `/api/:slug/learn`
 
 > Acesso: `student`
@@ -1006,6 +1023,21 @@ Response: { data: { badge } }
 
 ---
 
+## Catálogo do Super Admin — `/api/admin` *(Sprint 9.2)*
+
+CRUD do **catálogo global** (trilhas com `tenant_id` NULL). Guard: `super_admin`. Sem slug na rota.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET/POST | `/admin/trails` · GET/PATCH/DELETE `/admin/trails/:trailId` | Trilhas globais |
+| POST | `/admin/trails/:trailId/modules` · PATCH/DELETE `/admin/modules/:moduleId` | Módulos |
+| POST | `/admin/modules/:moduleId/challenges` · PATCH/DELETE `/admin/challenges/:challengeId` | Desafios |
+| POST | `/admin/users/:userId/reset-password` | Dispara reset de senha para qualquer usuário (cross-tenant); devolve o link e envia e-mail |
+
+> `GET /admin/trails/:trailId` retorna os desafios **completos** (description/starterCode/testCases) para o editor do admin pré-preencher.
+
+---
+
 ## Tutor de IA (Codi) — `/:slug/ai`
 
 > Exclusivo para role `student`. O tutor é o Codi, personagem pedagógico da plataforma.
@@ -1120,3 +1152,18 @@ Response: application/pdf (Content-Disposition: attachment)
 // 422 se a trilha não está concluída (completed < total ou total = 0)
 // 404 se a trilha não existe/não está atribuída ao tenant
 ```
+
+
+---
+
+## Certificados por escola — `/api/:slug/certificates` *(Sprint 4)*
+
+Templates de certificado configuráveis pela escola. Guard: `manager`. Ver tabela `certificate_templates`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/certificates/templates` | Lista os templates da escola (padrão + overrides por curso) |
+| PUT | `/certificates/templates` | Upsert de um template. Body: `{ trailId: uuid\|null, enabled: boolean, config }` (trailId NULL = padrão da escola) |
+| DELETE | `/certificates/templates/:templateId` | Remove um override (o curso volta a usar o padrão da escola) |
+
+A emissão do certificado (em `/portfolio/certificates/:trailId`) resolve o template (curso → padrão da escola → embutido) e respeita `enabled` (se desligado, retorna 422 "certificado desativado").
