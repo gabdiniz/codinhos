@@ -34,6 +34,7 @@ const ProfessorsPage = lazy(() => import('../pages/manager/ProfessorsPage.tsx'))
 const ProfessorDetailPage = lazy(() => import('../pages/manager/ProfessorDetailPage.tsx'))
 const GuardiansPage = lazy(() => import('../pages/manager/GuardiansPage.tsx'))
 const GuardianDetailPage = lazy(() => import('../pages/manager/GuardianDetailPage.tsx'))
+const CertificatesPage = lazy(() => import('../pages/manager/CertificatesPage.tsx'))
 const SettingsPage = lazy(() => import('../pages/manager/SettingsPage.tsx'))
 
 // Professor
@@ -193,6 +194,10 @@ export const router = createBrowserRouter([
           {
             path: 'manager/guardians/:guardianId',
             element: <Page component={GuardianDetailPage} />,
+          },
+          {
+            path: 'manager/certificates',
+            element: <Page component={CertificatesPage} />,
           },
           {
             path: 'manager/settings',

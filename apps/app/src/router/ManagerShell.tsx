@@ -62,6 +62,15 @@ function IconHeart() {
   )
 }
 
+function IconCertificate() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="9" r="5" />
+      <path d="M9 13.5 8 22l4-2 4 2-1-8.5" />
+    </svg>
+  )
+}
+
 function IconSettings() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -116,6 +125,7 @@ export function ManagerShell() {
     { to: `/${slug}/manager/students`, label: 'Alunos',    icon: <IconUsers />,    end: false },
     { to: `/${slug}/manager/professors`, label: 'Professores', icon: <IconChalkboard />, end: false },
     { to: `/${slug}/manager/guardians`, label: 'Responsáveis', icon: <IconHeart />, end: false },
+    { to: `/${slug}/manager/certificates`, label: 'Certificados', icon: <IconCertificate />, end: false },
     { to: `/${slug}/manager/settings`, label: 'Config.',   icon: <IconSettings />, end: false },
   ]
 
