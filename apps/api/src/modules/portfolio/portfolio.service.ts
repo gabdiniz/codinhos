@@ -9,6 +9,7 @@ import {
   findStudentEarnedBadges,
 } from '../dashboard/dashboard.repository.js'
 import { generateCertificatePdf } from '../../shared/pdf/certificate.js'
+import { resolveCertificateTemplate } from '../certificates/certificates.service.js'
 import { NotFoundError, UnprocessableError } from '../../shared/errors/index.js'
 
 // ─── GET /portfolio ───────────────────────────────────────────────────────────
@@ -72,18 +73,27 @@ export async function getCertificate(studentId: string, tenantId: string, trailI
     throw new UnprocessableError('Trilha ainda não concluída — certificado indisponível')
   }
 
-  const [studentName, tenantName] = await Promise.all([
+  const [studentName, tenantName, template] = await Promise.all([
     findStudentName(studentId, tenantId),
     findTenantName(tenantId),
+    resolveCertificateTemplate(tenantId, trailId),
   ])
   if (!studentName) throw new NotFoundError('Aluno')
 
-  const pdf = await generateCertificatePdf({
-    studentName,
-    trailTitle: completion.trailTitle,
-    tenantName: tenantName ?? 'Codinhos',
-    completedAt: new Date(),
-  })
+  // Escola pode ter desativado o certificado para este curso
+  if (template && template.enabled === false) {
+    throw new UnprocessableError('Certificado desativado pela escola para este curso')
+  }
+
+  const pdf = await generateCertificatePdf(
+    {
+      studentName,
+      trailTitle: completion.trailTitle,
+      tenantName: tenantName ?? 'Codinhos',
+      completedAt: new Date(),
+    },
+    template?.config ?? null,
+  )
 
   return { pdf, filename: `certificado-${slugifyFilename(completion.trailTitle)}.pdf` }
 }

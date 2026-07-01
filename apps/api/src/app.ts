@@ -8,6 +8,7 @@ import { authRoutes } from './modules/auth/auth.routes.js'
 import { tenantsRoutes } from './modules/tenants/tenants.routes.js'
 import { usersRoutes } from './modules/users/users.routes.js'
 import { catalogRoutes } from './modules/catalog/catalog.routes.js'
+import { certificatesRoutes } from './modules/certificates/certificates.routes.js'
 import { tenantTrailsRoutes } from './modules/tenant-trails/tenant-trails.routes.js'
 import { authoringRoutes } from './modules/authoring/authoring.routes.js'
 import { classesRoutes } from './modules/classes/classes.routes.js'
@@ -108,6 +109,7 @@ export async function createApp() {
   await app.register(classesRoutes, { prefix: '/api' })
   await app.register(integrationsRoutes, { prefix: '/api' })
   await app.register(guardiansRoutes, { prefix: '/api' })
+  await app.register(certificatesRoutes, { prefix: '/api' })
   await app.register(learnRoutes, { prefix: '/api' })
   await app.register(submissionsRoutes, { prefix: '/api' })
   await app.register(gamificationRoutes, { prefix: '/api' })
