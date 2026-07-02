@@ -15,7 +15,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px 8px 8px;
+  padding: 7px 16px 7px 7px;
   border-radius: var(--radius-full);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -33,6 +33,16 @@
   border-color: var(--color-primary);
 }
 
+.launcherAvatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  flex: none;
+}
+
 .launcherText {
   white-space: nowrap;
 }
@@ -40,7 +50,7 @@
 /* ─── Painel ──────────────────────────────────────────────────────────────── */
 
 .panel {
-  width: min(340px, calc(100vw - 40px));
+  width: min(360px, calc(100vw - 40px));
   border-radius: var(--radius-xl);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -48,6 +58,9 @@
   overflow: hidden;
   animation: codi-pop var(--transition-normal) ease;
   transform-origin: bottom right;
+  display: flex;
+  flex-direction: column;
+  max-height: min(560px, calc(100vh - 120px));
 }
 
 @keyframes codi-pop {
@@ -61,6 +74,12 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -68,6 +87,19 @@
   padding: 14px 16px;
   background: var(--gradient-brand);
   color: var(--color-text-inverse);
+  flex: none;
+}
+
+/* Crachá que dá contraste ao mascote sobre o gradiente do header */
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  flex: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .name {
@@ -95,31 +127,115 @@
   opacity: 1;
 }
 
+/* ─── Corpo (mensagens) ───────────────────────────────────────────────────── */
+
 .body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.bubbleBot,
+.bubbleUser {
+  max-width: 85%;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
 }
 
 .bubbleBot {
+  align-self: flex-start;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   border-bottom-left-radius: 4px;
-  padding: 10px 12px;
-  font-size: 0.88rem;
   color: var(--color-text);
 }
 
-.bubbleBot p {
+.bubbleUser {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-bottom-right-radius: 4px;
+}
+
+/* Texto do Codi (parágrafos e listas) */
+.bubbleBot p,
+.bubbleBot ul {
   margin: 0;
 }
 
+.bubbleBot p + p,
+.bubbleBot p + ul,
+.bubbleBot ul + p {
+  margin-top: 8px;
+}
+
+.mdList {
+  padding-left: 18px;
+}
+
+.mdList li {
+  margin: 2px 0;
+}
+
+.bubbleUser p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Indicador de digitação */
+.typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.typing i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: codi-typing 1.2s infinite ease-in-out;
+}
+
+.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes codi-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing i {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Chips de sugestão */
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 2px;
 }
 
 .chip {
@@ -140,9 +256,9 @@
   background: color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
-.note {
-  font-size: 0.76rem;
-  color: var(--color-text-muted);
+.error {
+  font-size: 0.8rem;
+  color: var(--color-error);
   margin: 2px 0 0;
   line-height: 1.5;
 }
@@ -151,6 +267,56 @@
   color: var(--color-primary);
   font-weight: 600;
   text-decoration: underline;
+}
+
+/* ─── Input ───────────────────────────────────────────────────────────────── */
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex: none;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.send {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition:
+    background-color var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.send:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.send:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 @media (max-width: 480px) {
