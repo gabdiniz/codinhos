@@ -1,0 +1,20 @@
+# Imagem de desenvolvimento compartilhada por api, app e web.
+# O código é bind-montado em runtime (hot-reload); aqui só instalamos o
+# node_modules do workspace (Linux) — o que também contorna o turbo, que
+# crasha nativamente em algumas máquinas.
+FROM node:20-bookworm-slim
+
+# pnpm via corepack, na versão fixada pelo repo
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /workspace
+
+# Copiamos o workspace inteiro para o pnpm resolver todos os pacotes.
+# Em runtime, o bind-mount do código sobrepõe estes arquivos; os node_modules
+# ficam preservados por volumes nomeados no compose.
+COPY . .
+
+RUN pnpm install --frozen-lockfile
+
+# O comando concreto (dev de cada app / migrate) é definido no docker-compose.
+CMD ["pnpm", "--version"]

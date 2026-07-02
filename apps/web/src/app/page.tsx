@@ -1,24 +1,39 @@
-import Link from 'next/link'
+import { CodiWidget } from '@/components/codi/CodiWidget'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { ComoFunciona } from '@/components/sections/ComoFunciona'
+import { Faq } from '@/components/sections/Faq'
+import { Gamificacao } from '@/components/sections/Gamificacao'
+import { Hero } from '@/components/sections/Hero'
+import { ParaEscolas } from '@/components/sections/ParaEscolas'
+import { Trilha } from '@/components/sections/Trilha'
 import styles from './page.module.css'
 
 export default function HomePage() {
   return (
-    <main className={styles.main}>
-      <section className={styles.hero}>
-        <h1 className={styles.title}>Codinhos</h1>
-        <p className={styles.subtitle}>
-          Programação de verdade para alunos de 11 a 14 anos — desafios práticos, sandbox no
-          navegador e tutor de IA, direto na sua escola.
-        </p>
-        <div className={styles.actions}>
-          <Link className={styles.primaryButton} href="/login">
-            Entrar
-          </Link>
-          <Link className={styles.secondaryButton} href="/cadastro">
-            Levar para minha escola
-          </Link>
-        </div>
-      </section>
-    </main>
+    <>
+      <Header />
+      <main>
+        <Hero />
+        <ComoFunciona />
+        <ParaEscolas />
+        <Trilha />
+        <Gamificacao />
+        <Faq />
+
+        <section id="contato" className={styles.contact}>
+          <h2 className={styles.contactTitle}>Leve o Codinhos para a sua escola</h2>
+          <p className={styles.contactText}>
+            Sem compromisso: conte pra gente sobre a sua escola e retornamos com uma proposta.
+          </p>
+          <a className={styles.contactCta} href="mailto:contato@codinhos.com.br">
+            Falar por e-mail
+          </a>
+        </section>
+      </main>
+
+      <Footer />
+      <CodiWidget />
+    </>
   )
 }

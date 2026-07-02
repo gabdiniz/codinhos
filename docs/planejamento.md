@@ -153,6 +153,36 @@ Super Admin — é uma escolha pedagógica, não um limite de custo). Detalhes
 técnicos em `agent_docs/banco-de-dados.md` (campo `ai_error_explanation_enabled`
 em `tenants.settings`).
 
+### Codi como marca
+
+O **Codi** é o personagem do tutor de IA — e será também o **mascote** da plataforma, presente na landing page de vendas (ver abaixo). A criança encontra o mesmo Codi no site e dentro do app: consistência de marca entre pré-venda e produto.
+
+---
+
+## Codi na Landing Page — Assistente de dúvidas *(pré-venda)*
+
+Funcionalidade da LP pública (`apps/web`), **distinta** do tutor in-app do aluno. Aqui o Codi é o **mascote** e um **assistente que responde dúvidas sobre o produto** para visitantes (gestores, professores, responsáveis) antes da contratação.
+
+### Papel
+
+- Widget de chat na LP: o visitante pergunta o que é o Codinhos, como funciona para a escola e para o aluno, trilha de JS, gamificação, modelo B2B multi-tenant.
+- O Codi responde a partir de uma **base de conhecimento curada**, alimentada pela documentação do produto. É por isso que mantemos as docs bem escritas.
+
+### Base de conhecimento — curada e pública
+
+As `agent_docs` (arquitetura, banco, autenticação, segurança) são **internas** e **não** podem ser expostas nem servir de resposta crua ao público. O Codi da LP consome apenas um **subconjunto curado e voltado ao produto**: o que é, benefícios para escola/aluno, trilha, gamificação, FAQ de adoção. Fonte e pipeline a definir (provável RAG: embeddings + recuperação → resposta).
+
+### Escopo e guardrails
+
+- Responde só sobre o produto. Fora do escopo → encaminha para o **CTA de contato por e-mail** (não há pagamento na LP).
+- Não inventa preço, prazo ou dado ausente da base.
+- Handoff para vendas quando a intenção for contratar.
+
+### Notas técnicas
+
+- Avaliar reaproveitar a infra de IA do tutor (`apps/api`) via **endpoint público separado**. Contexto é **pré-venda e público** — não há `tenant_id` aqui; aplicar rate limiting.
+- Detalhes de design/animação do mascote e da direção visual da LP em `docs/pesquisa-lp-vendas.md`.
+
 ---
 
 ## Gamificação
