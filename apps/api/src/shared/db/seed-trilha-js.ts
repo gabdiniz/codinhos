@@ -1,12 +1,13 @@
 /**
  * Seed da trilha "JavaScript: do Fundamento ao Algoritmo" no CATÁLOGO GLOBAL
- * (tenant_id = NULL). 84 módulos (1 desafio cada), do básico ao avançado.
+ * (tenant_id = NULL). Intercala LIÇÕES (módulos só-texto, sem desafio) com os
+ * desafios, apresentando cada conceito antes de exercitá-lo.
  *
  * Execução: pnpm --filter @codinhos/api db:seed:trilha
  *
- * Idempotente E atualizável: re-rodar ATUALIZA conceito/exemplo/starterCode/
- * testes dos módulos existentes (permite iterar no conteúdo). Casos de teste
- * verificados contra o runner real (run-tests.ts) antes de commitar.
+ * Idempotente E atualizável: re-rodar atualiza o conteúdo e converge para a
+ * estrutura atual (lição = módulo sem desafio; remove desafio órfão se houver).
+ * Desafios verificados contra o runner real (run-tests.ts).
  */
 
 import 'dotenv/config'
@@ -27,9 +28,10 @@ const db = drizzle(client)
 const TRAIL_SLUG = 'js-fundamentos-ao-algoritmo'
 const TRAIL_TITLE = 'JavaScript: do Fundamento ao Algoritmo'
 const TRAIL_DESC =
-  'Trilha completa de fundamentos de JavaScript, do básico ao avançado: variáveis, operadores, decisões, funções, strings, números, loops, arrays, objetos, recursão e algoritmos.'
+  'Trilha completa de fundamentos de JavaScript, do básico ao avançado: lições de conceito intercaladas com desafios práticos — variáveis, operadores, decisões, funções, strings, números, loops, arrays, objetos, recursão e algoritmos.'
 
 type Modulo = {
+  kind: 'lesson' | 'challenge'
   title: string
   concept: string
   exampleCode: string
@@ -43,6 +45,27 @@ type Modulo = {
 
 const trilhaModules: Modulo[] = [
   {
+    "kind": "lesson",
+    "title": "Lição 1 — Valores e variáveis",
+    "concept": "Antes de resolver problemas, o computador precisa **guardar informações** — e fazemos isso com **variáveis**, como caixinhas com um nome onde guardamos um valor.\n\nUse `let` quando o valor pode mudar e `const` quando é fixo. Todo valor tem um **tipo**: texto é `string` (entre aspas), número é `number` (sem aspas) e verdadeiro/falso é `boolean`.\n\nQuando queremos que um trecho de código **devolva** um resultado, escrevemos uma **função** e usamos `return`. Nos próximos desafios você vai criar variáveis e funções que devolvem valores.",
+    "exampleCode": "let nome = \"Ana\"       // string\nconst idade = 12        // number\nlet estudando = true    // boolean",
+    "vocabulary": [
+      "let",
+      "const",
+      "string",
+      "number",
+      "boolean",
+      "function",
+      "return"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "1.1 Declare seu nome",
     "concept": "Uma **variável** guarda um valor com um nome. Use `let` (pode mudar) ou `const` (não muda). Texto é do tipo `string` e fica entre aspas.",
     "exampleCode": "// declarando variáveis de texto\nlet cidade = \"Recife\"\nconst pais = \"Brasil\"",
@@ -64,6 +87,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "1.2 Idade e status",
     "concept": "Número (`number`) NÃO leva aspas. Verdadeiro/falso é `boolean`: vale `true` ou `false`.",
     "exampleCode": "let pontos = 10      // number\nlet venceu = false   // boolean",
@@ -91,6 +115,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "1.3 Apresente-se",
     "concept": "Uma **função** é um bloco de código com nome. O `return` devolve um valor. Veja uma função parecida que devolve um texto fixo:",
     "exampleCode": "function corFavorita() {\n  return \"azul\"\n}\n// corFavorita() devolve \"azul\"",
@@ -111,6 +136,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "1.4 O dobro",
     "concept": "Uma função recebe **parâmetros** (entradas) e usa no `return`. O `*` multiplica. Exemplo análogo (triplo):",
     "exampleCode": "function triplo(n) {\n  return n * 3\n}\n// triplo(2) devolve 6",
@@ -147,6 +173,27 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 2 — Operadores e expressões",
+    "concept": "Com os valores guardados, a gente **calcula** e **compara**.\n\nOperadores aritméticos: `+` soma, `-` subtrai, `*` multiplica, `/` divide e `%` dá o **resto** da divisão (ótimo para saber se um número é par).\n\nPara comparar use `>`, `<`, `>=`, `<=` e, para igualdade, sempre `===` (compara valor **e** tipo). Cuidado: `==` faz conversões estranhas (`1 == \"1\"` é `true`!). Comparações devolvem `boolean`, e você combina condições com `&&` (E) e `||` (OU).",
+    "exampleCode": "10 % 3       // 1 (resto)\n5 === 5      // true\n5 === \"5\"    // false (tipo diferente)",
+    "vocabulary": [
+      "%",
+      "===",
+      "!==",
+      ">",
+      "<",
+      "&&",
+      "||"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "2.1 Soma",
     "concept": "Operadores: `+` soma, `-` subtrai, `*` multiplica, `/` divide. Exemplo análogo com subtração:",
     "exampleCode": "function diferenca(a, b) {\n  return a - b\n}\n// diferenca(10, 4) devolve 6",
@@ -189,6 +236,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "2.2 É par?",
     "concept": "O `%` dá o RESTO da divisão (10 % 3 = 1). Uma comparação com `===` devolve true/false. Exemplo: múltiplo de 3.",
     "exampleCode": "function ehMultiploDe3(n) {\n  return n % 3 === 0\n}\n// ehMultiploDe3(9) devolve true",
@@ -225,6 +273,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "2.3 Média de três",
     "concept": "O operador de divisão é `/`. Para a média, **some primeiro** e **depois divida** pela quantidade. Guardar em variáveis deixa o passo-a-passo claro. Exemplo com DOIS números:",
     "exampleCode": "function mediaDeDois(a, b) {\n  const soma = a + b      // junta os números\n  const media = soma / 2  // divide pela quantidade\n  return media\n}\n// mediaDeDois(4, 6) devolve 5",
@@ -267,6 +316,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "2.4 Maior de idade",
     "concept": "Comparações: `>` maior, `<` menor, `>=` maior ou igual, `<=` menor ou igual. Devolvem true/false. Exemplo análogo:",
     "exampleCode": "function ehAdolescente(idade) {\n  return idade >= 12\n}\n// ehAdolescente(12) devolve true",
@@ -305,6 +355,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "2.5 São idênticos?",
     "concept": "Use sempre `===` (compara valor E tipo). `1 === \"1\"` é false, porque um é número e o outro é texto. Exemplo:",
     "exampleCode": "function disseSim(resposta) {\n  return resposta === \"sim\"\n}\n// disseSim(\"sim\") devolve true",
@@ -345,6 +396,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "2.6 Está na faixa?",
     "concept": "O `&&` (E) só é true quando os DOIS lados são true. Exemplo análogo (nota de 0 a 10):",
     "exampleCode": "function notaValida(n) {\n  return n >= 0 && n <= 10\n}\n// notaValida(7) devolve true",
@@ -388,6 +440,25 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 3 — Decisões (condicionais)",
+    "concept": "Programas ficam espertos quando **tomam decisões**.\n\nO `if` roda um bloco só se a condição for verdadeira; `else if` testa outra; `else` cobre o resto. A ordem importa: teste do caso mais específico ao mais geral.\n\nQuando a escolha é entre dois valores, o **ternário** `condição ? valorSeSim : valorSeNão` é um `if` curtinho que já devolve o valor. E o `switch` compara um mesmo valor com vários casos de forma organizada.",
+    "exampleCode": "function faixa(idade) {\n  if (idade < 12) return \"criança\"\n  if (idade < 18) return \"adolescente\"\n  return \"adulto\"\n}",
+    "vocabulary": [
+      "if",
+      "else",
+      "else if",
+      "switch",
+      "? :"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "3.1 Classificar nota",
     "concept": "O `if` testa uma condição; `else if` testa outra; o último `return` cobre o resto. A ordem importa (testa do mais específico ao geral). Exemplo análogo (tamanho):",
     "exampleCode": "function tamanho(n) {\n  if (n > 100) return \"grande\"\n  if (n > 10) return \"médio\"\n  return \"pequeno\"\n}",
@@ -439,6 +510,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "3.2 Sinal do número",
     "concept": "Encadeie `if`s para cobrir cada caso; o `return` já encerra a função. Exemplo análogo:",
     "exampleCode": "function temperatura(t) {\n  if (t > 30) return \"quente\"\n  if (t < 15) return \"frio\"\n  return \"agradável\"\n}",
@@ -475,6 +547,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "3.3 Maior de dois",
     "concept": "Compare os dois e devolva o que interessa. Exemplo análogo (o MENOR dos dois):",
     "exampleCode": "function menorDeDois(a, b) {\n  if (a <= b) return a\n  return b\n}\n// menorDeDois(3, 7) devolve 3",
@@ -514,6 +587,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "3.4 Maior de três",
     "concept": "Combine comparações com `&&`. Exemplo análogo (os três são positivos?):",
     "exampleCode": "function todosPositivos(a, b, c) {\n  return a > 0 && b > 0 && c > 0\n}",
@@ -556,6 +630,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "3.5 Nome do dia",
     "concept": "O `switch` compara um valor com vários `case`. Coloque `return` (ou `break`) em cada caso e um `default` para o resto. Exemplo análogo:",
     "exampleCode": "function nomeDaCor(n) {\n  switch (n) {\n    case 1: return \"vermelho\"\n    case 2: return \"verde\"\n    default: return \"desconhecida\"\n  }\n}",
@@ -593,6 +668,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "3.6 Preço VIP",
     "concept": "O ternário `condição ? valorSeSim : valorSeNão` é um if curtinho que devolve um valor. Exemplo análogo:",
     "exampleCode": "function dobroOuZero(n, dobrar) {\n  return dobrar ? n * 2 : 0\n}\n// dobroOuZero(5, true) devolve 10",
@@ -632,6 +708,24 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 4 — Funções",
+    "concept": "Você já usou `return`; agora vamos aprofundar as **funções**.\n\nUma função recebe **parâmetros** (as entradas) e devolve um resultado. Um parâmetro pode ter **valor padrão** (`exp = 2`): se ninguém passar, usa o padrão. As **arrow functions** (`(x) => x + 1`) são uma forma curta de escrever funções.\n\nUm truque de texto muito usado é o **template literal**: com crases e `${}` você mistura texto e valores. Funções bem escritas deixam o código reutilizável.",
+    "exampleCode": "function saudar(nome) {\n  return `Olá, ${nome}!`\n}\nconst dobro = (n) => n * 2",
+    "vocabulary": [
+      "parâmetro",
+      "arrow function",
+      "template literal",
+      "${}"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "4.1 Saudação",
     "concept": "Template literal usa crases ` e `${...}` para misturar texto com valores. Exemplo análogo:",
     "exampleCode": "function etiqueta(nome) {\n  return `Produto: ${nome}`\n}\n// etiqueta(\"Bola\") devolve \"Produto: Bola\"",
@@ -661,6 +755,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "4.2 Potência com padrão",
     "concept": "Um parâmetro pode ter valor **padrão** (`= 2`): se não passarem, usa o padrão. `Math.pow(base, exp)` calcula a potência. Exemplo análogo do padrão:",
     "exampleCode": "function multiplica(a, b = 2) {\n  return a * b\n}\n// multiplica(5) usa b=2 -> 10",
@@ -699,6 +794,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "4.3 Aplicar desconto",
     "concept": "Porcentagem: `(valor * pct) / 100`. Multiplique ANTES de dividir para evitar erros de arredondamento. Exemplo análogo (aumento):",
     "exampleCode": "function comAumento(preco, pct) {\n  return preco + (preco * pct) / 100\n}\n// comAumento(100, 10) devolve 110",
@@ -737,6 +833,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "4.4 Ano bissexto",
     "concept": "Combine `&&` (E), `||` (OU) e `%` (resto). Exemplo análogo (divisível por 2 E por 3):",
     "exampleCode": "function divisivelPor6(n) {\n  return n % 2 === 0 && n % 3 === 0\n}\n// divisivelPor6(12) devolve true",
@@ -781,6 +878,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "4.5 IMC arredondado",
     "concept": "Para arredondar com 1 casa decimal: `Math.round(x * 10) / 10`. Exemplo do truque:",
     "exampleCode": "function arredonda1(n) {\n  return Math.round(n * 10) / 10\n}\n// arredonda1(3.146) devolve 3.1",
@@ -812,6 +910,26 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 5 — Texto (strings)",
+    "concept": "Texto (`string`) é um dos tipos que você mais vai manipular.\n\nToda string tem `.length` (quantos caracteres) e cada caractere tem um **índice a partir de 0** (`texto[0]` é o primeiro). Métodos úteis: `.toUpperCase()`/`.toLowerCase()`, `.includes()`, `.slice()`, `.split()` e `.replace()`.\n\nRegra importante: strings são **imutáveis** — os métodos não mudam a original, eles **devolvem uma nova** string. Guarde o resultado se for usá-lo.",
+    "exampleCode": "\"casa\".length          // 4\n\"casa\"[0]               // \"c\"\n\"oi\".toUpperCase()      // \"OI\"",
+    "vocabulary": [
+      ".length",
+      ".toUpperCase()",
+      ".slice()",
+      ".includes()",
+      ".split()",
+      "imutável"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "5.1 Tamanho",
     "concept": "`.length` diz quantos caracteres a string tem. Exemplo análogo:",
     "exampleCode": "function temSenhaForte(senha) {\n  return senha.length >= 8\n}\n// \"12345678\".length é 8",
@@ -840,6 +958,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.2 Gritar",
     "concept": "Strings são imutáveis: `.toUpperCase()` devolve uma NOVA string em maiúsculas (`.toLowerCase()` em minúsculas). Exemplo análogo:",
     "exampleCode": "function sussurrar(texto) {\n  return texto.toLowerCase()\n}\n// sussurrar(\"OI\") devolve \"oi\"",
@@ -869,6 +988,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.3 Primeira letra",
     "concept": "Cada caractere tem um índice começando em 0: `texto[0]` é o primeiro. Exemplo análogo (terceira letra):",
     "exampleCode": "function terceiraLetra(texto) {\n  return texto[2]\n}\n// \"casa\"[2] é \"s\"",
@@ -898,6 +1018,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.4 Contém palavra",
     "concept": "`.includes(parte)` devolve true se a parte aparece na string. Exemplo análogo:",
     "exampleCode": "function ehEmail(texto) {\n  return texto.includes(\"@\")\n}\n// \"a@b\".includes(\"@\") é true",
@@ -928,6 +1049,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.5 Inverter texto",
     "concept": "Quebre em letras com `.split(\"\")`, inverta com `.reverse()` e junte com `.join(\"\")`. Exemplo do encadeamento:",
     "exampleCode": "function letrasEmLista(texto) {\n  return texto.split(\"\")\n}\n// \"abc\".split(\"\") devolve [\"a\",\"b\",\"c\"]",
@@ -958,6 +1080,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.6 Contar vogais",
     "concept": "Percorra com `for...of` e use um contador. `\"aeiou\".includes(c)` testa se é vogal. Exemplo análogo (conta espaços):",
     "exampleCode": "function contarEspacos(texto) {\n  let n = 0\n  for (const c of texto) {\n    if (c === \" \") n++\n  }\n  return n\n}",
@@ -994,6 +1117,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.7 Capitalizar",
     "concept": "Junte a primeira letra em maiúscula com o resto (`.slice(1)`) em minúscula. Exemplo do `.slice`:",
     "exampleCode": "function semPrimeiraLetra(texto) {\n  return texto.slice(1)\n}\n// \"casa\".slice(1) devolve \"asa\"",
@@ -1023,6 +1147,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.8 Censurar",
     "concept": "Quebrar pela palavra e juntar com outra troca TODAS as ocorrências (o `.replace` simples trocaria só a 1ª). Exemplo análogo:",
     "exampleCode": "function trocarTracos(texto) {\n  return texto.split(\"-\").join(\" \")\n}\n// \"a-b-c\" vira \"a b c\"",
@@ -1055,6 +1180,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "5.9 É palíndromo?",
     "concept": "Normalize (`.toLowerCase()` e `.replace(/[^a-z0-9]/g, \"\")` tira o que não é letra/número) e compare com o invertido. Exemplo da limpeza:",
     "exampleCode": "function soLetras(texto) {\n  return texto.toLowerCase().replace(/[^a-z]/g, \"\")\n}\n// \"Olá, Ana!\" vira \"olana\"",
@@ -1098,6 +1224,26 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 6 — Números e Math",
+    "concept": "Para trabalhar com números, o objeto **`Math`** traz várias ferramentas: `Math.round` (arredonda ao mais próximo), `Math.floor` (para baixo), `Math.ceil` (para cima), `Math.abs` (sem sinal), `Math.max`/`Math.min` e `Math.sqrt`.\n\nDuas armadilhas: `.toFixed(2)` devolve uma **string** (envolva em `Number(...)` se quiser número) e a soma de decimais nem sempre é exata (`0.1 + 0.2` não dá exatamente `0.3`). Para converter texto em número use `Number(...)` ou `parseInt(...)`.",
+    "exampleCode": "Math.round(2.6)               // 3\nNumber((3.14159).toFixed(2))  // 3.14",
+    "vocabulary": [
+      "Math.round",
+      "Math.floor",
+      "Math.abs",
+      "Math.max",
+      ".toFixed()",
+      "Number()"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "6.1 Arredondar",
     "concept": "`Math.round` arredonda ao mais próximo; `Math.floor` para baixo; `Math.ceil` para cima. Exemplo análogo:",
     "exampleCode": "function paraBaixo(n) {\n  return Math.floor(n)\n}\n// Math.floor(2.9) é 2",
@@ -1135,6 +1281,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "6.2 Valor absoluto",
     "concept": "`Math.abs` devolve o valor sem sinal (positivo ou zero). Exemplo análogo (distância entre dois números):",
     "exampleCode": "function distancia(a, b) {\n  return Math.abs(a - b)\n}\n// distancia(2, 9) é 7",
@@ -1170,6 +1317,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "6.3 Maior entre dois",
     "concept": "`Math.max(a, b)` devolve o maior; `Math.min(a, b)`, o menor. Exemplo análogo:",
     "exampleCode": "function menorEntre(a, b) {\n  return Math.min(a, b)\n}\n// Math.min(3, 9) é 3",
@@ -1201,6 +1349,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "6.4 Duas casas decimais",
     "concept": "CUIDADO: `.toFixed(2)` devolve uma STRING (\"3.14\"). Envolva em `Number(...)` para virar número. Exemplo análogo (1 casa):",
     "exampleCode": "function umaCasa(n) {\n  return Number(n.toFixed(1))\n}\n// Number((3.14).toFixed(1)) é 3.1",
@@ -1237,6 +1386,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "6.5 Soma dos dígitos",
     "concept": "Transforme em texto com `String(n)`, quebre em dígitos com `.split(\"\")` e some convertendo cada um com `Number`. Exemplo análogo (quantos dígitos):",
     "exampleCode": "function quantosDigitos(n) {\n  return String(n).split(\"\").length\n}\n// quantosDigitos(123) é 3",
@@ -1274,6 +1424,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "6.6 É primo?",
     "concept": "Primo é maior que 1 e só divisível por 1 e por ele mesmo. Teste divisores de 2 até a raiz (`i * i <= n`). Exemplo análogo (tem divisor por 2 a 4?):",
     "exampleCode": "function temDivisorPequeno(n) {\n  for (let i = 2; i <= 4; i++) {\n    if (n % i === 0) return true\n  }\n  return false\n}",
@@ -1325,6 +1476,25 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 7 — Repetição (loops)",
+    "concept": "Quando precisamos repetir algo, usamos **laços**.\n\nO `for` repete com um **contador** (começo, condição de parada e passo). O `while` repete enquanto uma condição for verdadeira. O `for...of` percorre cada item de uma lista ou string.\n\nMuitas vezes usamos um **acumulador**: uma variável que começa em 0 (para somar) ou 1 (para multiplicar) e é atualizada dentro do laço. Cuidado com o erro de \"um a mais/um a menos\" e com laços que nunca param.",
+    "exampleCode": "let soma = 0\nfor (let i = 1; i <= 5; i++) {\n  soma += i\n}\n// soma vale 15",
+    "vocabulary": [
+      "for",
+      "while",
+      "for...of",
+      "acumulador",
+      "++"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "7.1 Somar até N",
     "concept": "Um `for` repete com um contador; use um **acumulador** (começa em 0) e vá somando com `+=`. Exemplo análogo (soma dos pares até n? aqui: conta de 1 a n):",
     "exampleCode": "function quantosAte(n) {\n  let total = 0\n  for (let i = 1; i <= n; i++) total += 1\n  return total\n}",
@@ -1362,6 +1532,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.2 Contar pares",
     "concept": "Conte dentro do laço só quando a condição for verdadeira (`%` para testar par). Exemplo análogo (conta ímpares):",
     "exampleCode": "function contarImpares(ate) {\n  let n = 0\n  for (let i = 1; i <= ate; i++) {\n    if (i % 2 === 1) n++\n  }\n  return n\n}",
@@ -1399,6 +1570,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.3 Tabuada",
     "concept": "Crie uma lista vazia e vá adicionando com `.push()` dentro do laço. Exemplo análogo (lista de 1 a n):",
     "exampleCode": "function de1ate(n) {\n  const r = []\n  for (let i = 1; i <= n; i++) r.push(i)\n  return r\n}\n// de1ate(3) devolve [1,2,3]",
@@ -1451,6 +1623,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.4 Fatorial",
     "concept": "Fatorial = 1×2×...×n. O acumulador de multiplicação começa em 1 e usa `*=`. Exemplo análogo (multiplica todos até n):",
     "exampleCode": "function produtoAte(n) {\n  let p = 1\n  for (let i = 1; i <= n; i++) p *= i\n  return p\n}\n// produtoAte(4) é 24",
@@ -1487,6 +1660,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.5 Potência na mão",
     "concept": "Potência é multiplicar a base por ela mesma \"exp\" vezes (acumulador começa em 1). Exemplo análogo (soma a base exp vezes = multiplicação na mão):",
     "exampleCode": "function multiplicaSomando(base, vezes) {\n  let r = 0\n  for (let i = 0; i < vezes; i++) r += base\n  return r\n}",
@@ -1526,6 +1700,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.6 Maior da lista",
     "concept": "`for...of` percorre cada item. Guarde o maior visto até agora, começando pelo primeiro. Exemplo análogo (soma a lista):",
     "exampleCode": "function somar(lista) {\n  let total = 0\n  for (const x of lista) total += x\n  return total\n}",
@@ -1571,6 +1746,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "7.7 Quantas vezes a letra",
     "concept": "Percorra com `for...of` e conte quando o caractere for `===` à letra. Exemplo análogo (conta dígitos \"0\"):",
     "exampleCode": "function contarZeros(texto) {\n  let n = 0\n  for (const c of texto) {\n    if (c === \"0\") n++\n  }\n  return n\n}",
@@ -1603,6 +1779,26 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 8 — Listas (arrays)",
+    "concept": "Uma **lista** (array) guarda vários valores em ordem: `[10, 20, 30]`.\n\nCada item tem índice a partir de 0 (`lista[0]`), e `.length` diz quantos há (o último é `lista[lista.length - 1]`). Verifique se algo está na lista com `.includes()`.\n\nRegra de ouro: alguns métodos **alteram** a lista original (`push`, `pop`, `sort`, `reverse`) e outros **devolvem uma nova** (`slice`, `concat`, `map`, `filter`, spread `[...lista]`). Para transformar sem estragar a original, **copie antes**.",
+    "exampleCode": "const a = [1, 2, 3]\na[0]           // 1\na.length       // 3\n[...a, 4]      // [1,2,3,4] (nova lista)",
+    "vocabulary": [
+      "array",
+      "[i]",
+      ".length",
+      ".includes()",
+      "spread",
+      "mutação"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "8.1 Primeiro",
     "concept": "Itens de uma lista têm índice a partir de 0: `lista[0]` é o primeiro. Exemplo análogo (segundo item):",
     "exampleCode": "function segundo(lista) {\n  return lista[1]\n}\n// [10,20,30][1] é 20",
@@ -1639,6 +1835,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.2 Último",
     "concept": "O último índice é `.length - 1` (porque começa em 0). Exemplo análogo (penúltimo):",
     "exampleCode": "function penultimo(lista) {\n  return lista[lista.length - 2]\n}",
@@ -1675,6 +1872,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.3 Tamanho da lista",
     "concept": "`.length` em uma lista diz quantos itens há. Exemplo análogo (está vazia?):",
     "exampleCode": "function estaVazia(lista) {\n  return lista.length === 0\n}",
@@ -1707,6 +1905,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.4 Contém valor",
     "concept": "`.includes(valor)` diz se o valor está na lista. Exemplo análogo:",
     "exampleCode": "function temZero(lista) {\n  return lista.includes(0)\n}\n// [1,0,2].includes(0) é true",
@@ -1746,6 +1945,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.5 Sem o primeiro",
     "concept": "`.slice(1)` devolve uma NOVA lista a partir do índice 1, sem mexer na original. Exemplo análogo (só os 2 primeiros):",
     "exampleCode": "function doisPrimeiros(lista) {\n  return lista.slice(0, 2)\n}\n// [1,2,3,4].slice(0,2) é [1,2]",
@@ -1784,6 +1984,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.6 Adicionar (sem mutar)",
     "concept": "O spread `[...lista, valor]` cria uma NOVA lista com o item no fim, sem mexer na original (diferente de `.push`, que altera). Exemplo análogo (adiciona no começo):",
     "exampleCode": "function adicionarNoComeco(lista, valor) {\n  return [valor, ...lista]\n}\n// adicionarNoComeco([2,3], 1) é [1,2,3]",
@@ -1824,6 +2025,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.7 Inverter (copiando antes)",
     "concept": "CUIDADO: `.reverse()` ALTERA a lista original. Copie antes com `[...lista]`. Exemplo do mesmo cuidado com sort:",
     "exampleCode": "function copiaInvertida(lista) {\n  const copia = [...lista]\n  copia.reverse()\n  return copia\n}",
@@ -1868,6 +2070,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "8.8 Juntar com vírgula",
     "concept": "`.join(separador)` transforma uma lista em string separando pelos caracteres dados. Exemplo análogo:",
     "exampleCode": "function comTraco(lista) {\n  return lista.join(\"-\")\n}\n// [1,2,3].join(\"-\") é \"1-2-3\"",
@@ -1903,6 +2106,26 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 9 — Transformando listas",
+    "concept": "As **funções de ordem superior** deixam o trabalho com listas muito mais poderoso e limpo.\n\n`.map()` cria uma nova lista transformando cada item. `.filter()` mantém só os que passam numa condição. `.reduce()` combina a lista inteira em um valor (como uma soma). `.find()` acha o primeiro; `.some()`/`.every()` verificam se algum/todos passam.\n\nPegadinha clássica: `.sort()` sem função ordena como **texto** (`[10, 2, 1]` viraria `[1, 10, 2]`!). Para números use `.sort((a, b) => a - b)` — e copie antes, pois `sort` altera a original.",
+    "exampleCode": "[1,2,3].map(x => x * 2)         // [2,4,6]\n[1,2,3,4].filter(x => x%2===0)  // [2,4]\n[1,2,3].reduce((a,x) => a+x, 0)  // 6",
+    "vocabulary": [
+      ".map()",
+      ".filter()",
+      ".reduce()",
+      ".find()",
+      ".sort()",
+      "comparador"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "9.1 Dobrar todos",
     "concept": "`.map(fn)` cria uma NOVA lista aplicando a função a cada item. Exemplo análogo (+1 em cada):",
     "exampleCode": "function maisUm(lista) {\n  return lista.map(x => x + 1)\n}\n// [1,2,3] vira [2,3,4]",
@@ -1939,6 +2162,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.2 Só os pares",
     "concept": "`.filter(fn)` mantém só os itens em que a função devolve true. Exemplo análogo (maiores que 5):",
     "exampleCode": "function maioresQue5(lista) {\n  return lista.filter(x => x > 5)\n}\n// [3,7,9] vira [7,9]",
@@ -1979,6 +2203,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.3 Somar tudo",
     "concept": "`.reduce((acc, x) => ..., inicial)` combina a lista num único valor. Exemplo análogo (multiplica tudo):",
     "exampleCode": "function multiplicarTudo(lista) {\n  return lista.reduce((a, x) => a * x, 1)\n}\n// [2,3,4] dá 24",
@@ -2012,6 +2237,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.4 Nomes em maiúsculo",
     "concept": "Use `.map` para transformar cada string. Exemplo análogo (tamanho de cada palavra):",
     "exampleCode": "function tamanhos(lista) {\n  return lista.map(s => s.length)\n}\n// [\"oi\",\"tchau\"] vira [2,5]",
@@ -2040,6 +2266,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.5 Quantos maiores que N",
     "concept": "Combine `.filter` com `.length` para contar. Exemplo análogo (quantos pares):",
     "exampleCode": "function quantosPares(lista) {\n  return lista.filter(x => x % 2 === 0).length\n}",
@@ -2079,6 +2306,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.6 Achar o primeiro maior",
     "concept": "`.find(fn)` devolve o PRIMEIRO item que passa na condição (ou undefined). Exemplo análogo (1º par):",
     "exampleCode": "function primeiroPar(lista) {\n  return lista.find(x => x % 2 === 0)\n}\n// [1,3,4,6] devolve 4",
@@ -2117,6 +2345,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.7 Todos positivos?",
     "concept": "`.every(fn)` devolve true se TODOS passarem. Exemplo análogo (todos pares?):",
     "exampleCode": "function todosPares(lista) {\n  return lista.every(x => x % 2 === 0)\n}",
@@ -2153,6 +2382,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.8 Algum negativo?",
     "concept": "`.some(fn)` devolve true se PELO MENOS UM passar. Exemplo análogo (tem algum zero?):",
     "exampleCode": "function temZero(lista) {\n  return lista.some(x => x === 0)\n}",
@@ -2189,6 +2419,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.9 Média da lista",
     "concept": "Some com `.reduce` e divida pelo `.length`. Exemplo do `.reduce` somando:",
     "exampleCode": "function soma(lista) {\n  return lista.reduce((a, x) => a + x, 0)\n}\n// média = soma / lista.length",
@@ -2224,6 +2455,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "9.10 Ordenar crescente",
     "concept": "PEGADINHA: `.sort()` sem função ordena como TEXTO ([10,2,1] viraria [1,10,2]!). Para números use `.sort((a,b)=>a-b)`. E copie antes (`[...lista]`), pois sort altera a original. Exemplo:",
     "exampleCode": "function ordenarDecrescente(lista) {\n  return [...lista].sort((a, b) => b - a)\n}\n// [1,3,2] vira [3,2,1]",
@@ -2270,6 +2502,26 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 10 — Objetos",
+    "concept": "Enquanto listas guardam valores em ordem, **objetos** guardam valores com **nomes** (propriedades): `{ nome: \"Ana\", idade: 12 }`.\n\nAcesse com ponto (`pessoa.nome`) ou colchetes quando a chave é dinâmica (`pessoa[chave]`). `Object.keys(obj)` devolve as chaves e `Object.values(obj)` os valores.\n\nComo nas listas, para atualizar sem mexer no original use o spread: `{ ...pessoa, idade: 13 }` cria uma cópia trocando só a idade. Objetos são ótimos para representar \"coisas\" do mundo real.",
+    "exampleCode": "const p = { nome: \"Ana\", idade: 12 }\np.nome            // \"Ana\"\nObject.keys(p)    // [\"nome\",\"idade\"]",
+    "vocabulary": [
+      "objeto",
+      "{}",
+      ".propriedade",
+      "[chave]",
+      "Object.keys()",
+      "Object.values()"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "10.1 Criar pessoa",
     "concept": "Um objeto agrupa dados com nomes: `{ chave: valor }`. Exemplo análogo:",
     "exampleCode": "function criarPonto(x, y) {\n  return { x, y }\n}\n// criarPonto(1, 2) devolve { x: 1, y: 2 }",
@@ -2297,6 +2549,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.2 Pegar nome",
     "concept": "Acesse propriedades com ponto: `objeto.chave`. Exemplo análogo:",
     "exampleCode": "function pegarIdade(pessoa) {\n  return pessoa.idade\n}\n// { idade: 9 }.idade é 9",
@@ -2321,6 +2574,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.3 Tem a chave?",
     "concept": "O operador `in` diz se uma chave existe no objeto: `\"chave\" in obj`. Exemplo análogo:",
     "exampleCode": "function temEmail(pessoa) {\n  return \"email\" in pessoa\n}",
@@ -2356,6 +2610,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.4 Quantas chaves",
     "concept": "`Object.keys(obj)` devolve a lista das chaves; conte com `.length`. Exemplo:",
     "exampleCode": "function chaves(obj) {\n  return Object.keys(obj)\n}\n// { a:1, b:2 } -> [\"a\",\"b\"]",
@@ -2388,6 +2643,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.5 Somar valores",
     "concept": "`Object.values(obj)` devolve a lista dos valores; some com `.reduce`. Exemplo:",
     "exampleCode": "function valores(obj) {\n  return Object.values(obj)\n}\n// { a:1, b:2 } -> [1,2]",
@@ -2421,6 +2677,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.6 Atualizar idade (sem mutar)",
     "concept": "O spread `{ ...obj, chave: novo }` copia o objeto trocando uma propriedade, sem alterar o original. Exemplo análogo:",
     "exampleCode": "function comNovoNome(pessoa, nome) {\n  return { ...pessoa, nome }\n}",
@@ -2451,6 +2708,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "10.7 Inverter chave e valor",
     "concept": "Para chave dinâmica use colchetes: `novo[valor] = chave`. Percorra com `Object.keys`. Exemplo do colchete:",
     "exampleCode": "const cores = {}\ncores[\"céu\"] = \"azul\"\n// cores é { céu: \"azul\" }",
@@ -2490,6 +2748,23 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 11 — Recursão",
+    "concept": "**Recursão** é quando uma função chama a si mesma para resolver o problema em pedaços menores.\n\nToda recursão precisa de duas partes: o **caso base** (uma situação simples que para a repetição) e o **passo recursivo** (que chama a função com um problema menor, aproximando-se do caso base).\n\nPense: \"como resolvo o caso mais simples?\" e \"como reduzo o problema?\". Cuidado: sem caso base a recursão nunca para e estoura. Muitos problemas de lista e matemática ficam elegantes com recursão.",
+    "exampleCode": "function contagem(n) {\n  if (n <= 0) return []    // caso base\n  return [n, ...contagem(n - 1)]\n}\n// contagem(3) -> [3,2,1]",
+    "vocabulary": [
+      "recursão",
+      "caso base",
+      "passo recursivo"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "11.1 Contagem regressiva",
     "concept": "Função recursiva chama a si mesma e precisa de um CASO BASE que para. Exemplo análogo (lista crescente 1..n):",
     "exampleCode": "function ate(n) {\n  if (n <= 0) return []\n  return [...ate(n - 1), n]\n}\n// ate(3) devolve [1,2,3]",
@@ -2532,6 +2807,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "11.2 Fatorial recursivo",
     "concept": "fatorial(n) = n × fatorial(n-1); caso base fatorial(1) = 1. Exemplo análogo (soma recursiva):",
     "exampleCode": "function somaAte(n) {\n  if (n <= 0) return 0\n  return n + somaAte(n - 1)\n}",
@@ -2561,6 +2837,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "11.3 Soma até N recursiva",
     "concept": "somaAte(n) = n + somaAte(n-1), caso base somaAte(0) = 0. Exemplo análogo (conta itens):",
     "exampleCode": "function contar(lista) {\n  if (lista.length === 0) return 0\n  return 1 + contar(lista.slice(1))\n}",
@@ -2589,6 +2866,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "11.4 Potência recursiva",
     "concept": "base^exp = base × base^(exp-1); caso base base^0 = 1. Exemplo análogo (dobra n vezes):",
     "exampleCode": "function dobrarNvezes(x, vezes) {\n  if (vezes === 0) return x\n  return dobrarNvezes(x * 2, vezes - 1)\n}",
@@ -2619,6 +2897,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "11.5 Somar lista recursivamente",
     "concept": "A soma é o primeiro item mais a soma do resto (`.slice(1)`). Caso base: lista vazia soma 0. Exemplo análogo (tamanho recursivo):",
     "exampleCode": "function tamanho(lista) {\n  if (lista.length === 0) return 0\n  return 1 + tamanho(lista.slice(1))\n}",
@@ -2653,6 +2932,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "11.6 Fibonacci",
     "concept": "Cada termo é a soma dos dois anteriores; os DOIS primeiros valem 1 (dois casos base). Exemplo da estrutura:",
     "exampleCode": "function fib(n) {\n  if (n <= 2) return 1\n  return fib(n - 1) + fib(n - 2)\n}\n// 1,1,2,3,5,8...",
@@ -2689,6 +2969,24 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "lesson",
+    "title": "Lição 12 — Algoritmos",
+    "concept": "Chegou a hora de **juntar tudo**.\n\nUm algoritmo é uma sequência de passos para resolver um problema. Aqui você combina variáveis, condicionais, laços, listas, objetos e funções para resolver desafios clássicos: contar frequências, agrupar, validar com **expressões regulares** (padrões de texto), transformar dados e mais.\n\nDica principal: **decomponha** o problema em partes menores, pense nos **casos de borda** (lista vazia, empates) e escolha a estrutura certa. Não precisa acertar de primeira — teste, ajuste e peça uma dica ao Codi quando travar.",
+    "exampleCode": "function frequencia(lista) {\n  const c = {}\n  for (const x of lista) c[x] = (c[x] || 0) + 1\n  return c\n}",
+    "vocabulary": [
+      "algoritmo",
+      "objeto contador",
+      "regex",
+      "casos de borda"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
     "title": "12.1 FizzBuzz",
     "concept": "Monte uma lista de 1 a n. Teste o múltiplo de 15 ANTES de 3 e 5. Exemplo análogo (par/ímpar):",
     "exampleCode": "function parImpar(n) {\n  const r = []\n  for (let i = 1; i <= n; i++) {\n    r.push(i % 2 === 0 ? \"par\" : \"ímpar\")\n  }\n  return r\n}",
@@ -2741,6 +3039,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.2 Frequência",
     "concept": "Use um objeto como contador: `c[x] = (c[x] || 0) + 1`. Exemplo da contagem:",
     "exampleCode": "function contar(lista) {\n  const c = {}\n  for (const x of lista) c[x] = (c[x] || 0) + 1\n  return c\n}\n// [\"a\",\"a\"] -> { a: 2 }",
@@ -2784,6 +3083,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.3 Maior de cada sublista",
     "concept": "Combine `.map` com `Math.max(...sub)` (o spread espalha a sublista como argumentos). Exemplo análogo (soma de cada sublista):",
     "exampleCode": "function somasDeCada(matriz) {\n  return matriz.map(sub => sub.reduce((a, x) => a + x, 0))\n}",
@@ -2824,6 +3124,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.4 Agrupar por paridade",
     "concept": "Crie um objeto com duas listas e empurre cada número para a certa com `.push`. Exemplo análogo (positivos/negativos):",
     "exampleCode": "function porSinal(lista) {\n  const g = { pos: [], neg: [] }\n  for (const x of lista) (x >= 0 ? g.pos : g.neg).push(x)\n  return g\n}",
@@ -2861,6 +3162,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.5 Validar telefone",
     "concept": "Uma expressão regular descreve um padrão; `.test()` diz se casa. `\\\\d` é um dígito, `{11}` repete 11 vezes, `^...$` exige o texto inteiro. Exemplo análogo (3 dígitos):",
     "exampleCode": "function tem3Digitos(texto) {\n  return /^\\d{3}$/.test(texto)\n}\n// \"123\" é true, \"12a\" é false",
@@ -2897,6 +3199,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.6 Cifra de César",
     "concept": "`c.charCodeAt(0)` dá o código da letra; `String.fromCharCode(n)` faz o caminho inverso. Use `% 26` para voltar ao \"a\" depois do \"z\". Exemplo do código:",
     "exampleCode": "function proximaLetra(c) {\n  return String.fromCharCode(c.charCodeAt(0) + 1)\n}\n// proximaLetra(\"a\") é \"b\"",
@@ -2937,6 +3240,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.7 Moda",
     "concept": "Conte as frequências num objeto e guarde o item com a maior contagem. Exemplo do contador (base da moda):",
     "exampleCode": "function contagem(lista) {\n  const c = {}\n  for (const x of lista) c[x] = (c[x] || 0) + 1\n  return c\n}",
@@ -2976,6 +3280,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.8 Mediana",
     "concept": "Ordene; se a quantidade for ímpar, a mediana é o do meio; se for par, é a média dos dois do meio. Exemplo (pega o do meio, ímpar):",
     "exampleCode": "function doMeio(lista) {\n  const o = [...lista].sort((a, b) => a - b)\n  return o[Math.floor(o.length / 2)]\n}",
@@ -3014,6 +3319,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.9 São anagramas?",
     "concept": "Dois textos são anagramas se têm as mesmas letras. Ordene as letras de cada um e compare. Exemplo da \"assinatura\":",
     "exampleCode": "function ordenarLetras(s) {\n  return s.split(\"\").sort().join(\"\")\n}\n// \"roma\" e \"amor\" viram \"amor\"",
@@ -3046,6 +3352,7 @@ const trilhaModules: Modulo[] = [
     ]
   },
   {
+    "kind": "challenge",
     "title": "12.10 Inteiro para romano",
     "concept": "Tenha tabelas de valores e símbolos (do maior ao menor). Enquanto o número couber, subtraia o valor e acumule o símbolo. Exemplo do `while`:",
     "exampleCode": "function quantosCabem(n, valor) {\n  let q = 0\n  while (n >= valor) { n -= valor; q++ }\n  return q\n}",
@@ -3110,8 +3417,8 @@ async function seedTrilha() {
     console.log('  ⏩  Trilha já existe:', trail.id)
   }
 
-  let inseridos = 0
-  let atualizados = 0
+  let licoes = 0
+  let desafios = 0
   for (let i = 0; i < trilhaModules.length; i++) {
     const m = trilhaModules[i]!
     const order = i + 1
@@ -3127,13 +3434,18 @@ async function seedTrilha() {
         .insert(trailModules)
         .values({ trailId: trail!.id, title: m.title, concept: m.concept, exampleCode: m.exampleCode, vocabulary: m.vocabulary, order })
         .returning({ id: trailModules.id })
-      inseridos++
     } else {
       await db
         .update(trailModules)
         .set({ title: m.title, concept: m.concept, exampleCode: m.exampleCode, vocabulary: m.vocabulary })
         .where(eq(trailModules.id, mod.id))
-      atualizados++
+    }
+
+    if (m.kind === 'lesson') {
+      // Lição = módulo sem desafio. Remove qualquer desafio que exista neste módulo.
+      await db.delete(challenges).where(eq(challenges.moduleId, mod!.id))
+      licoes++
+      continue
     }
 
     const [ch] = await db
@@ -3156,19 +3468,13 @@ async function seedTrilha() {
     } else {
       await db
         .update(challenges)
-        .set({
-          title: m.title,
-          description: m.description,
-          starterCode: m.starterCode,
-          testCases: m.testCases,
-          difficulty: m.difficulty,
-          baseXp: m.baseXp,
-        })
+        .set({ title: m.title, description: m.description, starterCode: m.starterCode, testCases: m.testCases, difficulty: m.difficulty, baseXp: m.baseXp })
         .where(eq(challenges.id, ch.id))
     }
+    desafios++
   }
 
-  console.log(`  ✅  ${trilhaModules.length} módulos (${inseridos} novos, ${atualizados} atualizados)`)
+  console.log(`  ✅  ${trilhaModules.length} módulos (${licoes} lições, ${desafios} desafios)`)
   console.log('🎉  Seed da trilha concluído.')
 }
 
