@@ -1,4 +1,5 @@
 import { CodiWidget } from '@/components/codi/CodiWidget'
+import { ContactForm } from '@/components/contact/ContactForm'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ComoFunciona } from '@/components/sections/ComoFunciona'
@@ -26,9 +27,7 @@ export default function HomePage() {
           <p className={styles.contactText}>
             Sem compromisso: conte pra gente sobre a sua escola e retornamos com uma proposta.
           </p>
-          <a className={styles.contactCta} href="mailto:contato@codinhos.com.br">
-            Falar por e-mail
-          </a>
+          <ContactForm />
         </section>
       </main>
 
