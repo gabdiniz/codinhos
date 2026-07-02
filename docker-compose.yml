@@ -4,8 +4,9 @@
 #
 # Portas: web http://localhost:3000 | app http://localhost:5173 | api http://localhost:3333
 #
-# Segredos opcionais (ANTHROPIC_API_KEY p/ o Codi, RESEND_API_KEY, etc.): copie
-# apps/api/.env.example para apps/api/.env — e carregado automaticamente.
+# Segredos e config de e-mail (ANTHROPIC_API_KEY, RESEND_API_KEY, EMAIL_FROM,
+# CONTACT_TO, etc.): copie apps/api/.env.example para apps/api/.env — e carregado
+# automaticamente. NAO duplique aqui em `environment:`, senao sobrepoe o .env.
 name: codinhos
 
 # Aliases de valor inteiro (suportados pelo compose). Evitamos o merge key `<<`,
@@ -74,6 +75,9 @@ services:
     image: codinhos-dev
     container_name: codinhos-api
     command: pnpm --filter @codinhos/api dev
+    # Estas envs de infra ficam aqui de proposito (apontam para a rede do compose).
+    # Config de app/e-mail (EMAIL_FROM, CONTACT_TO, chaves) vem do apps/api/.env,
+    # para nao ser sobreposta pelo `environment:`.
     environment:
       NODE_ENV: development
       PORT: '3333'
@@ -82,8 +86,6 @@ services:
       APP_URL: http://localhost:5173
       SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-troque-em-prod-min-32-chars}
       SESSION_TTL_SECONDS: '604800'
-      AI_MODEL: ${AI_MODEL:-claude-haiku-4-5-20251001}
-      EMAIL_FROM: ${EMAIL_FROM:-noreply@codinhos.com.br}
     env_file:
       - path: ./apps/api/.env
         required: false

@@ -81,3 +81,12 @@ export class AiServiceError extends AppError {
     super(503, 'AI_SERVICE_ERROR', message)
   }
 }
+
+/** 503 — falha ao enviar e-mail (provedor indisponível, chave ausente/inválida) */
+export class EmailServiceError extends AppError {
+  constructor(
+    message = 'Não foi possível enviar sua mensagem agora. Tente novamente em instantes.',
+  ) {
+    super(503, 'EMAIL_SERVICE_ERROR', message)
+  }
+}
