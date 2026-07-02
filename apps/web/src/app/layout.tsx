@@ -1,7 +1,18 @@
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import Script from 'next/script'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import './globals.css'
+
+// Fontes auto-hospedadas pelo Next (sem requisição bloqueante ao Google Fonts).
+// Expostas como CSS variables e consumidas pelos tokens em globals.css.
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.codinhos.com.br'
 const SITE_NAME = 'Codinhos'
@@ -68,20 +79,19 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: script anti-FOUC precisa rodar antes da hidratação */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD estático de SEO */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="pt-BR" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
+        {/* Anti-FOUC: roda antes da hidratação, injetado no <head> pelo Next */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
+
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD estático de SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

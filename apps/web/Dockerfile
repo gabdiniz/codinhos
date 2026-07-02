@@ -7,6 +7,8 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 WORKDIR /workspace
 COPY . .
 RUN pnpm install --frozen-lockfile
+# Liga a saída standalone só aqui (o next.config lê esta env)
+ENV BUILD_STANDALONE=true
 RUN pnpm --filter @codinhos/web build
 
 FROM node:20-bookworm-slim AS runtime
