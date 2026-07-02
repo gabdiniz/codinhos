@@ -1,0 +1,86 @@
+# Stack de PRODUÇÃO — imagens buildadas e otimizadas (sem hot-reload).
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Ponto de partida para deploy. Antes de usar em produção de verdade:
+#  - defina segredos via .env na raiz (não use os defaults abaixo);
+#  - ajuste VITE_API_URL (app) e as URLs públicas para o seu domínio;
+#  - considere um proxy reverso (Caddy/Nginx/Traefik) com TLS na frente.
+name: codinhos-prod
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-codinhos}
+    volumes:
+      - codinhos_db_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-codinhos}']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # Migrations em produção rodam pela imagem de dev (tem drizzle-kit); one-shot.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: sh -c "pnpm --filter @codinhos/api db:migrate"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-codinhos}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3333'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-codinhos}
+      SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET no .env}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      AI_MODEL: ${AI_MODEL:-claude-haiku-4-5-20251001}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@codinhos.com.br}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+    ports:
+      - '3333:3333'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  app:
+    build:
+      context: .
+      dockerfile: apps/app/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:8080}
+    ports:
+      - '3000:3000'
+
+volumes:
+  codinhos_db_prod:

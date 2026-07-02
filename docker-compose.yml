@@ -1,3 +1,31 @@
+# Stack de DESENVOLVIMENTO — `docker compose up` sobe tudo com hot-reload.
+# Cada servico roda seu proprio dev server em Linux, entao NAO passa pelo turbo
+# (que crasha nativamente em algumas maquinas).
+#
+# Portas: web http://localhost:3000 | app http://localhost:5173 | api http://localhost:3333
+#
+# Segredos opcionais (ANTHROPIC_API_KEY, RESEND_API_KEY, etc.): copie
+# apps/api/.env.example para apps/api/.env — e carregado automaticamente.
+name: codinhos
+
+# Aliases de valor inteiro (suportados pelo compose). Evitamos o merge key `<<`,
+# que o parser do compose nao processa de forma confiavel.
+x-dev-build: &dev-build
+  context: .
+  dockerfile: Dockerfile.dev
+
+# Volumes nomeados preservam os node_modules instalados na imagem, impedindo que
+# o bind-mount do codigo (com node_modules do host) os sobreponha.
+x-node-modules: &node-modules
+  - ./:/workspace
+  - deps_root:/workspace/node_modules
+  - deps_api:/workspace/apps/api/node_modules
+  - deps_app:/workspace/apps/app/node_modules
+  - deps_web:/workspace/apps/web/node_modules
+  - deps_ui:/workspace/packages/ui/node_modules
+  - deps_types:/workspace/packages/types/node_modules
+  - deps_config:/workspace/packages/config/node_modules
+
 services:
   db:
     image: postgres:16
@@ -10,6 +38,96 @@ services:
       - '5432:5432'
     volumes:
       - codinhos_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d codinhos']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # One-shot: aplica migrations e popula dados iniciais, depois encerra.
+  migrate:
+    build: *dev-build
+    image: codinhos-dev
+    container_name: codinhos-migrate
+    command:
+      - sh
+      - -c
+      - >
+        pnpm --filter @codinhos/api db:migrate &&
+        (pnpm --filter @codinhos/api db:seed || echo 'seed: pulado (talvez ja populado)') &&
+        (pnpm --filter @codinhos/api db:seed:trilha || echo 'seed trilha: pulado (talvez ja populado)')
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/codinhos
+      SEED_SUPER_ADMIN_EMAIL: ${SEED_SUPER_ADMIN_EMAIL:-admin@codinhos.com.br}
+      SEED_SUPER_ADMIN_PASSWORD: ${SEED_SUPER_ADMIN_PASSWORD:-Admin123!codinhos}
+    env_file:
+      - path: ./apps/api/.env
+        required: false
+    volumes: *node-modules
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build: *dev-build
+    image: codinhos-dev
+    container_name: codinhos-api
+    command: pnpm --filter @codinhos/api dev
+    environment:
+      NODE_ENV: development
+      PORT: '3333'
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/codinhos
+      CORS_ORIGIN: http://localhost:3000,http://localhost:5173
+      APP_URL: http://localhost:5173
+      SESSION_SECRET: ${SESSION_SECRET:-dev-session-secret-troque-em-prod-min-32-chars}
+      SESSION_TTL_SECONDS: '604800'
+      AI_MODEL: ${AI_MODEL:-claude-haiku-4-5-20251001}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@codinhos.com.br}
+    env_file:
+      - path: ./apps/api/.env
+        required: false
+    ports:
+      - '3333:3333'
+    volumes: *node-modules
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  app:
+    build: *dev-build
+    image: codinhos-dev
+    container_name: codinhos-app
+    command: pnpm --filter @codinhos/app dev
+    environment:
+      DOCKER: 'true'
+      VITE_API_URL: http://localhost:3333
+    ports:
+      - '5173:5173'
+    volumes: *node-modules
+    depends_on:
+      - api
+
+  web:
+    build: *dev-build
+    image: codinhos-dev
+    container_name: codinhos-web
+    command: pnpm --filter @codinhos/web exec next dev --port 3000 --hostname 0.0.0.0
+    environment:
+      WATCHPACK_POLLING: 'true'
+      NEXT_PUBLIC_APP_URL: http://localhost:5173
+    ports:
+      - '3000:3000'
+    volumes: *node-modules
 
 volumes:
   codinhos_db:
+  deps_root:
+  deps_api:
+  deps_app:
+  deps_web:
+  deps_ui:
+  deps_types:
+  deps_config:
