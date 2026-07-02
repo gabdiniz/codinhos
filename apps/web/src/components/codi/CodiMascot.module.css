@@ -1,0 +1,121 @@
+/* Mascote Codi — animações puramente em CSS (sem JS), acessíveis.
+   Idle: flutua de leve, pisca os olhos e pulsa a antena/cursor.
+   Hover: abre um sorrisão. Tudo desligado em prefers-reduced-motion. */
+
+.mascot {
+  display: block;
+  overflow: visible;
+}
+
+/* Flutuar de leve (só quando animado) */
+.animated {
+  animation: codi-float 3.6s ease-in-out infinite;
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+@keyframes codi-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4%);
+  }
+}
+
+/* Piscar os olhos */
+.eye {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.animated .eye {
+  animation: codi-blink 4.5s infinite;
+}
+
+/* olho direito pisca um tiquinho depois — fica mais natural */
+.animated .eye2 {
+  animation-delay: 0.06s;
+}
+
+@keyframes codi-blink {
+  0%,
+  91%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.12);
+  }
+}
+
+/* Antena / cursor pulsando */
+.pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.animated .pulse {
+  animation: codi-pulse 2s ease-in-out infinite;
+}
+
+@keyframes codi-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.22);
+  }
+}
+
+/* Cursor piscando do terminal */
+.animated .caret {
+  animation: codi-caret 1.05s step-end infinite;
+}
+
+@keyframes codi-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Sorriso no hover (abre a boca num sorrisão) */
+.mouth {
+  transform-box: fill-box;
+  transform-origin: center top;
+  transition: transform 0.25s ease;
+}
+
+.mascot:hover .mouth {
+  transform: scaleY(1.7);
+}
+
+/* Bochechas acendem no hover */
+.cheek {
+  transition: opacity 0.25s ease;
+}
+
+.mascot:hover .cheek {
+  opacity: 0.95;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated,
+  .animated .eye,
+  .animated .pulse,
+  .animated .caret {
+    animation: none;
+  }
+  .mascot:hover .mouth {
+    transform: none;
+  }
+}
