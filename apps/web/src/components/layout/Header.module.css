@@ -26,6 +26,8 @@
   color: var(--color-text);
 }
 
+/* ─── Navegação desktop ───────────────────────────────────────────────────── */
+
 .nav {
   display: flex;
   gap: 6px;
@@ -72,8 +74,115 @@
   transform: translateY(-1px);
 }
 
+/* ─── Ações mobile (tema + hambúrguer) ────────────────────────────────────── */
+
+.mobileActions {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.burger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.burgerBar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 0 auto;
+  border-radius: 2px;
+  background: var(--color-text);
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.burgerBar[data-open='true']:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.burgerBar[data-open='true']:nth-child(2) {
+  opacity: 0;
+}
+.burgerBar[data-open='true']:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ─── Painel mobile ───────────────────────────────────────────────────────── */
+
+.mobilePanel {
+  display: none;
+}
+
 @media (max-width: 720px) {
-  .nav {
+  .nav,
+  .actions {
     display: none;
+  }
+
+  .mobileActions {
+    display: flex;
+  }
+
+  .mobilePanel {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-background);
+    animation: menu-down var(--transition-fast) ease;
+  }
+
+  .mobileLink {
+    padding: 12px 8px;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .mobileLink:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+
+  .mobileCta {
+    margin-top: 8px;
+    text-align: center;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-weight: 700;
+    box-shadow: var(--glow-primary);
+  }
+}
+
+@keyframes menu-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobilePanel {
+    animation: none;
+  }
+  .burgerBar {
+    transition: none;
   }
 }
