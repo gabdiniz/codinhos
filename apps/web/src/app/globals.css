@@ -11,6 +11,9 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Compensa o header fixo ao navegar por âncoras (#secao) */
+  scroll-padding-top: 72px;
 }
 
 body {
@@ -46,61 +49,200 @@ a {
   text-decoration: none;
 }
 
-/* ─── Tema padrão da plataforma ──────────────────────────────────────────────
-   Mesmas variáveis obrigatórias definidas em apps/app (ver agent_docs/theming.md).
-   O tema real do tenant sobrescreve estas variáveis no :root via API.
-   NUNCA use cores fixas fora deste arquivo — sempre var(--color-*).
-*/
+/* ════════════════════════════════════════════════════════════════════════════
+   TOKENS DA LANDING PAGE (apps/web) — marca Codinhos, direção híbrido tech-lúdico
+   ────────────────────────────────────────────────────────────────────────────
+   Duas camadas:
+     1. PRIMITIVAS  → paleta crua (--indigo-500 etc.). Não mudam com o tema.
+     2. SEMÂNTICOS  → papéis (--color-primary etc.). Referenciam primitivas e
+                       MUDAM entre light e dark.
+   Componentes usam SEMPRE os tokens semânticos, nunca as primitivas nem hex.
+   Regra do projeto: nenhuma cor fixa fora deste arquivo (ver agent_docs/theming.md).
+
+   Diferença para apps/app: a LP é a marca Codinhos (fixa, light+dark), não é
+   configurável por tenant. O theming por tenant só se aplica onde há slug.
+   Os nomes dos tokens são os mesmos para packages/ui funcionar nos dois apps.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. Primitivas (paleta crua, independente de tema) ──────────────────────*/
 
 :root {
+  /* Indigo — cor "tech" principal */
+  --indigo-300: #a5b4fc;
+  --indigo-400: #818cf8;
+  --indigo-500: #6366f1;
+  --indigo-600: #5b4ef0;
+  --indigo-700: #4a3dd6;
+
+  /* Violet — apoio, compõe o gradiente de marca */
+  --violet-400: #a78bfa;
+  --violet-500: #8b5cf6;
+
+  /* Lime — acento lúdico / "código" / CTA de destaque */
+  --lime-400: #a3e635;
+  --lime-500: #84cc16;
+  --lime-600: #65a30d;
+
+  /* Pink — pop lúdico para gamificação (badges, streak) */
+  --pink-400: #f472b6;
+  --pink-500: #ec4899;
+
+  /* Neutros (frios, vibe tech) */
+  --neutral-0:   #ffffff;
+  --neutral-50:  #f7f8fc;
+  --neutral-100: #eef0f7;
+  --neutral-200: #e4e6f0;
+  --neutral-300: #cbd0e0;
+  --neutral-500: #5c5f7a;
+  --neutral-600: #9aa1b8;
+  --neutral-800: #1c2130;
+  --neutral-850: #141824;
+  --neutral-900: #0f1420;
+  --neutral-950: #0b0e16;
+
+  /* Feedback (bases) */
+  --green-500: #16a34a;  --green-400: #34d399;
+  --red-500:   #dc2626;  --red-400:   #f87171;
+  --amber-500: #d97706;  --amber-400: #fbbf24;
+  --blue-500:  #2563eb;  --blue-400:  #60a5fa;
+}
+
+/* ─── 2. Semânticos → LIGHT (tema padrão) ────────────────────────────────────*/
+
+:root {
+  color-scheme: light;
+
   /* Marca */
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-on-primary: #ffffff;
-  --color-secondary: #8b5cf6;
-  --color-accent: #f59e0b;
+  --color-primary:       var(--indigo-600);
+  --color-primary-hover: var(--indigo-700);
+  --color-on-primary:    var(--neutral-0);
+  --color-secondary:     var(--violet-500);
+  --color-accent:        var(--lime-500);
+  --color-on-accent:     var(--neutral-950);
+  --color-pop:           var(--pink-500);   /* gamificação */
 
   /* Layout */
-  --color-background: #0f0f13;
-  --color-surface: #1a1a24;
-  --color-surface-raised: #22222f;
-  --color-border: #2e2e3f;
+  --color-background:     var(--neutral-50);
+  --color-surface:        var(--neutral-0);
+  --color-surface-raised: var(--neutral-0);
+  --color-border:         var(--neutral-200);
 
   /* Texto */
-  --color-text: #f1f0fb;
-  --color-text-muted: #9490b5;
-  --color-text-inverse: #0f0f13;
+  --color-text:         var(--neutral-900);
+  --color-text-muted:   var(--neutral-500);
+  --color-text-inverse: var(--neutral-0);
 
   /* Feedback */
-  --color-success: #22c55e;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
-  --color-info: #3b82f6;
+  --color-success: var(--green-500);
+  --color-error:   var(--red-500);
+  --color-warning: var(--amber-500);
+  --color-info:    var(--blue-500);
 
+  /* Efeitos de marca (LP) */
+  --gradient-brand: linear-gradient(135deg, var(--indigo-600), var(--violet-500));
+  --gradient-hero:  radial-gradient(60% 60% at 50% 0%, rgba(99, 102, 241, 0.12), transparent 70%);
+  --glow-primary:   0 0 40px rgba(91, 78, 240, 0.22);
+  --glow-accent:    0 0 32px rgba(132, 204, 22, 0.30);
+
+  /* Syntax highlight (snippets na LP) */
+  --code-bg:      var(--neutral-100);
+  --code-text:    #24283b;
+  --code-keyword: var(--violet-500);
+  --code-string:  var(--lime-600);
+  --code-fn:      var(--blue-500);
+  --code-number:  var(--amber-500);
+  --code-comment: #8a8fa8;
+
+  /* Sombras (suaves no light) */
+  --shadow-sm: 0 1px 2px rgba(20, 21, 43, 0.06);
+  --shadow-md: 0 4px 16px rgba(20, 21, 43, 0.08);
+  --shadow-lg: 0 12px 32px rgba(20, 21, 43, 0.12);
+}
+
+/* ─── 2. Semânticos → DARK ───────────────────────────────────────────────────
+   Aplicado quando <html data-theme="dark">. Uma lib como next-themes
+   (attribute="data-theme") resolve a preferência do sistema para este atributo,
+   então não precisamos duplicar em @media. */
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Marca — indigo/lime mais claros para "brilhar" no fundo escuro */
+  --color-primary:       var(--indigo-400);
+  --color-primary-hover: var(--indigo-300);
+  --color-on-primary:    var(--neutral-950);
+  --color-secondary:     var(--violet-400);
+  --color-accent:        var(--lime-400);
+  --color-on-accent:     var(--neutral-950);
+  --color-pop:           var(--pink-400);
+
+  /* Layout — base off-black (não #000 puro) */
+  --color-background:     var(--neutral-950);
+  --color-surface:        var(--neutral-850);
+  --color-surface-raised: var(--neutral-800);
+  --color-border:         #272d3d;
+
+  /* Texto */
+  --color-text:         #edf0f7;
+  --color-text-muted:   var(--neutral-600);
+  --color-text-inverse: var(--neutral-950);
+
+  /* Feedback */
+  --color-success: var(--green-400);
+  --color-error:   var(--red-400);
+  --color-warning: var(--amber-400);
+  --color-info:    var(--blue-400);
+
+  /* Efeitos de marca */
+  --gradient-brand: linear-gradient(135deg, var(--indigo-400), var(--violet-400));
+  --gradient-hero:  radial-gradient(60% 60% at 50% 0%, rgba(129, 140, 248, 0.20), transparent 70%);
+  --glow-primary:   0 0 48px rgba(129, 140, 248, 0.35);
+  --glow-accent:    0 0 40px rgba(163, 230, 53, 0.42);
+
+  /* Syntax highlight */
+  --code-bg:      var(--neutral-900);
+  --code-text:    #d7dbf0;
+  --code-keyword: #c4b5fd;
+  --code-string:  var(--lime-400);
+  --code-fn:      #7dd3fc;
+  --code-number:  var(--amber-400);
+  --code-comment: #6b7290;
+
+  /* Sombras (profundas no dark) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── 3. Tokens independentes de tema ────────────────────────────────────────*/
+
+:root {
   /* Tipografia */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 
-  /* Espaçamento base */
+  /* Raios */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-
-  /* Sombras */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --radius-full: 999px;
 
   /* Transições */
-  --transition-fast: 150ms ease;
+  --transition-fast:   150ms ease;
   --transition-normal: 250ms ease;
+
+  /* Troca de tema suave */
+  --transition-theme: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
+
+/* ─── Base ───────────────────────────────────────────────────────────────────*/
 
 body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-text);
+  transition: var(--transition-theme);
 }
 
 code,
@@ -113,4 +255,16 @@ samp {
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Acessibilidade: respeitar quem pediu menos movimento (obrigatório na LP) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
