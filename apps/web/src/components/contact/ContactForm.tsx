@@ -123,7 +123,7 @@ export function ContactForm() {
       </label>
 
       {error && (
-        <p className={styles.error}>
+        <p className={styles.error} role="alert">
           {error} Se preferir, escreva pra{' '}
           <a className={styles.link} href={`mailto:${FALLBACK_EMAIL}`}>
             {FALLBACK_EMAIL}

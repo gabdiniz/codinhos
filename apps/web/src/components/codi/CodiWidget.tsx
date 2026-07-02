@@ -146,7 +146,7 @@ export function CodiWidget() {
             </button>
           </header>
 
-          <div className={styles.body} ref={bodyRef}>
+          <div className={styles.body} ref={bodyRef} aria-live="polite">
             <div className={styles.bubbleBot}>
               <p>Oi! Eu sou o Codi 👋 Pode perguntar o que quiser sobre o Codinhos.</p>
             </div>
@@ -179,7 +179,7 @@ export function CodiWidget() {
             )}
 
             {error && (
-              <p className={styles.error}>
+              <p className={styles.error} role="alert">
                 {error}{' '}
                 <a className={styles.link} href={CONTACT_HREF} onClick={() => setOpen(false)}>
                   falar com a gente

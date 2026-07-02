@@ -151,7 +151,7 @@ a {
   --code-string:  var(--lime-600);
   --code-fn:      var(--blue-500);
   --code-number:  var(--amber-500);
-  --code-comment: #8a8fa8;
+  --code-comment: #5b6577;
 
   /* Sombras (suaves no light) */
   --shadow-sm: 0 1px 2px rgba(20, 21, 43, 0.06);
@@ -206,7 +206,7 @@ a {
   --code-string:  var(--lime-400);
   --code-fn:      #7dd3fc;
   --code-number:  var(--amber-400);
-  --code-comment: #6b7290;
+  --code-comment: #7c86a3;
 
   /* Sombras (profundas no dark) */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
@@ -218,8 +218,8 @@ a {
 
 :root {
   /* Tipografia */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains), 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
 
   /* Raios */
   --radius-sm: 4px;

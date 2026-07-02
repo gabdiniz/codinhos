@@ -74,6 +74,8 @@ function svgProps() {
     strokeWidth: 1.8,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
+    // Ícones decorativos (o título ao lado já dá o significado)
+    'aria-hidden': true,
   }
 }
 
