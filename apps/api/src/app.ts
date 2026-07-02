@@ -26,6 +26,7 @@ import { portfolioRoutes } from './modules/portfolio/portfolio.routes.js'
 import { adminRoutes } from './modules/admin/admin.routes.js'
 import { aiTutorRoutes } from './modules/ai-tutor/ai-tutor.routes.js'
 import { codiPublicRoutes } from './modules/codi-public/codi-public.routes.js'
+import { contactRoutes } from './modules/contact/contact.routes.js'
 import { progressRoutes } from './modules/progress/progress.routes.js'
 import { AppError } from './shared/errors/index.js'
 
@@ -123,6 +124,7 @@ export async function createApp() {
   await app.register(adminRoutes, { prefix: '/api' })
   await app.register(aiTutorRoutes, { prefix: '/api' })
   await app.register(codiPublicRoutes, { prefix: '/api' })
+  await app.register(contactRoutes, { prefix: '/api' })
   await app.register(progressRoutes, { prefix: '/api' })
 
   return app
