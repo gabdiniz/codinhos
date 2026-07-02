@@ -3,7 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
-import { getDashboard, getTrailDetail, getModuleDetail, getChallengeDetail } from './learn.service.js'
+import { getDashboard, getTrailDetail, getModuleDetail, getChallengeDetail, completeLesson } from './learn.service.js'
 import {
   slugParamsSchema,
   trailParamsSchema,
@@ -14,6 +14,7 @@ import {
   trailDetailResponseSchema,
   moduleDetailResponseSchema,
   challengeDetailResponseSchema,
+  completeLessonResponseSchema,
 } from './learn.schema.js'
 
 export async function learnRoutes(app: FastifyInstance) {
@@ -104,6 +105,22 @@ export async function learnRoutes(app: FastifyInstance) {
         req.query.classId,
       )
       return reply.status(200).send(result)
+    },
+  )
+  // POST /:slug/learn/modules/:moduleId/complete — conclui uma lição (módulo sem desafio)
+  f.post(
+    '/:slug/learn/modules/:moduleId/complete',
+    {
+      schema: {
+        params: moduleParamsSchema,
+        querystring: classIdQuerySchema,
+        response: { 200: completeLessonResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const result = await completeLesson(req.tenantId, req.user.id, req.params.moduleId, req.query.classId)
+      return reply.status(200).send({ data: result })
     },
   )
 }

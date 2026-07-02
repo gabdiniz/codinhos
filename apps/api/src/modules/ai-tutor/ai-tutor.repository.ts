@@ -194,3 +194,21 @@ export async function incrementUsage(
       set: { messageCount: sql`${aiUsage.messageCount} + 1` },
     })
 }
+
+/** Contexto de uma LIÇÃO (módulo sem desafio) para o system prompt do Codi. */
+export async function getModuleContext(moduleId: string): Promise<{
+  moduleTitle: string
+  moduleConcept: string | null
+  exampleCode: string | null
+} | null> {
+  const [row] = await db
+    .select({
+      moduleTitle: trailModules.title,
+      moduleConcept: trailModules.concept,
+      exampleCode: trailModules.exampleCode,
+    })
+    .from(trailModules)
+    .where(eq(trailModules.id, moduleId))
+    .limit(1)
+  return row ?? null
+}

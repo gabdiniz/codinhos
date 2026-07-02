@@ -3,13 +3,16 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
-import { getConversation, sendMessage } from './ai-tutor.service.js'
+import { getConversation, sendMessage, sendLessonMessage } from './ai-tutor.service.js'
 import { getTenantAiConfig, getStudentLevel } from './ai-tutor.repository.js'
 import {
   slugChallengeParamsSchema,
   sendMessageBodySchema,
   conversationResponseSchema,
   sendMessageResponseSchema,
+  slugModuleParamsSchema,
+  sendLessonMessageBodySchema,
+  lessonMessageResponseSchema,
 } from './ai-tutor.schema.js'
 import { NotFoundError } from '../../shared/errors/index.js'
 
@@ -82,6 +85,39 @@ export async function aiTutorRoutes(app: FastifyInstance) {
         tenantConfig,
       )
 
+      return reply.status(200).send({ data: result })
+    },
+  )
+  /**
+   * POST /api/:slug/ai/modules/:moduleId/messages
+   * Codi para uma LIÇÃO (módulo sem desafio). Sem persistência — histórico no cliente.
+   */
+  f.post(
+    '/:slug/ai/modules/:moduleId/messages',
+    {
+      schema: {
+        params: slugModuleParamsSchema,
+        body: sendLessonMessageBodySchema,
+        response: { 200: lessonMessageResponseSchema },
+      },
+      preHandler: guard,
+    },
+    async (req, reply) => {
+      const { moduleId } = req.params
+      const [tenantConfig, studentLevel] = await Promise.all([
+        getTenantAiConfig(req.resolvedTenantId),
+        getStudentLevel(req.resolvedTenantId, req.user.id),
+      ])
+      if (!tenantConfig) throw new NotFoundError('Tenant')
+
+      const result = await sendLessonMessage(
+        req.resolvedTenantId,
+        req.user.id,
+        moduleId,
+        req.body,
+        { name: req.user.name, level: studentLevel },
+        tenantConfig,
+      )
       return reply.status(200).send({ data: result })
     },
   )

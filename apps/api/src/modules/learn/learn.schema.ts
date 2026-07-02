@@ -145,3 +145,11 @@ export const challengeDetailResponseSchema = z.object({
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type ClassIdQuery = z.infer<typeof classIdQuerySchema>
+
+export const completeLessonResponseSchema = z.object({
+  data: z.object({
+    xpEarned: z.number(),
+    alreadyCompleted: z.boolean(),
+    nextModuleId: z.string().uuid().nullable(),
+  }),
+})
