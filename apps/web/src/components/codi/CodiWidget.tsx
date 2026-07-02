@@ -1,76 +1,137 @@
 'use client'
 
-import { useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { CodiMascot } from './CodiMascot'
 import styles from './CodiWidget.module.css'
 
 /**
  * Widget do Codi na LP — assistente de dúvidas sobre o produto (pré-venda).
- *
- * PLACEHOLDER: por enquanto responde com resumos estáticos da base de
- * conhecimento pública (docs/codi-kb). O próximo passo é ligar a um endpoint
- * público de IA (RAG sobre a docs/codi-kb) — ver docs/planejamento.md,
- * seção "Codi na Landing Page". Fora do escopo do produto, o Codi encaminha
- * para o contato por e-mail.
+ * Conversa de verdade com o endpoint público POST /api/codi/ask, que responde
+ * a partir da base curada (docs/codi-kb) com guardrails. Stateless: enviamos o
+ * histórico recente a cada pergunta. Fora do escopo, o Codi encaminha ao contato.
  */
 
-type Topic = {
-  id: string
-  chip: string
-  question: string
-  answer: string
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3333'
+const CONTACT_HREF = '#contato'
 
-const TOPICS: Topic[] = [
-  {
-    id: 'sobre',
-    chip: 'O que é o Codinhos?',
-    question: 'O que é o Codinhos?',
-    answer:
-      'É uma plataforma onde crianças de 11 a 14 anos aprendem a programar de verdade, escrevendo código no navegador. O foco inicial é JavaScript, por desafios práticos, com gamificação e um tutor de IA (esse sou eu!). É feito para escolas.',
-  },
-  {
-    id: 'escolas',
-    chip: 'Como funciona pra escola?',
-    question: 'Como funciona para a escola?',
-    answer:
-      'A escola ganha um ambiente próprio, com suas cores e logo. O gestor monta trilhas a partir de um catálogo pronto, cria turmas, define como o aluno avança e acompanha o progresso por relatórios — sem precisar criar conteúdo do zero.',
-  },
-  {
-    id: 'trilha',
-    chip: 'O que o aluno aprende?',
-    question: 'O que o aluno aprende?',
-    answer:
-      'Os fundamentos da programação em JavaScript: lógica (condicionais e loops), variáveis, funções, arrays e mini-projetos como um joguinho ou uma calculadora. Cada módulo tem conceito, exemplo guiado e desafio.',
-  },
-  {
-    id: 'gamificacao',
-    chip: 'Tem gamificação?',
-    question: 'Como funciona a gamificação?',
-    answer:
-      'Bastante! XP a cada desafio, níveis com títulos, conquistas (badges), ranking por turma e sequência diária. Tudo calibrado para o aluno sentir progresso e querer continuar.',
-  },
-  {
-    id: 'privacidade',
-    chip: 'É seguro pra crianças?',
-    question: 'É seguro para crianças?',
-    answer:
-      'Sim. Os dados de cada escola ficam separados, seguimos a LGPD e eu (o tutor de IA) tenho proteções para manter as conversas no tema do aprendizado e adequadas à idade.',
-  },
+const SUGGESTIONS = [
+  'O que é o Codinhos?',
+  'Como funciona pra escola?',
+  'O que o aluno aprende?',
+  'É seguro pra crianças?',
 ]
 
-const CONTACT_HREF = '#contato'
+type Msg = { role: 'user' | 'assistant'; content: string }
+
+// ─── Renderização leve de texto ───────────────────────────────────────────────
+// O Codi é instruído a responder em texto corrido, mas caso escape algum
+// markdown simples (negrito, listas), formatamos com segurança (sem HTML cru).
+
+function renderInline(text: string, prefix: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? (
+      <strong key={`${prefix}-${i}`}>{part.slice(2, -2)}</strong>
+    ) : (
+      <span key={`${prefix}-${i}`}>{part}</span>
+    ),
+  )
+}
+
+function RichText({ text }: { text: string }) {
+  // Remove marcadores de título (#, ##) que não fazem sentido num balão de chat
+  const clean = text.replace(/^#{1,6}\s*/gm, '').trim()
+  const blocks = clean.split(/\n{2,}/)
+
+  return (
+    <>
+      {blocks.map((block, bi) => {
+        const lines = block.split('\n')
+        const isList = lines.length > 0 && lines.every((l) => /^\s*[-*]\s+/.test(l))
+
+        if (isList) {
+          return (
+            <ul key={`b-${bi}`} className={styles.mdList}>
+              {lines.map((l, li) => (
+                <li key={`b-${bi}-${li}`}>
+                  {renderInline(l.replace(/^\s*[-*]\s+/, ''), `b-${bi}-${li}`)}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        return (
+          <p key={`b-${bi}`}>{renderInline(block.replace(/\n/g, ' '), `b-${bi}`)}</p>
+        )
+      })}
+    </>
+  )
+}
 
 export function CodiWidget() {
   const [open, setOpen] = useState(false)
-  const [active, setActive] = useState<Topic | null>(null)
+  const [messages, setMessages] = useState<Msg[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+
+  // Rola para a última mensagem
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rola a cada nova msg/loading
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages, loading])
+
+  async function send(text: string) {
+    const question = text.trim()
+    if (!question || loading) return
+
+    setError(null)
+    const history = messages.slice(-8)
+    setMessages((m) => [...m, { role: 'user', content: question }])
+    setInput('')
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API_URL}/api/codi/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: question, history }),
+      })
+
+      if (res.status === 429) {
+        setError('Muitas perguntas em pouco tempo. Tente de novo daqui a pouco.')
+        return
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      const json = (await res.json()) as { data?: { answer?: string } }
+      const answer = json?.data?.answer?.trim()
+      if (!answer) throw new Error('resposta vazia')
+
+      setMessages((m) => [...m, { role: 'assistant', content: answer }])
+    } catch {
+      setError('Não consegui responder agora. Tente de novo ou fale com a gente pelo formulário.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault()
+    void send(input)
+  }
+
+  const empty = messages.length === 0
 
   return (
     <div className={styles.root}>
       {open && (
         <div className={styles.panel} role="dialog" aria-label="Converse com o Codi">
           <header className={styles.header}>
-            <CodiMascot size={36} />
+            <span className={styles.avatar}>
+              <CodiMascot size={30} />
+            </span>
             <div>
               <strong className={styles.name}>Codi</strong>
               <span className={styles.status}>Tira suas dúvidas sobre o Codinhos</span>
@@ -85,39 +146,68 @@ export function CodiWidget() {
             </button>
           </header>
 
-          <div className={styles.body}>
-            {active ? (
-              <div className={styles.bubbleBot}>
-                <p>{active.answer}</p>
+          <div className={styles.body} ref={bodyRef}>
+            <div className={styles.bubbleBot}>
+              <p>Oi! Eu sou o Codi 👋 Pode perguntar o que quiser sobre o Codinhos.</p>
+            </div>
+
+            {messages.map((m, i) => (
+              <div
+                key={`${m.role}-${i}`}
+                className={m.role === 'user' ? styles.bubbleUser : styles.bubbleBot}
+              >
+                {m.role === 'assistant' ? <RichText text={m.content} /> : <p>{m.content}</p>}
               </div>
-            ) : (
+            ))}
+
+            {loading && (
               <div className={styles.bubbleBot}>
-                <p>Oi! Eu sou o Codi 👋 Sobre o que você quer saber?</p>
+                <span className={styles.typing}>
+                  <i /> <i /> <i />
+                </span>
               </div>
             )}
 
-            <div className={styles.chips}>
-              {TOPICS.map((topic) => (
-                <button
-                  key={topic.id}
-                  type="button"
-                  className={styles.chip}
-                  onClick={() => setActive(topic)}
-                >
-                  {topic.chip}
-                </button>
-              ))}
-            </div>
+            {empty && !loading && (
+              <div className={styles.chips}>
+                {SUGGESTIONS.map((s) => (
+                  <button key={s} type="button" className={styles.chip} onClick={() => send(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <p className={styles.note}>
-              Em breve vou responder qualquer pergunta ao vivo. Por enquanto, para falar com uma
-              pessoa,{' '}
-              <a className={styles.link} href={CONTACT_HREF} onClick={() => setOpen(false)}>
-                deixe seu contato
-              </a>
-              .
-            </p>
+            {error && (
+              <p className={styles.error}>
+                {error}{' '}
+                <a className={styles.link} href={CONTACT_HREF} onClick={() => setOpen(false)}>
+                  falar com a gente
+                </a>
+                .
+              </p>
+            )}
           </div>
+
+          <form className={styles.inputRow} onSubmit={onSubmit}>
+            <input
+              className={styles.input}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Escreva sua pergunta…"
+              maxLength={1000}
+              aria-label="Sua pergunta para o Codi"
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              className={styles.send}
+              disabled={loading || input.trim().length === 0}
+              aria-label="Enviar"
+            >
+              ↑
+            </button>
+          </form>
         </div>
       )}
 
@@ -128,7 +218,9 @@ export function CodiWidget() {
         aria-expanded={open}
         aria-label={open ? 'Fechar chat do Codi' : 'Abrir chat do Codi'}
       >
-        <CodiMascot size={34} />
+        <span className={styles.launcherAvatar}>
+          <CodiMascot size={30} />
+        </span>
         <span className={styles.launcherText}>Falar com o Codi</span>
       </button>
     </div>

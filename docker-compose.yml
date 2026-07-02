@@ -4,7 +4,7 @@
 #
 # Portas: web http://localhost:3000 | app http://localhost:5173 | api http://localhost:3333
 #
-# Segredos opcionais (ANTHROPIC_API_KEY, RESEND_API_KEY, etc.): copie
+# Segredos opcionais (ANTHROPIC_API_KEY p/ o Codi, RESEND_API_KEY, etc.): copie
 # apps/api/.env.example para apps/api/.env — e carregado automaticamente.
 name: codinhos
 
@@ -118,6 +118,7 @@ services:
     environment:
       WATCHPACK_POLLING: 'true'
       NEXT_PUBLIC_APP_URL: http://localhost:5173
+      NEXT_PUBLIC_API_URL: http://localhost:3333
     ports:
       - '3000:3000'
     volumes: *node-modules
