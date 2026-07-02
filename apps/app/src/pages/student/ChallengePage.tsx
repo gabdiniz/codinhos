@@ -551,7 +551,7 @@ function SubmitResultPanel({ result }: { result: SubmitResult }) {
 interface CodiDrawerProps {
   open: boolean
   onClose: () => void
-  challengeId: string
+  challengeId: string | null
   slug: string
   getCode: () => string
   /** Conversa carregada pelo ChallengePage ao abrir o desafio (sem round-trip extra) */
@@ -560,6 +560,10 @@ interface CodiDrawerProps {
   pendingHelpRequest: HelpRequest | null
   /** Mensagem disparada automaticamente (ex.: botão "Me ajude com este desafio") */
   autoMessage: { text: string; nonce: number } | null
+  /** Módulo atual — usado no modo lição (sem desafio) */
+  moduleId: string | null
+  /** true quando o módulo é uma lição (sem desafio) */
+  isLesson: boolean
 }
 
 function CodiDrawer({
@@ -571,6 +575,8 @@ function CodiDrawer({
   conversation,
   pendingHelpRequest,
   autoMessage,
+  moduleId,
+  isLesson,
 }: CodiDrawerProps) {
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [input, setInput] = useState('')
@@ -627,22 +633,37 @@ function CodiDrawer({
     setError(null)
 
     try {
-      const res = await api.post<{
-        data: {
-          message: AiMessage
-          messagesUsedToday: number
-          dailyLimit: number | null
-        }
-      }>(`/api/${slug}/ai/challenges/${challengeId}/messages`, {
-        message: text,
-        currentCode: getCode(),
-        ...(pendingFailedTest ? { failedTest: pendingFailedTest } : {}),
-      })
-      setMessages((prev) => [...prev, res.data.message])
-      setUsedToday(res.data.messagesUsedToday)
-      setDailyLimit(res.data.dailyLimit)
-      // Contexto consumido — não deve vazar pra próxima mensagem livre
-      setPendingFailedTest(null)
+      if (isLesson && moduleId) {
+        const res = await api.post<{
+          data: { reply: string; messagesUsedToday: number; dailyLimit: number | null }
+        }>(`/api/${slug}/ai/modules/${moduleId}/messages`, {
+          message: text,
+          history: messages.map((m) => ({ role: m.role, content: m.content })),
+        })
+        setMessages((prev) => [
+          ...prev,
+          { id: `codi-${Date.now()}`, role: 'assistant', content: res.data.reply, createdAt: new Date().toISOString() },
+        ])
+        setUsedToday(res.data.messagesUsedToday)
+        setDailyLimit(res.data.dailyLimit)
+      } else {
+        const res = await api.post<{
+          data: {
+            message: AiMessage
+            messagesUsedToday: number
+            dailyLimit: number | null
+          }
+        }>(`/api/${slug}/ai/challenges/${challengeId}/messages`, {
+          message: text,
+          currentCode: getCode(),
+          ...(pendingFailedTest ? { failedTest: pendingFailedTest } : {}),
+        })
+        setMessages((prev) => [...prev, res.data.message])
+        setUsedToday(res.data.messagesUsedToday)
+        setDailyLimit(res.data.dailyLimit)
+        // Contexto consumido — não deve vazar pra próxima mensagem livre
+        setPendingFailedTest(null)
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Codi não está disponível agora.')
       setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
@@ -774,6 +795,8 @@ export default function ChallengePage() {
   const helpRequestSeq = useRef(0)
   const [autoMsg, setAutoMsg] = useState<{ text: string; nonce: number } | null>(null)
   const autoMsgSeq = useRef(0)
+  const [lessonResult, setLessonResult] = useState<{ xpEarned: number; alreadyCompleted: boolean; nextModuleId: string | null } | null>(null)
+  const [completingLesson, setCompletingLesson] = useState(false)
 
   // Carrega dados do módulo — reseta estado ao trocar de módulo
   useEffect(() => {
@@ -789,6 +812,8 @@ export default function ChallengePage() {
     setAiData(null)
     setHelpRequest(null)
     setAutoMsg(null)
+    setLessonResult(null)
+    setCompletingLesson(false)
     api
       .get<{ data: ModuleDetail }>(`/api/${slug}/learn/modules/${moduleId}`)
       .then((res) => {
@@ -952,6 +977,23 @@ export default function ChallengePage() {
     )
   }
 
+  async function handleCompleteLesson() {
+    if (!slug || !moduleId) return
+    setCompletingLesson(true)
+    setSubmitError(null)
+    try {
+      const res = await api.post<{ data: { xpEarned: number; alreadyCompleted: boolean; nextModuleId: string | null } }>(
+        `/api/${slug}/learn/modules/${moduleId}/complete`,
+        {},
+      )
+      setLessonResult(res.data)
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? err.message : 'Erro ao concluir a lição.')
+    } finally {
+      setCompletingLesson(false)
+    }
+  }
+
   const { module: mod, challenge } = moduleData
   const starterCode = challenge?.starterCode ?? '// Escreva seu código aqui\n'
   const hasTests = (challenge?.testCases?.length ?? 0) > 0
@@ -983,10 +1025,10 @@ export default function ChallengePage() {
             onClick={() => {
               setCodiOpen(true)
               autoMsgSeq.current += 1
-              setAutoMsg({ text: 'Poderia me explicar o desafio?', nonce: autoMsgSeq.current })
+              setAutoMsg({ text: challenge ? 'Poderia me explicar o desafio?' : 'Pode me explicar esta lição?', nonce: autoMsgSeq.current })
             }}
           >
-            💡 Me ajude com este desafio
+            {challenge ? '💡 Me ajude com este desafio' : '💡 Me ajude com esta lição'}
           </button>
           <button
             className={`${styles.codiToggle} ${codiOpen ? styles.codiToggleActive : ''}`}
@@ -1045,6 +1087,8 @@ export default function ChallengePage() {
 
         {/* ── Painel direito: editor + resultados ── */}
         <div className={styles.rightPanel}>
+          {challenge ? (
+            <>
 
           {/* Editor */}
           <div className={styles.editorWrapper}>
@@ -1128,11 +1172,39 @@ export default function ChallengePage() {
               aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
             />
           )}
+            </>
+          ) : (
+            <div className={styles.lessonPanel}>
+              {!lessonResult ? (
+                <>
+                  <div className={styles.lessonCard}>
+                    <span className={styles.lessonIcon}>📖</span>
+                    <p className={styles.lessonText}>Esta é uma <strong>lição</strong>. Leia o conceito e o exemplo ao lado e, quando terminar, avance.</p>
+                    <p className={styles.lessonHint}>Ficou com dúvida? Abra o <strong>Codi</strong> aqui em cima — ele conhece esta lição.</p>
+                  </div>
+                  <button className={styles.lessonBtn} onClick={handleCompleteLesson} disabled={completingLesson}>
+                    {completingLesson ? 'Salvando...' : 'Entendi, avançar →'}
+                  </button>
+                  {submitError && <p className={styles.submitError}>{submitError}</p>}
+                </>
+              ) : (
+                <div className={styles.nextActions}>
+                  <p className={styles.lessonDone}>✅ Lição concluída!{lessonResult.xpEarned > 0 ? ` +${lessonResult.xpEarned} XP` : ''}</p>
+                  {lessonResult.nextModuleId ? (
+                    <Link to={`/${slug}/learn/${trailId}/module/${lessonResult.nextModuleId}`} className={styles.btnNext}>Próximo →</Link>
+                  ) : (
+                    <Link to={`/${slug}/learn/${trailId}`} className={styles.btnNext}>🎉 Você concluiu a trilha!</Link>
+                  )}
+                  <Link to={`/${slug}/learn/${trailId}`} className={styles.btnBackTrail}>Voltar à trilha</Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Codi Drawer ── */}
-      {challenge && (
+      {moduleData && (
         <>
           {codiOpen && (
             <div
@@ -1144,7 +1216,9 @@ export default function ChallengePage() {
           <CodiDrawer
             open={codiOpen}
             onClose={() => setCodiOpen(false)}
-            challengeId={challenge.id}
+            challengeId={challenge?.id ?? null}
+            moduleId={moduleId ?? null}
+            isLesson={!challenge}
             slug={slug!}
             getCode={() => codeRef.current}
             conversation={aiData}
