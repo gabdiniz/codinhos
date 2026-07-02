@@ -262,6 +262,7 @@ export default function AuthoringTrailPage() {
             <div className={styles.moduleHead}>
               <div>
                 <h2 className={styles.moduleTitle}>{m.title}</h2>
+                {m.challenges.length === 0 && <span className={styles.lessonBadge}>📖 Lição</span>}
                 {m.vocabulary.length > 0 && <span className={styles.vocab}>vocab: {m.vocabulary.join(', ')}</span>}
               </div>
               <div className={styles.moduleActions}>
