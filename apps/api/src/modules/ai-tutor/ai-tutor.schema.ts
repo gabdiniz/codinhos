@@ -54,3 +54,28 @@ export const sendMessageResponseSchema = z.object({
     dailyLimit: z.number().nullable(),
   }),
 })
+
+// ─── Lições (Codi por módulo, sem persistência) ───────────────────────────────
+
+export const slugModuleParamsSchema = z.object({
+  slug: z.string(),
+  moduleId: z.string().uuid('ID de módulo inválido'),
+})
+
+export const sendLessonMessageBodySchema = z.object({
+  message: z.string().min(1).max(2000),
+  history: z
+    .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(4000) }))
+    .max(20)
+    .optional(),
+})
+
+export const lessonMessageResponseSchema = z.object({
+  data: z.object({
+    reply: z.string(),
+    messagesUsedToday: z.number(),
+    dailyLimit: z.number().nullable(),
+  }),
+})
+
+export type SendLessonMessageBody = z.infer<typeof sendLessonMessageBodySchema>

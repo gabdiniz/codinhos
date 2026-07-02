@@ -16,7 +16,17 @@ import {
   findLastSubmission,
   listVocabularyUpToModule,
 } from './learn.repository.js'
-import { ForbiddenError, NotFoundError } from '../../shared/errors/index.js'
+import { ForbiddenError, NotFoundError, UnprocessableError } from '../../shared/errors/index.js'
+import { db } from '../../shared/db/index.js'
+import {
+  findStudentStatsRow,
+  upsertStudentStats,
+  insertXpEvent,
+  upsertModuleProgress,
+  findTenantSettings,
+} from '../submissions/submissions.repository.js'
+
+const LESSON_XP = 5
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 
@@ -238,4 +248,78 @@ export async function getChallengeDetail(
         : null,
     },
   }
+}
+
+// ─── POST /:slug/learn/modules/:moduleId/complete ─────────────────────────────
+// Conclui uma LIÇÃO (módulo sem desafio): marca o módulo como concluído (desbloqueia
+// o próximo no modo sequencial) e concede um bônus fixo de XP na primeira vez.
+export async function completeLesson(
+  tenantId: string,
+  studentId: string,
+  moduleId: string,
+  classId: string | undefined,
+) {
+  let membership
+  if (classId) {
+    membership = await findClassWithMembership(classId, studentId, tenantId)
+    if (!membership) throw new ForbiddenError()
+  } else {
+    membership = await findFirstStudentClass(studentId, tenantId)
+    if (!membership) throw new NotFoundError('Turma')
+  }
+
+  const mod = await findModuleWithChallenge(moduleId)
+  if (!mod) throw new NotFoundError('Módulo')
+  if (mod.challenge) {
+    throw new UnprocessableError('Este módulo tem um desafio — conclua resolvendo o desafio.')
+  }
+
+  const classTrail = await findClassTrail(membership.id, mod.trailId)
+  if (!classTrail) throw new NotFoundError('Módulo')
+
+  const [trailModulesList, progressMap] = await Promise.all([
+    listTrailModuleIds(mod.trailId),
+    listModuleProgressForTrail(mod.trailId, studentId, tenantId),
+  ])
+  const statusMap = computeModuleStatuses(trailModulesList, progressMap, membership.progressionMode)
+  const status = statusMap.get(moduleId) ?? 'locked'
+  if (status === 'locked') throw new ForbiddenError()
+
+  const idx = trailModulesList.findIndex((m) => m.id === moduleId)
+  const nextModuleId =
+    idx >= 0 && idx + 1 < trailModulesList.length ? trailModulesList[idx + 1].id : null
+
+  if (status === 'completed') {
+    return { xpEarned: 0, alreadyCompleted: true, nextModuleId }
+  }
+
+  const settings = await findTenantSettings(tenantId)
+  const gamification = (settings?.gamification ?? {}) as { xp_per_level?: number }
+  const xpPerLevel = gamification.xp_per_level ?? 100
+  const stats = await findStudentStatsRow(studentId, tenantId)
+  const newTotalXp = (stats?.totalXp ?? 0) + LESSON_XP
+  const newLevel = Math.floor(newTotalXp / xpPerLevel) + 1
+  const today = new Date().toISOString().slice(0, 10)
+
+  await db.transaction(async (tx) => {
+    await upsertModuleProgress({ tenantId, studentId, moduleId }, tx)
+    await insertXpEvent(
+      { tenantId, studentId, amount: LESSON_XP, reason: 'lesson_completed', refId: moduleId },
+      tx,
+    )
+    await upsertStudentStats(
+      {
+        studentId,
+        tenantId,
+        totalXp: newTotalXp,
+        level: newLevel,
+        currentStreak: stats?.currentStreak ?? 0,
+        longestStreak: stats?.longestStreak ?? 0,
+        lastActivity: stats?.lastActivity ?? today,
+      },
+      tx,
+    )
+  })
+
+  return { xpEarned: LESSON_XP, alreadyCompleted: false, nextModuleId }
 }
