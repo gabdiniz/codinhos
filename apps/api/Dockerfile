@@ -13,11 +13,15 @@ RUN pnpm --filter @codinhos/api deploy --prod /app-api
 
 FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production
+# Base de conhecimento pública do Codi (lida em runtime pelo módulo codi-public).
+ENV CODI_KB_DIR=/app/codi-kb
 WORKDIR /app
 # node_modules de produção + código compilado + arquivos do pacote (inclui migrations)
 COPY --from=build /app-api/node_modules ./node_modules
 COPY --from=build /app-api/dist ./dist
 COPY --from=build /app-api/package.json ./package.json
 COPY --from=build /app-api/src/shared/db/migrations ./src/shared/db/migrations
+# Base de conhecimento do Codi (copiada da raiz do monorepo, não faz parte do pacote)
+COPY docs/codi-kb ./codi-kb
 EXPOSE 3333
 CMD ["node", "dist/server.js"]
