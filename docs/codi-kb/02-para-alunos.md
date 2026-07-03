@@ -1,6 +1,6 @@
 ---
 titulo: A experiência do aluno
-tema: aluno, sandbox, tutor, jornada
+tema: aluno, sandbox, tutor, jornada, portfolio, certificados
 publico: gestores, responsáveis, alunos
 ---
 
@@ -10,7 +10,7 @@ Para o aluno, o Codinhos é um lugar onde programar parece um jogo — mas ele a
 
 ## A jornada
 
-O aluno entra e vê sua **trilha atual** com o progresso visível. Dentro de cada módulo ele passa por três momentos:
+O aluno entra e vê sua **trilha atual** com o progresso visível. Dentro de cada módulo ele passa por três momentos, sempre **um conceito de cada vez**:
 
 1. **Conceito** — uma explicação curta da ideia (por exemplo, "o que é uma variável").
 2. **Exemplo guiado** — um código pronto e comentado para ele entender na prática.
@@ -22,9 +22,23 @@ Ao acertar, ele avança para o próximo módulo e ganha **XP e conquistas**. Se 
 
 O sandbox é o coração do produto: o aluno **escreve e executa código direto no navegador**, sem instalar nada e sem espera. Ele roda o código, vê o resultado na hora e ajusta até resolver o desafio.
 
+Alguns apoios deixam essa experiência mais acolhedora para quem está começando:
+
+- **Autocomplete contextual:** o editor sugere **apenas o que o aluno já aprendeu** na trilha, sem despejar a linguagem inteira de uma vez.
+- **Modo blocos:** em trilhas configuradas para isso, o aluno pode montar a lógica com blocos visuais em vez de digitar — uma porta de entrada mais suave para o código.
+- **Erros em linguagem amigável:** quando algo dá errado, a mensagem é traduzida para uma linguagem acessível à idade, em vez de mostrar o erro técnico cru.
+
 ## O Codi, tutor de IA
 
 O Codi é o assistente que acompanha o aluno. O princípio é pedagógico: **ele não entrega a resposta pronta**. Em vez disso, dá dicas progressivas e ajuda o aluno a pensar. Quando um desafio falha, o aluno pode pedir ao Codi para explicar o que deu errado — e o Codi guia o raciocínio sem resolver por ele. Errar faz parte do aprendizado, e o aluno decide quando quer ajuda.
+
+## Desafio da semana
+
+Além da trilha, o aluno encontra um **desafio da semana** — uma atividade extra para praticar e se manter engajado.
+
+## Portfólio e certificados
+
+Conforme avança, o aluno constrói um **portfólio**: as trilhas que concluiu, as que estão em andamento e as conquistas que ganhou. Ao **concluir uma trilha**, ele pode **baixar um certificado em PDF** com a marca da escola.
 
 ## Aprender no próprio ritmo
 

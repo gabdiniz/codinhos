@@ -13,8 +13,8 @@ const FEATURES: Feature[] = [
   },
   {
     icon: <IconCatalog />,
-    title: 'Catálogo pronto',
-    text: 'Monte trilhas escolhendo e ordenando módulos de qualidade — nada de criar conteúdo do zero.',
+    title: 'Catálogo pronto ou trilha própria',
+    text: 'Monte trilhas escolhendo módulos de qualidade — ou crie percursos sob medida para a sua escola.',
   },
   {
     icon: <IconFlow />,
@@ -27,14 +27,29 @@ const FEATURES: Feature[] = [
     text: 'Automática por testes, automática com revisão, ou totalmente manual para desafios abertos.',
   },
   {
+    icon: <IconRoles />,
+    title: 'Professores e responsáveis',
+    text: 'Professores acompanham só as suas turmas e revisam entregas. Responsáveis acompanham os filhos em modo leitura.',
+  },
+  {
     icon: <IconChart />,
     title: 'Relatórios de progresso',
     text: 'Acompanhe quem completou o quê, por aluno e por turma, e identifique quem precisa de apoio.',
   },
   {
     icon: <IconUsers />,
-    title: 'Onboarding simples',
+    title: 'Cadastro sem trabalho',
     text: 'Convite por e-mail e cadastro de alunos um a um ou por planilha (CSV), com modelo pronto.',
+  },
+  {
+    icon: <IconImport />,
+    title: 'Integração com Google Classroom',
+    text: 'Importe turmas e alunos direto de um curso do Classroom, sem cadastrar aluno por aluno.',
+  },
+  {
+    icon: <IconAward />,
+    title: 'Certificados com a sua marca',
+    text: 'O aluno baixa um certificado em PDF ao concluir uma trilha, com a identidade da escola.',
   },
 ]
 
@@ -135,6 +150,35 @@ function IconUsers() {
       <circle cx="9" cy="8" r="3" />
       <path d="M3 20a6 6 0 0 1 12 0" />
       <path d="M16 5.5a3 3 0 0 1 0 5.8M21 20a6 6 0 0 0-4-5.6" />
+    </svg>
+  )
+}
+
+function IconRoles() {
+  return (
+    <svg {...svgProps()}>
+      <path d="M12 3 2 8l10 5 10-5z" />
+      <path d="M6 10.5V15c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5" />
+      <path d="M22 8v5" />
+    </svg>
+  )
+}
+
+function IconImport() {
+  return (
+    <svg {...svgProps()}>
+      <path d="M12 3v11" />
+      <path d="M8 11l4 4 4-4" />
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </svg>
+  )
+}
+
+function IconAward() {
+  return (
+    <svg {...svgProps()}>
+      <circle cx="12" cy="9" r="5" />
+      <path d="M9 13.5 7.5 22 12 19.5 16.5 22 15 13.5" />
     </svg>
   )
 }
