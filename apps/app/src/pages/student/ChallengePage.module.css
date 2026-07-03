@@ -999,3 +999,21 @@
 .lessonBtn:hover:not(:disabled) { background: var(--color-primary-hover); }
 .lessonBtn:disabled { opacity: 0.6; cursor: default; }
 .lessonDone { font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--color-success); margin: 0; }
+
+/* ── Botão "Resetar código" ── */
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.9rem;
+  margin-left: auto;
+}
+.resetBtn:hover { color: var(--color-text); border-color: var(--color-text-muted); }
