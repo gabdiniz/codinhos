@@ -548,6 +548,17 @@
   border: 1px solid color-mix(in srgb, var(--color-error) 18%, transparent);
 }
 
+.submitResultReview {
+  background: color-mix(in srgb, var(--color-info) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-info) 25%, transparent);
+}
+
+.submitResultNote {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .submitResultHeader {
   display: flex;
   align-items: center;
