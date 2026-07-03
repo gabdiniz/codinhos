@@ -47,14 +47,18 @@ const trilhaModules: Modulo[] = [
   {
     "kind": "lesson",
     "title": "Lição 1 — Valores e variáveis",
-    "concept": "Antes de resolver problemas, o computador precisa **guardar informações** — e fazemos isso com **variáveis**, como caixinhas com um nome onde guardamos um valor.\n\nUse `let` quando o valor pode mudar e `const` quando é fixo. Todo valor tem um **tipo**: texto é `string` (entre aspas), número é `number` (sem aspas) e verdadeiro/falso é `boolean`.\n\nQuando queremos que um trecho de código **devolva** um resultado, escrevemos uma **função** e usamos `return`. Nos próximos desafios você vai criar variáveis e funções que devolvem valores.",
-    "exampleCode": "let nome = \"Ana\"       // string\nconst idade = 12        // number\nlet estudando = true    // boolean",
+    "concept": "Antes de resolver problemas, o computador precisa **guardar informações** — e fazemos isso com **variáveis**, como caixinhas com um nome onde guardamos um valor.\n\nUse `let` quando o valor pode mudar e `const` quando é fixo. Todo valor tem um **tipo**: texto é `string` (entre aspas), número é `number` (sem aspas) e verdadeiro/falso é `boolean`.\n\nPara fazer contas com números, usamos os **operadores aritméticos**: `+` (soma), `-` (subtração), `*` (multiplicação) e `/` (divisão). Por exemplo, `preco * 2` dobra o preço.\n\nE quando queremos que um trecho de código **devolva** um resultado, escrevemos uma **função** e usamos `return`. Nos próximos desafios você vai criar variáveis e funções que fazem contas e devolvem valores.",
+    "exampleCode": "let nome = \"Ana\"          // string\nconst idade = 12           // number\nconst pontos = idade * 10  // operador * -> 120",
     "vocabulary": [
       "let",
       "const",
       "string",
       "number",
       "boolean",
+      "+",
+      "-",
+      "*",
+      "/",
       "function",
       "return"
     ],
@@ -710,13 +714,15 @@ const trilhaModules: Modulo[] = [
   {
     "kind": "lesson",
     "title": "Lição 4 — Funções",
-    "concept": "Você já usou `return`; agora vamos aprofundar as **funções**.\n\nUma função recebe **parâmetros** (as entradas) e devolve um resultado. Um parâmetro pode ter **valor padrão** (`exp = 2`): se ninguém passar, usa o padrão. As **arrow functions** (`(x) => x + 1`) são uma forma curta de escrever funções.\n\nUm truque de texto muito usado é o **template literal**: com crases e `${}` você mistura texto e valores. Funções bem escritas deixam o código reutilizável.",
+    "concept": "Você já usou `return`; agora vamos aprofundar as **funções**.\n\nUma função recebe **parâmetros** (as entradas) e devolve um resultado. Um parâmetro pode ter **valor padrão** (`exp = 2`): se ninguém passar, usa o padrão. As **arrow functions** (`(x) => x + 1`) são uma forma curta de escrever funções.\n\nUm truque de texto muito usado é o **template literal**: com crases e `${}` você mistura texto e valores. Funções bem escritas deixam o código reutilizável.\n\nAlgumas contas já vêm prontas na biblioteca **`Math`**: por exemplo, `Math.pow(base, expoente)` calcula uma potência e `Math.round(n)` arredonda um número. Você vai ver o `Math` em detalhe mais pra frente.",
     "exampleCode": "function saudar(nome) {\n  return `Olá, ${nome}!`\n}\nconst dobro = (n) => n * 2",
     "vocabulary": [
       "parâmetro",
       "arrow function",
       "template literal",
-      "${}"
+      "${}",
+      "Math.pow",
+      "Math.round"
     ],
     "difficulty": "easy",
     "baseXp": 5,
@@ -911,16 +917,16 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "lesson",
-    "title": "Lição 5 — Texto (strings)",
-    "concept": "Texto (`string`) é um dos tipos que você mais vai manipular.\n\nToda string tem `.length` (quantos caracteres) e cada caractere tem um **índice a partir de 0** (`texto[0]` é o primeiro). Métodos úteis: `.toUpperCase()`/`.toLowerCase()`, `.includes()`, `.slice()`, `.split()` e `.replace()`.\n\nRegra importante: strings são **imutáveis** — os métodos não mudam a original, eles **devolvem uma nova** string. Guarde o resultado se for usá-lo.",
-    "exampleCode": "\"casa\".length          // 4\n\"casa\"[0]               // \"c\"\n\"oi\".toUpperCase()      // \"OI\"",
+    "title": "Lição 5 — Listas (arrays)",
+    "concept": "Uma **lista** (array) guarda vários valores em ordem: `[10, 20, 30]`.\n\nCada item tem índice a partir de 0 (`lista[0]`), e `.length` diz quantos há (o último é `lista[lista.length - 1]`). Verifique se algo está na lista com `.includes()`.\n\nRegra de ouro: alguns métodos **alteram** a lista original (`push`, `pop`, `sort`, `reverse`) e outros **devolvem uma nova** (`slice`, `concat`, `map`, `filter`, spread `[...lista]`). Para transformar sem estragar a original, **copie antes**.",
+    "exampleCode": "const a = [1, 2, 3]\na[0]           // 1\na.length       // 3\n[...a, 4]      // [1,2,3,4] (nova lista)",
     "vocabulary": [
+      "array",
+      "[i]",
       ".length",
-      ".toUpperCase()",
-      ".slice()",
       ".includes()",
-      ".split()",
-      "imutável"
+      "spread",
+      "mutação"
     ],
     "difficulty": "easy",
     "baseXp": 5,
@@ -930,554 +936,315 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "5.1 Tamanho",
-    "concept": "`.length` diz quantos caracteres a string tem. Exemplo análogo:",
-    "exampleCode": "function temSenhaForte(senha) {\n  return senha.length >= 8\n}\n// \"12345678\".length é 8",
+    "title": "5.1 Primeiro",
+    "concept": "Itens de uma lista têm índice a partir de 0: `lista[0]` é o primeiro. Exemplo análogo (segundo item):",
+    "exampleCode": "function segundo(lista) {\n  return lista[1]\n}\n// [10,20,30][1] é 20",
+    "vocabulary": [
+      "array",
+      "[0]"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `primeiro(lista)` que retorna o primeiro item.",
+    "starterCode": "function primeiro(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(primeiro([10,20,30]))  // deve dar 10\nconsole.log(primeiro([\"a\",\"b\"]))  // deve dar \"a\"",
+    "testCases": [
+      {
+        "input": [
+          [
+            10,
+            20,
+            30
+          ]
+        ],
+        "expected": 10,
+        "description": "primeiro = 10"
+      },
+      {
+        "input": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "expected": "a",
+        "description": "primeiro = \"a\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "5.2 Último",
+    "concept": "O último índice é `.length - 1` (porque começa em 0). Exemplo análogo (penúltimo):",
+    "exampleCode": "function penultimo(lista) {\n  return lista[lista.length - 2]\n}",
+    "vocabulary": [
+      ".length",
+      "índice"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `ultimo(lista)` que retorna o último item.",
+    "starterCode": "function ultimo(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(ultimo([10,20,30]))  // deve dar 30\nconsole.log(ultimo([\"a\",\"b\"]))  // deve dar \"b\"",
+    "testCases": [
+      {
+        "input": [
+          [
+            10,
+            20,
+            30
+          ]
+        ],
+        "expected": 30,
+        "description": "último = 30"
+      },
+      {
+        "input": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "expected": "b",
+        "description": "último = \"b\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "5.3 Tamanho da lista",
+    "concept": "`.length` em uma lista diz quantos itens há. Exemplo análogo (está vazia?):",
+    "exampleCode": "function estaVazia(lista) {\n  return lista.length === 0\n}",
     "vocabulary": [
       ".length"
     ],
     "difficulty": "easy",
     "baseXp": 10,
-    "description": "Escreva `tamanho(texto)` que retorna a quantidade de caracteres.",
-    "starterCode": "function tamanho(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(tamanho(\"casa\"))  // deve dar 4\nconsole.log(tamanho(\"\"))  // deve dar 0",
+    "description": "Escreva `tamanhoLista(lista)` que retorna a quantidade de itens.",
+    "starterCode": "function tamanhoLista(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(tamanhoLista([1,2,3]))  // deve dar 3\nconsole.log(tamanhoLista([]))  // deve dar 0",
     "testCases": [
       {
         "input": [
-          "casa"
-        ],
-        "expected": 4,
-        "description": "\"casa\" tem 4"
-      },
-      {
-        "input": [
-          ""
-        ],
-        "expected": 0,
-        "description": "vazio tem 0"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.2 Gritar",
-    "concept": "Strings são imutáveis: `.toUpperCase()` devolve uma NOVA string em maiúsculas (`.toLowerCase()` em minúsculas). Exemplo análogo:",
-    "exampleCode": "function sussurrar(texto) {\n  return texto.toLowerCase()\n}\n// sussurrar(\"OI\") devolve \"oi\"",
-    "vocabulary": [
-      ".toUpperCase()",
-      ".toLowerCase()"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `gritar(texto)` que retorna o texto todo em MAIÚSCULAS.",
-    "starterCode": "function gritar(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(gritar(\"oi\"))  // deve dar \"OI\"\nconsole.log(gritar(\"Codi\"))  // deve dar \"CODI\"",
-    "testCases": [
-      {
-        "input": [
-          "oi"
-        ],
-        "expected": "OI",
-        "description": "\"oi\" -> \"OI\""
-      },
-      {
-        "input": [
-          "Codi"
-        ],
-        "expected": "CODI",
-        "description": "\"Codi\" -> \"CODI\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.3 Primeira letra",
-    "concept": "Cada caractere tem um índice começando em 0: `texto[0]` é o primeiro. Exemplo análogo (terceira letra):",
-    "exampleCode": "function terceiraLetra(texto) {\n  return texto[2]\n}\n// \"casa\"[2] é \"s\"",
-    "vocabulary": [
-      "índice",
-      "[0]"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `primeiraLetra(texto)` que retorna o primeiro caractere.",
-    "starterCode": "function primeiraLetra(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(primeiraLetra(\"banana\"))  // deve dar \"b\"\nconsole.log(primeiraLetra(\"Zé\"))  // deve dar \"Z\"",
-    "testCases": [
-      {
-        "input": [
-          "banana"
-        ],
-        "expected": "b",
-        "description": "primeira de \"banana\" = \"b\""
-      },
-      {
-        "input": [
-          "Zé"
-        ],
-        "expected": "Z",
-        "description": "primeira de \"Zé\" = \"Z\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.4 Contém palavra",
-    "concept": "`.includes(parte)` devolve true se a parte aparece na string. Exemplo análogo:",
-    "exampleCode": "function ehEmail(texto) {\n  return texto.includes(\"@\")\n}\n// \"a@b\".includes(\"@\") é true",
-    "vocabulary": [
-      ".includes()"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `contem(frase, palavra)` que retorna true se a palavra aparece na frase.",
-    "starterCode": "function contem(frase, palavra) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(contem(\"banana split\", \"split\"))  // deve dar true\nconsole.log(contem(\"ola mundo\", \"xyz\"))  // deve dar false",
-    "testCases": [
-      {
-        "input": [
-          "banana split",
-          "split"
-        ],
-        "expected": true,
-        "description": "tem \"split\""
-      },
-      {
-        "input": [
-          "ola mundo",
-          "xyz"
-        ],
-        "expected": false,
-        "description": "não tem \"xyz\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.5 Inverter texto",
-    "concept": "Quebre em letras com `.split(\"\")`, inverta com `.reverse()` e junte com `.join(\"\")`. Exemplo do encadeamento:",
-    "exampleCode": "function letrasEmLista(texto) {\n  return texto.split(\"\")\n}\n// \"abc\".split(\"\") devolve [\"a\",\"b\",\"c\"]",
-    "vocabulary": [
-      ".split()",
-      ".reverse()",
-      ".join()"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `inverter(texto)` que retorna o texto de trás pra frente.",
-    "starterCode": "function inverter(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          "casa"
-        ],
-        "expected": "asac",
-        "description": "\"casa\" -> \"asac\""
-      },
-      {
-        "input": [
-          "Codi"
-        ],
-        "expected": "idoC",
-        "description": "\"Codi\" -> \"idoC\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.6 Contar vogais",
-    "concept": "Percorra com `for...of` e use um contador. `\"aeiou\".includes(c)` testa se é vogal. Exemplo análogo (conta espaços):",
-    "exampleCode": "function contarEspacos(texto) {\n  let n = 0\n  for (const c of texto) {\n    if (c === \" \") n++\n  }\n  return n\n}",
-    "vocabulary": [
-      "for...of",
-      "contador"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `contarVogais(texto)` que conta as vogais a, e, i, o, u (minúsculas).",
-    "starterCode": "function contarVogais(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          "banana"
+          [
+            1,
+            2,
+            3
+          ]
         ],
         "expected": 3,
-        "description": "\"banana\" tem 3 vogais"
+        "description": "3 itens"
       },
       {
         "input": [
-          "xyz"
+          []
         ],
         "expected": 0,
-        "description": "\"xyz\" tem 0"
-      },
-      {
-        "input": [
-          "aeiou"
-        ],
-        "expected": 5,
-        "description": "\"aeiou\" tem 5"
+        "description": "lista vazia"
       }
     ]
   },
   {
     "kind": "challenge",
-    "title": "5.7 Capitalizar",
-    "concept": "Junte a primeira letra em maiúscula com o resto (`.slice(1)`) em minúscula. Exemplo do `.slice`:",
-    "exampleCode": "function semPrimeiraLetra(texto) {\n  return texto.slice(1)\n}\n// \"casa\".slice(1) devolve \"asa\"",
+    "title": "5.4 Contém valor",
+    "concept": "`.includes(valor)` diz se o valor está na lista. Exemplo análogo:",
+    "exampleCode": "function temZero(lista) {\n  return lista.includes(0)\n}\n// [1,0,2].includes(0) é true",
+    "vocabulary": [
+      ".includes()",
+      ".indexOf()"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `contemValor(lista, valor)` que retorna true se o valor está na lista.",
+    "starterCode": "function contemValor(lista, valor) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(contemValor([1,2,3], 2))  // deve dar true\nconsole.log(contemValor([1,2,3], 9))  // deve dar false",
+    "testCases": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ],
+          2
+        ],
+        "expected": true,
+        "description": "tem o 2"
+      },
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ],
+          9
+        ],
+        "expected": false,
+        "description": "não tem 9"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "5.5 Sem o primeiro",
+    "concept": "`.slice(1)` devolve uma NOVA lista a partir do índice 1, sem mexer na original. Exemplo análogo (só os 2 primeiros):",
+    "exampleCode": "function doisPrimeiros(lista) {\n  return lista.slice(0, 2)\n}\n// [1,2,3,4].slice(0,2) é [1,2]",
     "vocabulary": [
       ".slice()",
-      ".charAt()"
+      "imutável"
     ],
     "difficulty": "medium",
     "baseXp": 20,
-    "description": "Escreva `capitalizar(texto)`: primeira letra maiúscula, o resto minúsculo.",
-    "starterCode": "function capitalizar(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "description": "Escreva `semPrimeiro(lista)` que retorna a lista sem o primeiro item.",
+    "starterCode": "function semPrimeiro(lista) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
     "testCases": [
       {
         "input": [
-          "maria"
+          [
+            1,
+            2,
+            3
+          ]
         ],
-        "expected": "Maria",
-        "description": "\"maria\" -> \"Maria\""
-      },
-      {
-        "input": [
-          "JOÃO"
-        ],
-        "expected": "João",
-        "description": "\"JOÃO\" -> \"João\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.8 Censurar",
-    "concept": "Quebrar pela palavra e juntar com outra troca TODAS as ocorrências (o `.replace` simples trocaria só a 1ª). Exemplo análogo:",
-    "exampleCode": "function trocarTracos(texto) {\n  return texto.split(\"-\").join(\" \")\n}\n// \"a-b-c\" vira \"a b c\"",
-    "vocabulary": [
-      ".split()",
-      ".join()",
-      ".replace()"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `censurar(frase, palavra)` que troca toda ocorrência da palavra por \"***\".",
-    "starterCode": "function censurar(frase, palavra) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          "voce e bobo bobo",
-          "bobo"
-        ],
-        "expected": "voce e *** ***",
-        "description": "troca as duas"
-      },
-      {
-        "input": [
-          "oi mundo",
-          "feio"
-        ],
-        "expected": "oi mundo",
-        "description": "sem ocorrência fica igual"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "5.9 É palíndromo?",
-    "concept": "Normalize (`.toLowerCase()` e `.replace(/[^a-z0-9]/g, \"\")` tira o que não é letra/número) e compare com o invertido. Exemplo da limpeza:",
-    "exampleCode": "function soLetras(texto) {\n  return texto.toLowerCase().replace(/[^a-z]/g, \"\")\n}\n// \"Olá, Ana!\" vira \"olana\"",
-    "vocabulary": [
-      ".toLowerCase()",
-      ".replace()"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `ehPalindromo(texto)` que retorna true se for palíndromo (ignore maiúsculas e espaços).",
-    "starterCode": "function ehPalindromo(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          "arara"
-        ],
-        "expected": true,
-        "description": "\"arara\" é"
-      },
-      {
-        "input": [
-          "Ana"
-        ],
-        "expected": true,
-        "description": "\"Ana\" é"
-      },
-      {
-        "input": [
-          "casa"
-        ],
-        "expected": false,
-        "description": "\"casa\" não é"
-      },
-      {
-        "input": [
-          "Anotaram a data da maratona"
-        ],
-        "expected": true,
-        "description": "frase é palíndromo"
-      }
-    ]
-  },
-  {
-    "kind": "lesson",
-    "title": "Lição 6 — Números e Math",
-    "concept": "Para trabalhar com números, o objeto **`Math`** traz várias ferramentas: `Math.round` (arredonda ao mais próximo), `Math.floor` (para baixo), `Math.ceil` (para cima), `Math.abs` (sem sinal), `Math.max`/`Math.min` e `Math.sqrt`.\n\nDuas armadilhas: `.toFixed(2)` devolve uma **string** (envolva em `Number(...)` se quiser número) e a soma de decimais nem sempre é exata (`0.1 + 0.2` não dá exatamente `0.3`). Para converter texto em número use `Number(...)` ou `parseInt(...)`.",
-    "exampleCode": "Math.round(2.6)               // 3\nNumber((3.14159).toFixed(2))  // 3.14",
-    "vocabulary": [
-      "Math.round",
-      "Math.floor",
-      "Math.abs",
-      "Math.max",
-      ".toFixed()",
-      "Number()"
-    ],
-    "difficulty": "easy",
-    "baseXp": 5,
-    "description": "",
-    "starterCode": "",
-    "testCases": []
-  },
-  {
-    "kind": "challenge",
-    "title": "6.1 Arredondar",
-    "concept": "`Math.round` arredonda ao mais próximo; `Math.floor` para baixo; `Math.ceil` para cima. Exemplo análogo:",
-    "exampleCode": "function paraBaixo(n) {\n  return Math.floor(n)\n}\n// Math.floor(2.9) é 2",
-    "vocabulary": [
-      "Math.round",
-      "Math.floor",
-      "Math.ceil"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `arredondar(n)` que retorna n arredondado ao inteiro mais próximo.",
-    "starterCode": "function arredondar(n) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(arredondar(2.4))  // deve dar 2\nconsole.log(arredondar(2.6))  // deve dar 3",
-    "testCases": [
-      {
-        "input": [
-          2.4
-        ],
-        "expected": 2,
-        "description": "2.4 -> 2"
-      },
-      {
-        "input": [
-          2.6
-        ],
-        "expected": 3,
-        "description": "2.6 -> 3"
-      },
-      {
-        "input": [
-          5
-        ],
-        "expected": 5,
-        "description": "5 -> 5"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "6.2 Valor absoluto",
-    "concept": "`Math.abs` devolve o valor sem sinal (positivo ou zero). Exemplo análogo (distância entre dois números):",
-    "exampleCode": "function distancia(a, b) {\n  return Math.abs(a - b)\n}\n// distancia(2, 9) é 7",
-    "vocabulary": [
-      "Math.abs"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `absoluto(n)` que retorna o valor absoluto de n.",
-    "starterCode": "function absoluto(n) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(absoluto(-7))  // deve dar 7\nconsole.log(absoluto(3))  // deve dar 3",
-    "testCases": [
-      {
-        "input": [
-          -7
-        ],
-        "expected": 7,
-        "description": "-7 -> 7"
-      },
-      {
-        "input": [
+        "expected": [
+          2,
           3
         ],
-        "expected": 3,
-        "description": "3 -> 3"
+        "description": "[1,2,3] -> [2,3]"
       },
       {
         "input": [
-          0
+          [
+            "a"
+          ]
         ],
-        "expected": 0,
-        "description": "0 -> 0"
+        "expected": [],
+        "description": "[\"a\"] -> []"
       }
     ]
   },
   {
     "kind": "challenge",
-    "title": "6.3 Maior entre dois",
-    "concept": "`Math.max(a, b)` devolve o maior; `Math.min(a, b)`, o menor. Exemplo análogo:",
-    "exampleCode": "function menorEntre(a, b) {\n  return Math.min(a, b)\n}\n// Math.min(3, 9) é 3",
+    "title": "5.6 Adicionar (sem mutar)",
+    "concept": "O spread `[...lista, valor]` cria uma NOVA lista com o item no fim, sem mexer na original (diferente de `.push`, que altera). Exemplo análogo (adiciona no começo):",
+    "exampleCode": "function adicionarNoComeco(lista, valor) {\n  return [valor, ...lista]\n}\n// adicionarNoComeco([2,3], 1) é [1,2,3]",
     "vocabulary": [
-      "Math.max",
-      "Math.min"
+      "spread",
+      "..."
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `adicionar(lista, valor)` que retorna uma NOVA lista com o valor no fim.",
+    "starterCode": "function adicionar(lista, valor) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          [
+            1,
+            2
+          ],
+          9
+        ],
+        "expected": [
+          1,
+          2,
+          9
+        ],
+        "description": "adiciona 9"
+      },
+      {
+        "input": [
+          [],
+          1
+        ],
+        "expected": [
+          1
+        ],
+        "description": "em lista vazia"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "5.7 Inverter (copiando antes)",
+    "concept": "CUIDADO: `.reverse()` ALTERA a lista original. Copie antes com `[...lista]`. Exemplo do mesmo cuidado com sort:",
+    "exampleCode": "function copiaInvertida(lista) {\n  const copia = [...lista]\n  copia.reverse()\n  return copia\n}",
+    "vocabulary": [
+      ".reverse()",
+      "spread",
+      "mutação"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `inverter(lista)` que retorna uma NOVA lista invertida.",
+    "starterCode": "function inverter(lista) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          3,
+          2,
+          1
+        ],
+        "description": "[1,2,3] -> [3,2,1]"
+      },
+      {
+        "input": [
+          [
+            "a",
+            "b"
+          ]
+        ],
+        "expected": [
+          "b",
+          "a"
+        ],
+        "description": "[\"a\",\"b\"] -> [\"b\",\"a\"]"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "5.8 Juntar com vírgula",
+    "concept": "`.join(separador)` transforma uma lista em string separando pelos caracteres dados. Exemplo análogo:",
+    "exampleCode": "function comTraco(lista) {\n  return lista.join(\"-\")\n}\n// [1,2,3].join(\"-\") é \"1-2-3\"",
+    "vocabulary": [
+      ".join()"
     ],
     "difficulty": "easy",
     "baseXp": 10,
-    "description": "Escreva `maiorEntre(a, b)` usando Math.max.",
-    "starterCode": "function maiorEntre(a, b) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(maiorEntre(3, 9))  // deve dar 9\nconsole.log(maiorEntre(-1, -5))  // deve dar -1",
+    "description": "Escreva `juntar(lista)` que retorna os itens separados por \", \" (vírgula e espaço).",
+    "starterCode": "function juntar(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(juntar([\"a\",\"b\",\"c\"]))  // deve dar \"a, b, c\"\nconsole.log(juntar([1,2]))  // deve dar \"1, 2\"",
     "testCases": [
       {
         "input": [
-          3,
-          9
+          [
+            "a",
+            "b",
+            "c"
+          ]
         ],
-        "expected": 9,
-        "description": "max(3,9)=9"
+        "expected": "a, b, c",
+        "description": "junta com vírgula"
       },
       {
         "input": [
-          -1,
-          -5
+          [
+            1,
+            2
+          ]
         ],
-        "expected": -1,
-        "description": "max(-1,-5)=-1"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "6.4 Duas casas decimais",
-    "concept": "CUIDADO: `.toFixed(2)` devolve uma STRING (\"3.14\"). Envolva em `Number(...)` para virar número. Exemplo análogo (1 casa):",
-    "exampleCode": "function umaCasa(n) {\n  return Number(n.toFixed(1))\n}\n// Number((3.14).toFixed(1)) é 3.1",
-    "vocabulary": [
-      ".toFixed()",
-      "Number()"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `duasCasas(n)` que retorna n com no máximo 2 casas decimais, como NÚMERO.",
-    "starterCode": "function duasCasas(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          3.14159
-        ],
-        "expected": 3.14,
-        "description": "3.14159 -> 3.14"
-      },
-      {
-        "input": [
-          2
-        ],
-        "expected": 2,
-        "description": "2 -> 2"
-      },
-      {
-        "input": [
-          0.1
-        ],
-        "expected": 0.1,
-        "description": "0.1 -> 0.1"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "6.5 Soma dos dígitos",
-    "concept": "Transforme em texto com `String(n)`, quebre em dígitos com `.split(\"\")` e some convertendo cada um com `Number`. Exemplo análogo (quantos dígitos):",
-    "exampleCode": "function quantosDigitos(n) {\n  return String(n).split(\"\").length\n}\n// quantosDigitos(123) é 3",
-    "vocabulary": [
-      "String()",
-      "Number()",
-      ".split()"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `somaDigitos(n)` que soma os dígitos de n (n é positivo). Ex.: 123 -> 6.",
-    "starterCode": "function somaDigitos(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          123
-        ],
-        "expected": 6,
-        "description": "1+2+3=6"
-      },
-      {
-        "input": [
-          99
-        ],
-        "expected": 18,
-        "description": "9+9=18"
-      },
-      {
-        "input": [
-          5
-        ],
-        "expected": 5,
-        "description": "5=5"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "6.6 É primo?",
-    "concept": "Primo é maior que 1 e só divisível por 1 e por ele mesmo. Teste divisores de 2 até a raiz (`i * i <= n`). Exemplo análogo (tem divisor por 2 a 4?):",
-    "exampleCode": "function temDivisorPequeno(n) {\n  for (let i = 2; i <= 4; i++) {\n    if (n % i === 0) return true\n  }\n  return false\n}",
-    "vocabulary": [
-      "Math.sqrt",
-      "for",
-      "%"
-    ],
-    "difficulty": "hard",
-    "baseXp": 35,
-    "description": "Escreva `ehPrimo(n)` que retorna true se n for primo.",
-    "starterCode": "function ehPrimo(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          2
-        ],
-        "expected": true,
-        "description": "2 é primo"
-      },
-      {
-        "input": [
-          7
-        ],
-        "expected": true,
-        "description": "7 é primo"
-      },
-      {
-        "input": [
-          9
-        ],
-        "expected": false,
-        "description": "9 não é"
-      },
-      {
-        "input": [
-          1
-        ],
-        "expected": false,
-        "description": "1 não é"
-      },
-      {
-        "input": [
-          13
-        ],
-        "expected": true,
-        "description": "13 é"
+        "expected": "1, 2",
+        "description": "números viram texto"
       }
     ]
   },
   {
     "kind": "lesson",
-    "title": "Lição 7 — Repetição (loops)",
+    "title": "Lição 6 — Repetição (loops)",
     "concept": "Quando precisamos repetir algo, usamos **laços**.\n\nO `for` repete com um **contador** (começo, condição de parada e passo). O `while` repete enquanto uma condição for verdadeira. O `for...of` percorre cada item de uma lista ou string.\n\nMuitas vezes usamos um **acumulador**: uma variável que começa em 0 (para somar) ou 1 (para multiplicar) e é atualizada dentro do laço. Cuidado com o erro de \"um a mais/um a menos\" e com laços que nunca param.",
     "exampleCode": "let soma = 0\nfor (let i = 1; i <= 5; i++) {\n  soma += i\n}\n// soma vale 15",
     "vocabulary": [
@@ -1495,7 +1262,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.1 Somar até N",
+    "title": "6.1 Somar até N",
     "concept": "Um `for` repete com um contador; use um **acumulador** (começa em 0) e vá somando com `+=`. Exemplo análogo (soma dos pares até n? aqui: conta de 1 a n):",
     "exampleCode": "function quantosAte(n) {\n  let total = 0\n  for (let i = 1; i <= n; i++) total += 1\n  return total\n}",
     "vocabulary": [
@@ -1533,7 +1300,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.2 Contar pares",
+    "title": "6.2 Contar pares",
     "concept": "Conte dentro do laço só quando a condição for verdadeira (`%` para testar par). Exemplo análogo (conta ímpares):",
     "exampleCode": "function contarImpares(ate) {\n  let n = 0\n  for (let i = 1; i <= ate; i++) {\n    if (i % 2 === 1) n++\n  }\n  return n\n}",
     "vocabulary": [
@@ -1571,7 +1338,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.3 Tabuada",
+    "title": "6.3 Tabuada",
     "concept": "Crie uma lista vazia e vá adicionando com `.push()` dentro do laço. Exemplo análogo (lista de 1 a n):",
     "exampleCode": "function de1ate(n) {\n  const r = []\n  for (let i = 1; i <= n; i++) r.push(i)\n  return r\n}\n// de1ate(3) devolve [1,2,3]",
     "vocabulary": [
@@ -1624,7 +1391,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.4 Fatorial",
+    "title": "6.4 Fatorial",
     "concept": "Fatorial = 1×2×...×n. O acumulador de multiplicação começa em 1 e usa `*=`. Exemplo análogo (multiplica todos até n):",
     "exampleCode": "function produtoAte(n) {\n  let p = 1\n  for (let i = 1; i <= n; i++) p *= i\n  return p\n}\n// produtoAte(4) é 24",
     "vocabulary": [
@@ -1661,7 +1428,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.5 Potência na mão",
+    "title": "6.5 Potência na mão",
     "concept": "Potência é multiplicar a base por ela mesma \"exp\" vezes (acumulador começa em 1). Exemplo análogo (soma a base exp vezes = multiplicação na mão):",
     "exampleCode": "function multiplicaSomando(base, vezes) {\n  let r = 0\n  for (let i = 0; i < vezes; i++) r += base\n  return r\n}",
     "vocabulary": [
@@ -1701,7 +1468,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.6 Maior da lista",
+    "title": "6.6 Maior da lista",
     "concept": "`for...of` percorre cada item. Guarde o maior visto até agora, começando pelo primeiro. Exemplo análogo (soma a lista):",
     "exampleCode": "function somar(lista) {\n  let total = 0\n  for (const x of lista) total += x\n  return total\n}",
     "vocabulary": [
@@ -1747,7 +1514,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "7.7 Quantas vezes a letra",
+    "title": "6.7 Quantas vezes a letra",
     "concept": "Percorra com `for...of` e conte quando o caractere for `===` à letra. Exemplo análogo (conta dígitos \"0\"):",
     "exampleCode": "function contarZeros(texto) {\n  let n = 0\n  for (const c of texto) {\n    if (c === \"0\") n++\n  }\n  return n\n}",
     "vocabulary": [
@@ -1780,16 +1547,16 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "lesson",
-    "title": "Lição 8 — Listas (arrays)",
-    "concept": "Uma **lista** (array) guarda vários valores em ordem: `[10, 20, 30]`.\n\nCada item tem índice a partir de 0 (`lista[0]`), e `.length` diz quantos há (o último é `lista[lista.length - 1]`). Verifique se algo está na lista com `.includes()`.\n\nRegra de ouro: alguns métodos **alteram** a lista original (`push`, `pop`, `sort`, `reverse`) e outros **devolvem uma nova** (`slice`, `concat`, `map`, `filter`, spread `[...lista]`). Para transformar sem estragar a original, **copie antes**.",
-    "exampleCode": "const a = [1, 2, 3]\na[0]           // 1\na.length       // 3\n[...a, 4]      // [1,2,3,4] (nova lista)",
+    "title": "Lição 7 — Texto (strings)",
+    "concept": "Texto (`string`) é um dos tipos que você mais vai manipular.\n\nToda string tem `.length` (quantos caracteres) e cada caractere tem um **índice a partir de 0** (`texto[0]` é o primeiro). Métodos úteis: `.toUpperCase()`/`.toLowerCase()`, `.includes()`, `.slice()`, `.split()` e `.replace()`.\n\nRegra importante: strings são **imutáveis** — os métodos não mudam a original, eles **devolvem uma nova** string. Guarde o resultado se for usá-lo.",
+    "exampleCode": "\"casa\".length          // 4\n\"casa\"[0]               // \"c\"\n\"oi\".toUpperCase()      // \"OI\"",
     "vocabulary": [
-      "array",
-      "[i]",
       ".length",
+      ".toUpperCase()",
+      ".slice()",
       ".includes()",
-      "spread",
-      "mutação"
+      ".split()",
+      "imutável"
     ],
     "difficulty": "easy",
     "baseXp": 5,
@@ -1799,315 +1566,303 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "8.1 Primeiro",
-    "concept": "Itens de uma lista têm índice a partir de 0: `lista[0]` é o primeiro. Exemplo análogo (segundo item):",
-    "exampleCode": "function segundo(lista) {\n  return lista[1]\n}\n// [10,20,30][1] é 20",
-    "vocabulary": [
-      "array",
-      "[0]"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `primeiro(lista)` que retorna o primeiro item.",
-    "starterCode": "function primeiro(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(primeiro([10,20,30]))  // deve dar 10\nconsole.log(primeiro([\"a\",\"b\"]))  // deve dar \"a\"",
-    "testCases": [
-      {
-        "input": [
-          [
-            10,
-            20,
-            30
-          ]
-        ],
-        "expected": 10,
-        "description": "primeiro = 10"
-      },
-      {
-        "input": [
-          [
-            "a",
-            "b"
-          ]
-        ],
-        "expected": "a",
-        "description": "primeiro = \"a\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "8.2 Último",
-    "concept": "O último índice é `.length - 1` (porque começa em 0). Exemplo análogo (penúltimo):",
-    "exampleCode": "function penultimo(lista) {\n  return lista[lista.length - 2]\n}",
-    "vocabulary": [
-      ".length",
-      "índice"
-    ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `ultimo(lista)` que retorna o último item.",
-    "starterCode": "function ultimo(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(ultimo([10,20,30]))  // deve dar 30\nconsole.log(ultimo([\"a\",\"b\"]))  // deve dar \"b\"",
-    "testCases": [
-      {
-        "input": [
-          [
-            10,
-            20,
-            30
-          ]
-        ],
-        "expected": 30,
-        "description": "último = 30"
-      },
-      {
-        "input": [
-          [
-            "a",
-            "b"
-          ]
-        ],
-        "expected": "b",
-        "description": "último = \"b\""
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "8.3 Tamanho da lista",
-    "concept": "`.length` em uma lista diz quantos itens há. Exemplo análogo (está vazia?):",
-    "exampleCode": "function estaVazia(lista) {\n  return lista.length === 0\n}",
+    "title": "7.1 Tamanho",
+    "concept": "`.length` diz quantos caracteres a string tem. Exemplo análogo:",
+    "exampleCode": "function temSenhaForte(senha) {\n  return senha.length >= 8\n}\n// \"12345678\".length é 8",
     "vocabulary": [
       ".length"
     ],
     "difficulty": "easy",
     "baseXp": 10,
-    "description": "Escreva `tamanhoLista(lista)` que retorna a quantidade de itens.",
-    "starterCode": "function tamanhoLista(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(tamanhoLista([1,2,3]))  // deve dar 3\nconsole.log(tamanhoLista([]))  // deve dar 0",
+    "description": "Escreva `tamanho(texto)` que retorna a quantidade de caracteres.",
+    "starterCode": "function tamanho(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(tamanho(\"casa\"))  // deve dar 4\nconsole.log(tamanho(\"\"))  // deve dar 0",
     "testCases": [
       {
         "input": [
-          [
-            1,
-            2,
-            3
-          ]
+          "casa"
         ],
-        "expected": 3,
-        "description": "3 itens"
+        "expected": 4,
+        "description": "\"casa\" tem 4"
       },
       {
         "input": [
-          []
+          ""
         ],
         "expected": 0,
-        "description": "lista vazia"
+        "description": "vazio tem 0"
       }
     ]
   },
   {
     "kind": "challenge",
-    "title": "8.4 Contém valor",
-    "concept": "`.includes(valor)` diz se o valor está na lista. Exemplo análogo:",
-    "exampleCode": "function temZero(lista) {\n  return lista.includes(0)\n}\n// [1,0,2].includes(0) é true",
+    "title": "7.2 Gritar",
+    "concept": "Strings são imutáveis: `.toUpperCase()` devolve uma NOVA string em maiúsculas (`.toLowerCase()` em minúsculas). Exemplo análogo:",
+    "exampleCode": "function sussurrar(texto) {\n  return texto.toLowerCase()\n}\n// sussurrar(\"OI\") devolve \"oi\"",
     "vocabulary": [
-      ".includes()",
-      ".indexOf()"
+      ".toUpperCase()",
+      ".toLowerCase()"
     ],
     "difficulty": "easy",
     "baseXp": 10,
-    "description": "Escreva `contemValor(lista, valor)` que retorna true se o valor está na lista.",
-    "starterCode": "function contemValor(lista, valor) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(contemValor([1,2,3], 2))  // deve dar true\nconsole.log(contemValor([1,2,3], 9))  // deve dar false",
+    "description": "Escreva `gritar(texto)` que retorna o texto todo em MAIÚSCULAS.",
+    "starterCode": "function gritar(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(gritar(\"oi\"))  // deve dar \"OI\"\nconsole.log(gritar(\"Codi\"))  // deve dar \"CODI\"",
     "testCases": [
       {
         "input": [
-          [
-            1,
-            2,
-            3
-          ],
-          2
+          "oi"
+        ],
+        "expected": "OI",
+        "description": "\"oi\" -> \"OI\""
+      },
+      {
+        "input": [
+          "Codi"
+        ],
+        "expected": "CODI",
+        "description": "\"Codi\" -> \"CODI\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.3 Primeira letra",
+    "concept": "Cada caractere tem um índice começando em 0: `texto[0]` é o primeiro. Exemplo análogo (terceira letra):",
+    "exampleCode": "function terceiraLetra(texto) {\n  return texto[2]\n}\n// \"casa\"[2] é \"s\"",
+    "vocabulary": [
+      "índice",
+      "[0]"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `primeiraLetra(texto)` que retorna o primeiro caractere.",
+    "starterCode": "function primeiraLetra(texto) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(primeiraLetra(\"banana\"))  // deve dar \"b\"\nconsole.log(primeiraLetra(\"Zé\"))  // deve dar \"Z\"",
+    "testCases": [
+      {
+        "input": [
+          "banana"
+        ],
+        "expected": "b",
+        "description": "primeira de \"banana\" = \"b\""
+      },
+      {
+        "input": [
+          "Zé"
+        ],
+        "expected": "Z",
+        "description": "primeira de \"Zé\" = \"Z\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.4 Contém palavra",
+    "concept": "`.includes(parte)` devolve true se a parte aparece na string. Exemplo análogo:",
+    "exampleCode": "function ehEmail(texto) {\n  return texto.includes(\"@\")\n}\n// \"a@b\".includes(\"@\") é true",
+    "vocabulary": [
+      ".includes()"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `contem(frase, palavra)` que retorna true se a palavra aparece na frase.",
+    "starterCode": "function contem(frase, palavra) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(contem(\"banana split\", \"split\"))  // deve dar true\nconsole.log(contem(\"ola mundo\", \"xyz\"))  // deve dar false",
+    "testCases": [
+      {
+        "input": [
+          "banana split",
+          "split"
         ],
         "expected": true,
-        "description": "tem o 2"
+        "description": "tem \"split\""
       },
       {
         "input": [
-          [
-            1,
-            2,
-            3
-          ],
-          9
+          "ola mundo",
+          "xyz"
         ],
         "expected": false,
-        "description": "não tem 9"
+        "description": "não tem \"xyz\""
       }
     ]
   },
   {
     "kind": "challenge",
-    "title": "8.5 Sem o primeiro",
-    "concept": "`.slice(1)` devolve uma NOVA lista a partir do índice 1, sem mexer na original. Exemplo análogo (só os 2 primeiros):",
-    "exampleCode": "function doisPrimeiros(lista) {\n  return lista.slice(0, 2)\n}\n// [1,2,3,4].slice(0,2) é [1,2]",
+    "title": "7.5 Inverter texto",
+    "concept": "Quebre em letras com `.split(\"\")`, inverta com `.reverse()` e junte com `.join(\"\")`. Exemplo do encadeamento:",
+    "exampleCode": "function letrasEmLista(texto) {\n  return texto.split(\"\")\n}\n// \"abc\".split(\"\") devolve [\"a\",\"b\",\"c\"]",
     "vocabulary": [
-      ".slice()",
-      "imutável"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `semPrimeiro(lista)` que retorna a lista sem o primeiro item.",
-    "starterCode": "function semPrimeiro(lista) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          [
-            1,
-            2,
-            3
-          ]
-        ],
-        "expected": [
-          2,
-          3
-        ],
-        "description": "[1,2,3] -> [2,3]"
-      },
-      {
-        "input": [
-          [
-            "a"
-          ]
-        ],
-        "expected": [],
-        "description": "[\"a\"] -> []"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "8.6 Adicionar (sem mutar)",
-    "concept": "O spread `[...lista, valor]` cria uma NOVA lista com o item no fim, sem mexer na original (diferente de `.push`, que altera). Exemplo análogo (adiciona no começo):",
-    "exampleCode": "function adicionarNoComeco(lista, valor) {\n  return [valor, ...lista]\n}\n// adicionarNoComeco([2,3], 1) é [1,2,3]",
-    "vocabulary": [
-      "spread",
-      "..."
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `adicionar(lista, valor)` que retorna uma NOVA lista com o valor no fim.",
-    "starterCode": "function adicionar(lista, valor) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          [
-            1,
-            2
-          ],
-          9
-        ],
-        "expected": [
-          1,
-          2,
-          9
-        ],
-        "description": "adiciona 9"
-      },
-      {
-        "input": [
-          [],
-          1
-        ],
-        "expected": [
-          1
-        ],
-        "description": "em lista vazia"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "8.7 Inverter (copiando antes)",
-    "concept": "CUIDADO: `.reverse()` ALTERA a lista original. Copie antes com `[...lista]`. Exemplo do mesmo cuidado com sort:",
-    "exampleCode": "function copiaInvertida(lista) {\n  const copia = [...lista]\n  copia.reverse()\n  return copia\n}",
-    "vocabulary": [
+      ".split()",
       ".reverse()",
-      "spread",
-      "mutação"
-    ],
-    "difficulty": "medium",
-    "baseXp": 20,
-    "description": "Escreva `inverter(lista)` que retorna uma NOVA lista invertida.",
-    "starterCode": "function inverter(lista) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
-    "testCases": [
-      {
-        "input": [
-          [
-            1,
-            2,
-            3
-          ]
-        ],
-        "expected": [
-          3,
-          2,
-          1
-        ],
-        "description": "[1,2,3] -> [3,2,1]"
-      },
-      {
-        "input": [
-          [
-            "a",
-            "b"
-          ]
-        ],
-        "expected": [
-          "b",
-          "a"
-        ],
-        "description": "[\"a\",\"b\"] -> [\"b\",\"a\"]"
-      }
-    ]
-  },
-  {
-    "kind": "challenge",
-    "title": "8.8 Juntar com vírgula",
-    "concept": "`.join(separador)` transforma uma lista em string separando pelos caracteres dados. Exemplo análogo:",
-    "exampleCode": "function comTraco(lista) {\n  return lista.join(\"-\")\n}\n// [1,2,3].join(\"-\") é \"1-2-3\"",
-    "vocabulary": [
       ".join()"
     ],
-    "difficulty": "easy",
-    "baseXp": 10,
-    "description": "Escreva `juntar(lista)` que retorna os itens separados por \", \" (vírgula e espaço).",
-    "starterCode": "function juntar(lista) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(juntar([\"a\",\"b\",\"c\"]))  // deve dar \"a, b, c\"\nconsole.log(juntar([1,2]))  // deve dar \"1, 2\"",
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `inverter(texto)` que retorna o texto de trás pra frente.",
+    "starterCode": "function inverter(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
     "testCases": [
       {
         "input": [
-          [
-            "a",
-            "b",
-            "c"
-          ]
+          "casa"
         ],
-        "expected": "a, b, c",
-        "description": "junta com vírgula"
+        "expected": "asac",
+        "description": "\"casa\" -> \"asac\""
       },
       {
         "input": [
-          [
-            1,
-            2
-          ]
+          "Codi"
         ],
-        "expected": "1, 2",
-        "description": "números viram texto"
+        "expected": "idoC",
+        "description": "\"Codi\" -> \"idoC\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.6 Contar vogais",
+    "concept": "Percorra com `for...of` e use um contador. `\"aeiou\".includes(c)` testa se é vogal. Exemplo análogo (conta espaços):",
+    "exampleCode": "function contarEspacos(texto) {\n  let n = 0\n  for (const c of texto) {\n    if (c === \" \") n++\n  }\n  return n\n}",
+    "vocabulary": [
+      "for...of",
+      "contador"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `contarVogais(texto)` que conta as vogais a, e, i, o, u (minúsculas).",
+    "starterCode": "function contarVogais(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          "banana"
+        ],
+        "expected": 3,
+        "description": "\"banana\" tem 3 vogais"
+      },
+      {
+        "input": [
+          "xyz"
+        ],
+        "expected": 0,
+        "description": "\"xyz\" tem 0"
+      },
+      {
+        "input": [
+          "aeiou"
+        ],
+        "expected": 5,
+        "description": "\"aeiou\" tem 5"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.7 Capitalizar",
+    "concept": "Junte a primeira letra em maiúscula com o resto (`.slice(1)`) em minúscula. Exemplo do `.slice`:",
+    "exampleCode": "function semPrimeiraLetra(texto) {\n  return texto.slice(1)\n}\n// \"casa\".slice(1) devolve \"asa\"",
+    "vocabulary": [
+      ".slice()",
+      ".charAt()"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `capitalizar(texto)`: primeira letra maiúscula, o resto minúsculo.",
+    "starterCode": "function capitalizar(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          "maria"
+        ],
+        "expected": "Maria",
+        "description": "\"maria\" -> \"Maria\""
+      },
+      {
+        "input": [
+          "JOÃO"
+        ],
+        "expected": "João",
+        "description": "\"JOÃO\" -> \"João\""
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.8 Censurar",
+    "concept": "Quebrar pela palavra e juntar com outra troca TODAS as ocorrências (o `.replace` simples trocaria só a 1ª). Exemplo análogo:",
+    "exampleCode": "function trocarTracos(texto) {\n  return texto.split(\"-\").join(\" \")\n}\n// \"a-b-c\" vira \"a b c\"",
+    "vocabulary": [
+      ".split()",
+      ".join()",
+      ".replace()"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `censurar(frase, palavra)` que troca toda ocorrência da palavra por \"***\".",
+    "starterCode": "function censurar(frase, palavra) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          "voce e bobo bobo",
+          "bobo"
+        ],
+        "expected": "voce e *** ***",
+        "description": "troca as duas"
+      },
+      {
+        "input": [
+          "oi mundo",
+          "feio"
+        ],
+        "expected": "oi mundo",
+        "description": "sem ocorrência fica igual"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "7.9 É palíndromo?",
+    "concept": "Palíndromo é uma palavra igual de trás pra frente. Antes de comparar, **normalize**: deixe tudo minúsculo e monte uma versão só com letras, percorrendo com `for...of` e guardando cada letra. Depois compare com o texto invertido. Exemplo da limpeza:",
+    "exampleCode": "let limpo = \"\"\nfor (const c of \"Olá, Ana!\".toLowerCase()) {\n  if (c >= \"a\" && c <= \"z\") limpo += c\n}\n// limpo = \"olana\"",
+    "vocabulary": [
+      ".toLowerCase()",
+      "for...of",
+      "comparação"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `ehPalindromo(texto)` que retorna true se for palíndromo (ignore maiúsculas e espaços).",
+    "starterCode": "function ehPalindromo(texto) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          "arara"
+        ],
+        "expected": true,
+        "description": "\"arara\" é"
+      },
+      {
+        "input": [
+          "Ana"
+        ],
+        "expected": true,
+        "description": "\"Ana\" é"
+      },
+      {
+        "input": [
+          "casa"
+        ],
+        "expected": false,
+        "description": "\"casa\" não é"
+      },
+      {
+        "input": [
+          "Anotaram a data da maratona"
+        ],
+        "expected": true,
+        "description": "frase é palíndromo"
       }
     ]
   },
   {
     "kind": "lesson",
-    "title": "Lição 9 — Transformando listas",
+    "title": "Lição 8 — Transformando listas",
     "concept": "As **funções de ordem superior** deixam o trabalho com listas muito mais poderoso e limpo.\n\n`.map()` cria uma nova lista transformando cada item. `.filter()` mantém só os que passam numa condição. `.reduce()` combina a lista inteira em um valor (como uma soma). `.find()` acha o primeiro; `.some()`/`.every()` verificam se algum/todos passam.\n\nPegadinha clássica: `.sort()` sem função ordena como **texto** (`[10, 2, 1]` viraria `[1, 10, 2]`!). Para números use `.sort((a, b) => a - b)` — e copie antes, pois `sort` altera a original.",
     "exampleCode": "[1,2,3].map(x => x * 2)         // [2,4,6]\n[1,2,3,4].filter(x => x%2===0)  // [2,4]\n[1,2,3].reduce((a,x) => a+x, 0)  // 6",
     "vocabulary": [
@@ -2126,7 +1881,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.1 Dobrar todos",
+    "title": "8.1 Dobrar todos",
     "concept": "`.map(fn)` cria uma NOVA lista aplicando a função a cada item. Exemplo análogo (+1 em cada):",
     "exampleCode": "function maisUm(lista) {\n  return lista.map(x => x + 1)\n}\n// [1,2,3] vira [2,3,4]",
     "vocabulary": [
@@ -2163,7 +1918,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.2 Só os pares",
+    "title": "8.2 Só os pares",
     "concept": "`.filter(fn)` mantém só os itens em que a função devolve true. Exemplo análogo (maiores que 5):",
     "exampleCode": "function maioresQue5(lista) {\n  return lista.filter(x => x > 5)\n}\n// [3,7,9] vira [7,9]",
     "vocabulary": [
@@ -2204,7 +1959,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.3 Somar tudo",
+    "title": "8.3 Somar tudo",
     "concept": "`.reduce((acc, x) => ..., inicial)` combina a lista num único valor. Exemplo análogo (multiplica tudo):",
     "exampleCode": "function multiplicarTudo(lista) {\n  return lista.reduce((a, x) => a * x, 1)\n}\n// [2,3,4] dá 24",
     "vocabulary": [
@@ -2238,7 +1993,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.4 Nomes em maiúsculo",
+    "title": "8.4 Nomes em maiúsculo",
     "concept": "Use `.map` para transformar cada string. Exemplo análogo (tamanho de cada palavra):",
     "exampleCode": "function tamanhos(lista) {\n  return lista.map(s => s.length)\n}\n// [\"oi\",\"tchau\"] vira [2,5]",
     "vocabulary": [
@@ -2267,7 +2022,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.5 Quantos maiores que N",
+    "title": "8.5 Quantos maiores que N",
     "concept": "Combine `.filter` com `.length` para contar. Exemplo análogo (quantos pares):",
     "exampleCode": "function quantosPares(lista) {\n  return lista.filter(x => x % 2 === 0).length\n}",
     "vocabulary": [
@@ -2307,7 +2062,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.6 Achar o primeiro maior",
+    "title": "8.6 Achar o primeiro maior",
     "concept": "`.find(fn)` devolve o PRIMEIRO item que passa na condição (ou undefined). Exemplo análogo (1º par):",
     "exampleCode": "function primeiroPar(lista) {\n  return lista.find(x => x % 2 === 0)\n}\n// [1,3,4,6] devolve 4",
     "vocabulary": [
@@ -2346,7 +2101,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.7 Todos positivos?",
+    "title": "8.7 Todos positivos?",
     "concept": "`.every(fn)` devolve true se TODOS passarem. Exemplo análogo (todos pares?):",
     "exampleCode": "function todosPares(lista) {\n  return lista.every(x => x % 2 === 0)\n}",
     "vocabulary": [
@@ -2383,7 +2138,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.8 Algum negativo?",
+    "title": "8.8 Algum negativo?",
     "concept": "`.some(fn)` devolve true se PELO MENOS UM passar. Exemplo análogo (tem algum zero?):",
     "exampleCode": "function temZero(lista) {\n  return lista.some(x => x === 0)\n}",
     "vocabulary": [
@@ -2420,7 +2175,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.9 Média da lista",
+    "title": "8.9 Média da lista",
     "concept": "Some com `.reduce` e divida pelo `.length`. Exemplo do `.reduce` somando:",
     "exampleCode": "function soma(lista) {\n  return lista.reduce((a, x) => a + x, 0)\n}\n// média = soma / lista.length",
     "vocabulary": [
@@ -2456,7 +2211,7 @@ const trilhaModules: Modulo[] = [
   },
   {
     "kind": "challenge",
-    "title": "9.10 Ordenar crescente",
+    "title": "8.10 Ordenar crescente",
     "concept": "PEGADINHA: `.sort()` sem função ordena como TEXTO ([10,2,1] viraria [1,10,2]!). Para números use `.sort((a,b)=>a-b)`. E copie antes (`[...lista]`), pois sort altera a original. Exemplo:",
     "exampleCode": "function ordenarDecrescente(lista) {\n  return [...lista].sort((a, b) => b - a)\n}\n// [1,3,2] vira [3,2,1]",
     "vocabulary": [
@@ -2498,6 +2253,258 @@ const trilhaModules: Modulo[] = [
           3
         ],
         "description": "[3,1,2] -> [1,2,3]"
+      }
+    ]
+  },
+  {
+    "kind": "lesson",
+    "title": "Lição 9 — Números e Math",
+    "concept": "Para trabalhar com números, o objeto **`Math`** traz várias ferramentas: `Math.round` (arredonda ao mais próximo), `Math.floor` (para baixo), `Math.ceil` (para cima), `Math.abs` (sem sinal), `Math.max`/`Math.min` e `Math.sqrt`.\n\nDuas armadilhas: `.toFixed(2)` devolve uma **string** (envolva em `Number(...)` se quiser número) e a soma de decimais nem sempre é exata (`0.1 + 0.2` não dá exatamente `0.3`). Para converter texto em número use `Number(...)` ou `parseInt(...)`.",
+    "exampleCode": "Math.round(2.6)               // 3\nNumber((3.14159).toFixed(2))  // 3.14",
+    "vocabulary": [
+      "Math.round",
+      "Math.floor",
+      "Math.abs",
+      "Math.max",
+      ".toFixed()",
+      "Number()"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
+    "title": "9.1 Arredondar",
+    "concept": "`Math.round` arredonda ao mais próximo; `Math.floor` para baixo; `Math.ceil` para cima. Exemplo análogo:",
+    "exampleCode": "function paraBaixo(n) {\n  return Math.floor(n)\n}\n// Math.floor(2.9) é 2",
+    "vocabulary": [
+      "Math.round",
+      "Math.floor",
+      "Math.ceil"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `arredondar(n)` que retorna n arredondado ao inteiro mais próximo.",
+    "starterCode": "function arredondar(n) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(arredondar(2.4))  // deve dar 2\nconsole.log(arredondar(2.6))  // deve dar 3",
+    "testCases": [
+      {
+        "input": [
+          2.4
+        ],
+        "expected": 2,
+        "description": "2.4 -> 2"
+      },
+      {
+        "input": [
+          2.6
+        ],
+        "expected": 3,
+        "description": "2.6 -> 3"
+      },
+      {
+        "input": [
+          5
+        ],
+        "expected": 5,
+        "description": "5 -> 5"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "9.2 Valor absoluto",
+    "concept": "`Math.abs` devolve o valor sem sinal (positivo ou zero). Exemplo análogo (distância entre dois números):",
+    "exampleCode": "function distancia(a, b) {\n  return Math.abs(a - b)\n}\n// distancia(2, 9) é 7",
+    "vocabulary": [
+      "Math.abs"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `absoluto(n)` que retorna o valor absoluto de n.",
+    "starterCode": "function absoluto(n) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(absoluto(-7))  // deve dar 7\nconsole.log(absoluto(3))  // deve dar 3",
+    "testCases": [
+      {
+        "input": [
+          -7
+        ],
+        "expected": 7,
+        "description": "-7 -> 7"
+      },
+      {
+        "input": [
+          3
+        ],
+        "expected": 3,
+        "description": "3 -> 3"
+      },
+      {
+        "input": [
+          0
+        ],
+        "expected": 0,
+        "description": "0 -> 0"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "9.3 Maior entre dois",
+    "concept": "`Math.max(a, b)` devolve o maior; `Math.min(a, b)`, o menor. Exemplo análogo:",
+    "exampleCode": "function menorEntre(a, b) {\n  return Math.min(a, b)\n}\n// Math.min(3, 9) é 3",
+    "vocabulary": [
+      "Math.max",
+      "Math.min"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Escreva `maiorEntre(a, b)` usando Math.max.",
+    "starterCode": "function maiorEntre(a, b) {\n  // escreva seu código aqui\n}\n\n// Exemplos (clique em Executar para testar):\nconsole.log(maiorEntre(3, 9))  // deve dar 9\nconsole.log(maiorEntre(-1, -5))  // deve dar -1",
+    "testCases": [
+      {
+        "input": [
+          3,
+          9
+        ],
+        "expected": 9,
+        "description": "max(3,9)=9"
+      },
+      {
+        "input": [
+          -1,
+          -5
+        ],
+        "expected": -1,
+        "description": "max(-1,-5)=-1"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "9.4 Duas casas decimais",
+    "concept": "CUIDADO: `.toFixed(2)` devolve uma STRING (\"3.14\"). Envolva em `Number(...)` para virar número. Exemplo análogo (1 casa):",
+    "exampleCode": "function umaCasa(n) {\n  return Number(n.toFixed(1))\n}\n// Number((3.14).toFixed(1)) é 3.1",
+    "vocabulary": [
+      ".toFixed()",
+      "Number()"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `duasCasas(n)` que retorna n com no máximo 2 casas decimais, como NÚMERO.",
+    "starterCode": "function duasCasas(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          3.14159
+        ],
+        "expected": 3.14,
+        "description": "3.14159 -> 3.14"
+      },
+      {
+        "input": [
+          2
+        ],
+        "expected": 2,
+        "description": "2 -> 2"
+      },
+      {
+        "input": [
+          0.1
+        ],
+        "expected": 0.1,
+        "description": "0.1 -> 0.1"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "9.5 Soma dos dígitos",
+    "concept": "Transforme em texto com `String(n)`, quebre em dígitos com `.split(\"\")` e some convertendo cada um com `Number`. Exemplo análogo (quantos dígitos):",
+    "exampleCode": "function quantosDigitos(n) {\n  return String(n).split(\"\").length\n}\n// quantosDigitos(123) é 3",
+    "vocabulary": [
+      "String()",
+      "Number()",
+      ".split()"
+    ],
+    "difficulty": "medium",
+    "baseXp": 20,
+    "description": "Escreva `somaDigitos(n)` que soma os dígitos de n (n é positivo). Ex.: 123 -> 6.",
+    "starterCode": "function somaDigitos(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          123
+        ],
+        "expected": 6,
+        "description": "1+2+3=6"
+      },
+      {
+        "input": [
+          99
+        ],
+        "expected": 18,
+        "description": "9+9=18"
+      },
+      {
+        "input": [
+          5
+        ],
+        "expected": 5,
+        "description": "5=5"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "9.6 É primo?",
+    "concept": "Primo é maior que 1 e só divisível por 1 e por ele mesmo. Teste divisores de 2 até a raiz (`i * i <= n`). Exemplo análogo (tem divisor por 2 a 4?):",
+    "exampleCode": "function temDivisorPequeno(n) {\n  for (let i = 2; i <= 4; i++) {\n    if (n % i === 0) return true\n  }\n  return false\n}",
+    "vocabulary": [
+      "Math.sqrt",
+      "for",
+      "%"
+    ],
+    "difficulty": "hard",
+    "baseXp": 35,
+    "description": "Escreva `ehPrimo(n)` que retorna true se n for primo.",
+    "starterCode": "function ehPrimo(n) {\n  // escreva seu código aqui\n}\n\n// Os testes deste desafio ficam ocultos (dificuldade maior).\n// Use a descrição e o exemplo acima como guia.",
+    "testCases": [
+      {
+        "input": [
+          2
+        ],
+        "expected": true,
+        "description": "2 é primo"
+      },
+      {
+        "input": [
+          7
+        ],
+        "expected": true,
+        "description": "7 é primo"
+      },
+      {
+        "input": [
+          9
+        ],
+        "expected": false,
+        "description": "9 não é"
+      },
+      {
+        "input": [
+          1
+        ],
+        "expected": false,
+        "description": "1 não é"
+      },
+      {
+        "input": [
+          13
+        ],
+        "expected": true,
+        "description": "13 é"
       }
     ]
   },
