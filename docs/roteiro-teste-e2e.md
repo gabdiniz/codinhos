@@ -66,6 +66,8 @@
 
 1. **Login** aluno → `/learn`. Veja trilhas e progresso.
 2. Abra **trilha → módulo → desafio**. Confira conceito e exemplo.
+2b. **Lição** (trilha com lições, ex.: a do catálogo "JavaScript: do Fundamento ao Algoritmo"): abra um módulo **sem desafio** (rótulo 📖 Lição). Leia o conteúdo, pergunte algo ao **Codi** (ele responde sobre a lição, não sobre um desafio) e clique **"Entendi, avançar"**.
+   ✅ Esperado: `POST /learn/modules/:id/complete` marca a lição como concluída, concede **+5 XP** (uma vez) e oferece o **próximo módulo**; reabrir a lição não concede XP de novo.
 3. **Sandbox + autocomplete contextual**: comece a digitar no editor.
    ✅ Esperado: o autocomplete sugere **só** o vocabulário ensinado até o módulo atual (não o JS inteiro).
 4. **Submeter**: escreva a solução e rode os testes.
@@ -87,6 +89,8 @@
 ## 4. Professor — acompanhamento e revisão
 
 > Pré: a turma do professor deve ter submissões `under_review` (use modo *manual* ou *auto+revisão* no passo 2.2 e submeta como aluno).
+>
+> No **aluno**, ao enviar nesses modos, o painel deve mostrar **"📤 Enviado para revisão do professor"** (cor neutra + nota "o professor vai revisar e dar a nota") — **não** "❌ Não passou ainda". O XP só é concedido quando o professor aprova.
 
 1. **Login** professor → redireciona para `/professor`.
    ✅ Esperado: NÃO cai em `/manager`.

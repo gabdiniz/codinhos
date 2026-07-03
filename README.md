@@ -36,7 +36,7 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 **Conteúdo e aprendizado**
 - Catálogo global de **trilhas → módulos → desafios** (gerido pelo Super Admin via UI de catálogo), ativado por tenant.
 - **Trilha própria da escola** — o gestor pode criar suas próprias trilhas/módulos/desafios (autoria híbrida; `trails.tenant_id`).
-- **Trilha embutida "JavaScript: do Fundamento ao Algoritmo"** — 84 desafios do básico ao avançado (`pnpm --filter @codinhos/api db:seed:trilha`).
+- **Trilha embutida "JavaScript: do Fundamento ao Algoritmo"** — 96 módulos (84 desafios + 12 lições teóricas intercaladas), do básico ao avançado e ordenados por pré-requisito (`pnpm --filter @codinhos/api db:seed:trilha`).
 - **Sandbox JavaScript** com execução segura em Web Worker e editor CodeMirror 6.
 - **Autocomplete contextual** — sugere só o vocabulário já ensinado até o módulo atual.
 - **Editor de blocos visuais** (Blockly) por trilha (`visualBlocksEnabled`), gerando JS para o mesmo fluxo de submissão.
