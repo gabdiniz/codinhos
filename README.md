@@ -277,3 +277,15 @@ pnpm format         # formata o código com Biome
 Cada escola é um **tenant** com um `slug` único na URL. Todas as rotas autenticadas seguem o padrão `/:slug/recurso` e toda query ao banco filtra por `tenant_id`.
 
 O tenant `__system__` é interno e hospeda apenas o super admin da plataforma.
+
+---
+
+## Licença
+
+**© 2026 Gabriel Diniz — Todos os direitos reservados.**
+
+Este é um projeto de **código-fonte visível (source-available)**, **não** open source.
+O código é público apenas para leitura e avaliação. **Não é permitido clonar, copiar,
+usar, modificar ou distribuir** o software, no todo ou em parte, sem autorização prévia
+por escrito. Veja os termos completos em [`LICENSE`](./LICENSE).
+
