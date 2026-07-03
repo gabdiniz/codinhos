@@ -1,6 +1,6 @@
 ---
 titulo: Trilha e conteúdo
-tema: trilha, conteudo, javascript, modulos
+tema: trilha, conteudo, javascript, modulos, autoria
 publico: gestores, professores, responsáveis
 ---
 
@@ -10,7 +10,7 @@ O aprendizado no Codinhos é organizado em **trilhas**, e cada trilha é feita d
 
 ## Como uma trilha é montada
 
-Cada módulo segue sempre a mesma estrutura, pensada para o aluno aprender fazendo:
+Cada módulo segue sempre a mesma estrutura, pensada para o aluno aprender fazendo, **um conceito de cada vez**:
 
 1. **Conceito** — explicação curta da ideia.
 2. **Exemplo guiado** — código pronto e comentado.
@@ -27,9 +27,11 @@ O catálogo cobre os fundamentos da programação de forma progressiva:
 - **Arrays e listas**.
 - **Mini-projetos** — como um jogo simples ou uma calculadora, para juntar tudo na prática.
 
-## Conteúdo com qualidade garantida
+Já existe uma trilha completa de JavaScript pronta para uso, cobrindo do fundamento ao algoritmo em uma sequência progressiva de desafios.
 
-O gestor **monta as trilhas a partir de um catálogo pronto**, mantido pela equipe do Codinhos — ele seleciona e ordena os módulos, mas não precisa criar conteúdo do zero. Isso garante qualidade pedagógica e deixa a configuração simples e rápida.
+## Catálogo pronto ou trilha própria
+
+O gestor **monta as trilhas a partir de um catálogo pronto**, mantido pela equipe do Codinhos — seleciona e ordena os módulos, sem precisar criar conteúdo do zero. Quando quer um percurso sob medida, ele também pode **criar trilhas próprias** para a escola. As duas formas convivem, garantindo qualidade pedagógica e flexibilidade.
 
 ## Soluções abertas
 

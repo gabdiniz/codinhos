@@ -10,11 +10,9 @@ Além do que já faz parte do Codinhos hoje, algumas novidades estão planejadas
 
 > Regra para o Codi: falar destes itens sempre como **planejados / em breve**, nunca como recursos já existentes.
 
-## Experiência de código ainda mais acolhedora
+## Experiência de código ainda mais rica
 
-- **Modo blocos e modo híbrido:** montar código com blocos visuais e transição gradual para o modo texto, para quem está começando.
-- **Autocomplete guiado** pelo que o aluno já aprendeu na trilha, para não intimidar.
-- **Mensagens de erro em linguagem amigável**, pensadas para crianças.
+- **Modo híbrido de blocos e texto:** alternar entre blocos visuais e código escrito, com conversão entre os dois, para uma transição gradual. (Hoje já existe um modo de blocos isolado; o híbrido e a conversão são o próximo passo.)
 
 ## Mais criação e colaboração
 
@@ -23,13 +21,18 @@ Além do que já faz parte do Codinhos hoje, algumas novidades estão planejadas
 
 ## Mais para o educador
 
-- **Papel de professor**, com acompanhamento de turma e liberação de módulos.
 - **Painéis mais ricos:** quem está travado e há quanto tempo, comparativo entre turmas e alertas de alunos inativos.
+- **Resumo semanal por e-mail para os responsáveis.**
 - **Aulas em vídeo** por módulo.
+
+## Mais integração
+
+- **Login com Google (SSO):** hoje a integração com o Google Classroom traz turmas e alunos (rostering); o login direto com a conta Google é um passo planejado.
+- **Sincronização contínua com o Classroom:** manter turmas e alunos atualizados automaticamente, além da importação inicial.
 
 ## Mais conteúdo e recompensas
 
 - **Python** como segunda linguagem.
-- **Missões semanais**, conquistas raras e itens cosméticos (temas de editor, avatares) — sempre sem afetar o aprendizado.
+- **Conquistas raras e itens cosméticos** (temas de editor, avatares) — sempre sem afetar o aprendizado.
 
 > Quer saber quando uma novidade específica chega? Fale com a gente pelo formulário de contato.
