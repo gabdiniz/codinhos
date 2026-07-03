@@ -524,16 +524,33 @@ function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPane
 // ─── SubmitResultPanel ────────────────────────────────────────────────────────
 
 function SubmitResultPanel({ result }: { result: SubmitResult }) {
-  const passed = result.submission.status === 'passed'
+  const status = result.submission.status
+  const variantClass =
+    status === 'passed'
+      ? styles.submitResultPassed
+      : status === 'under_review'
+        ? styles.submitResultReview
+        : styles.submitResultFailed
+  const headerLabel =
+    status === 'passed'
+      ? '✅ Desafio concluído!'
+      : status === 'under_review'
+        ? '📤 Enviado para revisão do professor'
+        : '❌ Não passou ainda'
 
   return (
-    <div className={`${styles.submitResult} ${passed ? styles.submitResultPassed : styles.submitResultFailed}`}>
+    <div className={`${styles.submitResult} ${variantClass}`}>
       <div className={styles.submitResultHeader}>
-        <span>{passed ? '✅ Desafio concluído!' : '❌ Não passou ainda'}</span>
+        <span>{headerLabel}</span>
         {result.xpEarned > 0 && (
           <span className={styles.xpEarned}>+{result.xpEarned} XP</span>
         )}
       </div>
+      {status === 'under_review' && (
+        <p className={styles.submitResultNote}>
+          Sua solução foi enviada. O professor vai revisar e dar a nota.
+        </p>
+      )}
       {result.newBadges.length > 0 && (
         <div className={styles.newBadges}>
           <span className={styles.badgesLabel}>Novo badge desbloqueado:</span>
