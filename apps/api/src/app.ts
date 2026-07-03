@@ -58,7 +58,9 @@ export async function createApp() {
   })
 
   await app.register(rateLimit, {
-    max: 100,
+    // Produção: 100 req/min por IP. Fora de produção (dev/test/e2e) o limite é
+    // altíssimo para não gerar 429 durante a suíte e2e nem no desenvolvimento local.
+    max: process.env.NODE_ENV === 'production' ? 100 : 100_000,
     timeWindow: '1 minute',
     keyGenerator: (req) => req.ip,
   })

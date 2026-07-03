@@ -137,8 +137,9 @@ test.describe('UsersPage — listagem global', () => {
 
   test('deve filtrar por status inativo e exibir vazio ou resultados', async ({ adminPage: page }) => {
     await page.getByLabel('Filtrar por status').selectOption('false')
-    const hasRows = await page.locator('[class*="tableRow"]').first().isVisible()
-    const isEmpty = await page.getByText(/nenhum usuário/i).isVisible()
-    expect(hasRows || isEmpty).toBe(true)
+    // Espera a lista recarregar: ou aparece uma linha, ou o estado vazio.
+    const rows  = page.locator('[class*="tableRow"]').first()
+    const empty = page.getByText(/nenhum usuário/i)
+    await expect(rows.or(empty)).toBeVisible()
   })
 })

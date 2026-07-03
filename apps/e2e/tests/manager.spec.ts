@@ -106,17 +106,19 @@ test.describe('SettingsPage — configurações', () => {
     await page.goto('/escola-demo/manager/settings')
   })
 
-  test('deve exibir seção de informações da escola', async ({ managerPage: page }) => {
-    await expect(page.getByRole('heading', { name: /informações da escola/i })).toBeVisible()
+  test('deve exibir a aba Geral com os dados da escola', async ({ managerPage: page }) => {
+    // A página de configurações é em abas; "Geral" é a aba padrão.
+    await expect(page.getByText(/dados da sua escola/i)).toBeVisible()
   })
 
-  test('deve exibir seção de tema visual', async ({ managerPage: page }) => {
-    await expect(page.getByRole('heading', { name: /tema visual/i })).toBeVisible()
+  test('deve exibir a aba de tema visual', async ({ managerPage: page }) => {
+    await page.getByRole('tab', { name: /tema visual/i }).click()
     // Pelo menos um color input deve estar presente
     await expect(page.locator('input[type="color"]').first()).toBeVisible()
   })
 
-  test('deve exibir seção de gamificação', async ({ managerPage: page }) => {
-    await expect(page.getByRole('heading', { name: /gamificação/i })).toBeVisible()
+  test('deve exibir a aba de gamificação', async ({ managerPage: page }) => {
+    await page.getByRole('tab', { name: /gamificação/i }).click()
+    await expect(page.getByText(/regras de xp/i)).toBeVisible()
   })
 })
