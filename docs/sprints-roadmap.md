@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Sprint 7.2 fase (a) concluída (editor de blocos isolado). Roadmap principal coberto. **Sprint 9 (autoria híbrida de conteúdo)** concluída: 9.1 — gestor cria trilhas próprias (`trails.tenant_id`, migration 0007) + scoping do catálogo; 9.2 — UI de catálogo (CRUD) na área do Super Admin. **Certificado por escola** concluído (migration 0008 `certificate_templates`, PDF parametrizado, construtor no gestor). UIs de gestão concluídas na interface (Professores, Responsáveis, importação CSV, Google Classroom, reset de senha pelo admin). Trilha embutida **"JavaScript: do Fundamento ao Algoritmo"** (84 desafios) via `db:seed:trilha`. Faltam só refinos (7.2 b/c) e backlog opcional.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Sprint 7.2 fase (a) concluída (editor de blocos isolado). Roadmap principal coberto. **Sprint 9 (autoria híbrida de conteúdo)** concluída: 9.1 — gestor cria trilhas próprias (`trails.tenant_id`, migration 0007) + scoping do catálogo; 9.2 — UI de catálogo (CRUD) na área do Super Admin. **Certificado por escola** concluído (migration 0008 `certificate_templates`, PDF parametrizado, construtor no gestor). UIs de gestão concluídas na interface (Professores, Responsáveis, importação CSV, Google Classroom, reset de senha pelo admin). Trilha embutida **"JavaScript: do Fundamento ao Algoritmo"** (96 módulos: 84 desafios + 12 lições teóricas intercaladas, reordenados por pré-requisito) via `db:seed:trilha`. Faltam só refinos (7.2 b/c) e backlog opcional.
 
 ---
 
@@ -153,7 +153,7 @@ Itens de baixa prioridade na análise original — exigem validação de demanda
 
 ## Conteúdo — trilha JS embutida ✅
 
-- ✅ Seed **"JavaScript: do Fundamento ao Algoritmo"** no catálogo global — 84 desafios (variáveis → algoritmos), casos de teste verificados contra o runner real. Comando: `pnpm --filter @codinhos/api db:seed:trilha` (idempotente e atualizável).
+- ✅ Seed **"JavaScript: do Fundamento ao Algoritmo"** no catálogo global — 96 módulos: 84 desafios + 12 lições teóricas intercaladas (variáveis → algoritmos), temas ordenados por pré-requisito (nada usado antes de ensinado), casos de teste verificados contra o runner real. Comando: `pnpm --filter @codinhos/api db:seed:trilha` (idempotente e atualizável).
 
 ---
 

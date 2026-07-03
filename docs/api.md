@@ -336,6 +336,9 @@ O gestor cria e edita **trilhas próprias da escola** (`trails.tenant_id` = tena
 | GET | `/trails/:trailId` | student | Trilha com módulos e status de progresso |
 | GET | `/modules/:moduleId` | student | Conteúdo do módulo (conceito, exemplo, desafio atual) |
 | GET | `/challenges/:challengeId` | student | Detalhes do desafio + starter code |
+| POST | `/modules/:moduleId/complete` | student | Conclui uma **lição** (módulo sem desafio) → +5 XP |
+
+> **Lições** são módulos sem desafio (`kind: 'lesson'`): só conceito/exemplo. O aluno conclui com "Entendi, avançar", que chama `POST /:slug/learn/modules/:moduleId/complete` — idempotente, concede `LESSON_XP` (=5) uma única vez e retorna `nextModuleId`. Retorna 422 se o módulo tiver desafio.
 
 ### GET `/`
 ```
@@ -1065,6 +1068,7 @@ Isso garante que o tutor sempre conhece o desafio, mesmo após vários turnos de
 |---|---|---|---|
 | GET | `/:slug/ai/challenges/:challengeId/conversation` | student | Obtém/cria conversa e histórico |
 | POST | `/:slug/ai/challenges/:challengeId/messages` | student | Envia mensagem e recebe resposta |
+| POST | `/:slug/ai/modules/:moduleId/messages` | student | Codi na **lição**: pergunta sobre o conteúdo do módulo. Contexto = conceito/exemplo do módulo; **não persiste** a conversa (histórico enviado no body). Mesmo limite diário. |
 
 ### GET `/:slug/ai/challenges/:challengeId/conversation`
 

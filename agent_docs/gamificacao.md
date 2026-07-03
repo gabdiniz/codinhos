@@ -52,6 +52,7 @@ Toda concessão de XP gera um ou mais registros em `xp_events`. Nunca deletar ne
 | `challenge_passed` | Primeira aprovação do aluno neste desafio |
 | `first_attempt_bonus` | Aprovação na 1ª tentativa (gerado junto com `challenge_passed`) |
 | `streak_bonus` | Aprovação com streak ativo > 0 |
+| `lesson_completed` | Conclusão de uma **lição** (módulo sem desafio); `amount = 5` (`LESSON_XP`), uma vez por lição |
 | `badge_earned` | Badge conquistado (amount = 0; evento informacional) |
 
 ### Cálculo ao aprovar uma submissão
