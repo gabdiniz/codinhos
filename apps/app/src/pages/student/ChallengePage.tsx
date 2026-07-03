@@ -797,6 +797,7 @@ export default function ChallengePage() {
   const autoMsgSeq = useRef(0)
   const [lessonResult, setLessonResult] = useState<{ xpEarned: number; alreadyCompleted: boolean; nextModuleId: string | null } | null>(null)
   const [completingLesson, setCompletingLesson] = useState(false)
+  const [resetNonce, setResetNonce] = useState(0)
 
   // Carrega dados do módulo — reseta estado ao trocar de módulo
   useEffect(() => {
@@ -814,6 +815,7 @@ export default function ChallengePage() {
     setAutoMsg(null)
     setLessonResult(null)
     setCompletingLesson(false)
+    setResetNonce(0)
     api
       .get<{ data: ModuleDetail }>(`/api/${slug}/learn/modules/${moduleId}`)
       .then((res) => {
@@ -1101,12 +1103,12 @@ export default function ChallengePage() {
             <div className={styles.editorBody}>
               {moduleData?.visualBlocksEnabled ? (
                 <BlocklyEditor
-                  key={`blocks-${challenge?.id ?? mod.id}`}
+                  key={`blocks-${challenge?.id ?? mod.id}-${resetNonce}`}
                   onChange={(v) => { codeRef.current = v }}
                 />
               ) : (
                 <CodeEditor
-                  key={challenge?.id ?? mod.id}
+                  key={`${challenge?.id ?? mod.id}-${resetNonce}`}
                   initialValue={starterCode}
                   onChange={(v) => { codeRef.current = v }}
                   vocabulary={moduleData?.availableVocabulary ?? []}
@@ -1137,6 +1139,20 @@ export default function ChallengePage() {
                 aria-busy={submitState === 'submitting'}
               >
                 {submitState === 'submitting' ? 'Enviando...' : '✓ Enviar solução'}
+              </button>
+            )}
+
+            {challenge && (
+              <button
+                className={styles.resetBtn}
+                type="button"
+                onClick={() => {
+                  codeRef.current = starterCode
+                  setResetNonce((n) => n + 1)
+                }}
+                title="Volta o código ao ponto inicial do desafio"
+              >
+                ↺ Resetar código
               </button>
             )}
           </div>
