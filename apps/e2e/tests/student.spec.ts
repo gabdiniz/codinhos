@@ -24,7 +24,7 @@ test.describe('Navegação trilha → módulo', () => {
     await page.locator('ul li a').first().click()
     await expect(page).toHaveURL(/\/escola-demo\/learn\/[^/]+$/)
     // Barra de progresso e contagem de módulos devem aparecer
-    await expect(page.getByText(/módulos/i)).toBeVisible()
+    await expect(page.getByText(/módulos/i).first()).toBeVisible()
   })
 
   test('deve exibir módulos em ordem com status correto', async ({ studentPage: page }) => {

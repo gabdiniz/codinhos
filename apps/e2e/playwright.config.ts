@@ -25,6 +25,11 @@ export default defineConfig({
   workers: 1,
   reporter: [['html', { open: 'never' }], ['list']],
 
+  // Timeouts folgados: a suíte roda em série contra o stack de dev, que lenteia
+  // sob carga (bcrypt no login). Timeouts curtos geravam flakiness intermitente.
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
+
   use: {
     baseURL: 'http://localhost:5173',
     // Cada fixture (studentPage/managerPage/adminPage) carrega o storageState
@@ -32,8 +37,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'off',
-    actionTimeout: 10_000,
-    navigationTimeout: 15_000,
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
   },
 
   projects: [
