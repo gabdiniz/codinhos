@@ -1,0 +1,62 @@
+# ── Caddy — reverse proxy + TLS automático (Let's Encrypt) ──────────────────
+# Roteamento single-origin por app (sem CORS): cada domínio serve seu app e
+# encaminha /api/* para a API Fastify. Cookies de sessão ficam first-party.
+#
+# Variáveis vêm do ambiente do container caddy (definidas no compose a partir
+# do .env): {$DOMAIN} = codinhos.com.br, {$APP_DOMAIN} = app.codinhos.com.br,
+# {$ACME_EMAIL} = e-mail para a conta ACME/Let's Encrypt.
+
+{
+	email {$ACME_EMAIL}
+	# Descomente para testar contra o staging do Let's Encrypt (evita rate limit):
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# Headers de segurança reutilizáveis.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# ── Landing page pública (apex) ─────────────────────────────────────────────
+{$DOMAIN} {
+	import security_headers
+
+	# API sob o mesmo host → sem CORS para /api/codi/ask e /api/contact.
+	handle /api/* {
+		reverse_proxy api:3333
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+
+	encode zstd gzip
+}
+
+# www → apex (canonical no apex).
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+# ── SPA interna autenticada ─────────────────────────────────────────────────
+{$APP_DOMAIN} {
+	import security_headers
+
+	handle /api/* {
+		reverse_proxy api:3333
+	}
+
+	# SPA estática (nginx no container app). O fallback pro index.html já é
+	# feito pelo nginx interno; aqui só encaminhamos.
+	handle {
+		reverse_proxy app:80
+	}
+
+	encode zstd gzip
+}

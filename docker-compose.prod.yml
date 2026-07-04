@@ -1,19 +1,39 @@
-# Stack de PRODUÇÃO — imagens buildadas e otimizadas (sem hot-reload).
+# Stack de PRODUÇÃO — imagens buildadas + Caddy (TLS automático) na frente.
+#   cp .env.docker.example .env   # ajuste segredos, senhas e domínio
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
-# Ponto de partida para deploy. Antes de usar em produção de verdade:
-#  - defina segredos via .env na raiz (não use os defaults abaixo);
-#  - ajuste VITE_API_URL (app) e as URLs públicas para o seu domínio;
-#  - considere um proxy reverso (Caddy/Nginx/Traefik) com TLS na frente.
+# Só o Caddy publica portas no host (80/443). api/app/web/db ficam apenas na
+# rede interna do compose — o Caddy fala com eles pelo nome do serviço.
+# Runbook completo: docs/deploy.md
 name: codinhos-prod
 
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp' # HTTP/3
+    environment:
+      DOMAIN: "${DOMAIN:?defina DOMAIN no .env - ex codinhos.com.br}"
+      APP_DOMAIN: "${APP_DOMAIN:?defina APP_DOMAIN no .env - ex app.codinhos.com.br}"
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # certificados — NÃO apagar (rate limit do Let's Encrypt)
+      - caddy_config:/config
+    depends_on:
+      - api
+      - app
+      - web
+
   db:
     image: postgres:16
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       POSTGRES_DB: ${POSTGRES_DB:-codinhos}
     volumes:
       - codinhos_db_prod:/var/lib/postgresql/data
@@ -23,6 +43,26 @@ services:
       timeout: 5s
       retries: 15
 
+  # Backup diário do Postgres com retenção (pg_dump comprimido em ./backups).
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-codinhos}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_CRON: ${BACKUP_CRON:-0 3 * * *}
+    volumes:
+      - ./scripts/backup-db.sh:/usr/local/bin/backup-db.sh:ro
+      - ./scripts/backup-entrypoint.sh:/usr/local/bin/backup-entrypoint.sh:ro
+      - ./backups:/backups
+    entrypoint: ['/bin/sh', '/usr/local/bin/backup-entrypoint.sh']
+    depends_on:
+      db:
+        condition: service_healthy
+
   # Migrations em produção rodam pela imagem de dev (tem drizzle-kit); one-shot.
   migrate:
     build:
@@ -30,7 +70,7 @@ services:
       dockerfile: Dockerfile.dev
     command: sh -c "pnpm --filter @codinhos/api db:migrate"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-codinhos}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-codinhos}
     depends_on:
       db:
         condition: service_healthy
@@ -44,17 +84,22 @@ services:
     environment:
       NODE_ENV: production
       PORT: '3333'
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-codinhos}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-codinhos}
       SESSION_SECRET: ${SESSION_SECRET:?defina SESSION_SECRET no .env}
       SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-604800}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://localhost:8080}
-      APP_URL: ${APP_URL:-http://localhost:8080}
+      # Single-origin (Caddy encaminha /api no mesmo host) → CORS é redundante,
+      # mas mantido explícito por segurança.
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://${DOMAIN},https://${APP_DOMAIN}}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      APP_URL: ${APP_URL:-https://${APP_DOMAIN}}
       AI_MODEL: ${AI_MODEL:-claude-haiku-4-5-20251001}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-noreply@codinhos.com.br}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-    ports:
-      - '3333:3333'
+      CONTACT_TO: ${CONTACT_TO:-contato@codinhos.com.br}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://${APP_DOMAIN}/api/integrations/google/callback}
     depends_on:
       db:
         condition: service_healthy
@@ -66,21 +111,25 @@ services:
       context: .
       dockerfile: apps/app/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
+        # URL da API embutida no bundle (build time). Mesmo host do SPA → /api.
+        VITE_API_URL: ${VITE_API_URL:-https://${APP_DOMAIN}}
     restart: unless-stopped
-    ports:
-      - '8080:80'
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # NEXT_PUBLIC_* são inlined no build do Next (componentes 'use client'),
+        # por isso vão como build-args, não como env de runtime.
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://${DOMAIN}}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://${APP_DOMAIN}}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${DOMAIN}}
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:8080}
-    ports:
-      - '3000:3000'
 
 volumes:
   codinhos_db_prod:
+  caddy_data:
+  caddy_config:

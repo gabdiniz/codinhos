@@ -43,3 +43,6 @@ coverage/
 
 # Playwright — sessões salvas via storageState (cookies de login)
 apps/e2e/.auth/
+
+# Dumps de backup do Postgres (nunca commitar)
+backups/
