@@ -36,6 +36,10 @@ export async function createApp() {
       process.env.NODE_ENV !== 'test'
         ? { level: process.env.LOG_LEVEL ?? 'info' }
         : false,
+    // Em produção a API roda atrás do Caddy (reverse proxy). Sem trustProxy,
+    // req.ip seria o IP do proxy e o rate-limit por IP agruparia todos os
+    // usuários no mesmo balde. Confiamos no X-Forwarded-* do proxy interno.
+    trustProxy: process.env.NODE_ENV === 'production',
   })
 
   // Zod type provider
