@@ -51,16 +51,22 @@ na raiz a partir de `.env.docker.example`.
 
 ## Produção (build otimizado)
 
+O `docker-compose.prod.yml` já inclui **Caddy** (reverse proxy + HTTPS
+automático via Let's Encrypt), Postgres, migrations one-shot e backup diário.
+Só o Caddy publica portas no host (80/443); os demais serviços ficam apenas na
+rede interna do compose.
+
 ```bash
-cp .env.docker.example .env    # ajuste segredos, senhas e URLs do seu domínio
+cp .env.docker.example .env    # ajuste domínio, segredos e senhas
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-Imagens: API (Node standalone), App (estático em Nginx, porta 8080), Web (Next
-standalone). As migrations rodam num serviço one-shot antes da API.
+Roteamento single-origin (sem CORS): `codinhos.com.br` → landing (Next),
+`app.codinhos.com.br` → SPA (Vite), ambos com `/api/*` → API (Fastify).
+Imagens: API (Node standalone), App (estático em Nginx), Web (Next standalone).
 
-É um ponto de partida para deploy. Em produção de verdade, coloque um proxy
-reverso com TLS (Caddy/Traefik/Nginx) na frente e use segredos reais.
+O passo a passo completo de deploy — provisionar o servidor, DNS, seed inicial,
+backups, CI/CD e rollback — está em **[`deploy.md`](deploy.md)**.
 
 ## Como funciona por dentro
 

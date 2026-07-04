@@ -206,7 +206,7 @@ pnpm --filter @codinhos/api db:studio
 apps/
   api/        → Fastify — backend único (auth, learn, gamification, ai-tutor…)
   app/        → Vite + React — SPA interna autenticada
-  web/        → Next.js — landing pública (planejado)
+  web/        → Next.js — landing pública (LP de vendas)
 packages/
   ui/         → componentes React compartilhados
   types/      → tipos TypeScript compartilhados (DTOs, entidades)
@@ -214,6 +214,8 @@ packages/
 docs/
   api.md      → contratos completos de todos os endpoints
   database.md → schema completo do banco
+  docker.md   → subir a stack toda em containers (dev e prod)
+  deploy.md   → runbook de deploy em produção (VPS + Caddy + CI/CD)
 agent_docs/   → documentação de contexto para o desenvolvimento
 ```
 
@@ -269,6 +271,25 @@ pnpm test           # todos os testes (backend)
 pnpm test:e2e       # testes E2E (requer dev rodando)
 pnpm format         # formata o código com Biome
 ```
+
+---
+
+## Deploy
+
+Toda a stack roda em containers. Para desenvolvimento e detalhes do Docker,
+veja [`docs/docker.md`](docs/docker.md).
+
+Para **produção** — VPS Linux com Caddy (HTTPS automático), Postgres em
+container, backups diários e CI/CD via GitHub Actions — o passo a passo completo
+está no runbook [`docs/deploy.md`](docs/deploy.md):
+
+```bash
+cp .env.docker.example .env    # ajuste domínio, segredos e senhas
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Roteamento single-origin (sem CORS): `codinhos.com.br` → landing,
+`app.codinhos.com.br` → SPA interna, ambos com `/api/*` encaminhado para a API.
 
 ---
 
