@@ -455,6 +455,18 @@ function SandboxErrorMessage({ raw }: { raw: RawSandboxError }) {
 
 // ─── TestResultsPanel ─────────────────────────────────────────────────────────
 
+/**
+ * Renderiza um valor de teste. Strings com quebra de linha (ex.: saída de
+ * console.log no modo stdout) viram um bloco <pre> multilinha; o resto
+ * continua inline como JSON.
+ */
+function renderResultValue(v: unknown) {
+  if (typeof v === 'string' && v.includes('\n')) {
+    return <pre className={styles.resultOutput}>{v}</pre>
+  }
+  return <code>{JSON.stringify(v)}</code>
+}
+
 interface TestResultsPanelProps {
   results: TestResult[]
   /** Chamado quando o aluno clica em "Pedir ajuda ao Codi" num teste que falhou */
@@ -497,10 +509,10 @@ function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPane
                     return (
                       <>
                         <span className={styles.resultExpected}>
-                          esperado: <code>{JSON.stringify(r.expected)}</code>
+                          esperado: {renderResultValue(r.expected)}
                         </span>
                         <span className={styles.resultActual}>
-                          recebido: <code>{JSON.stringify(r.actual)}</code>
+                          recebido: {renderResultValue(r.actual)}
                         </span>
                       </>
                     )

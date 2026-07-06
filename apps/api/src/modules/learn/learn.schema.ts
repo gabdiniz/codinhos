@@ -102,9 +102,13 @@ export const moduleDetailResponseSchema = z.object({
               input: z.unknown(),
               expected: z.unknown(),
               description: z.string(),
+              matcher: z.enum(['equal', 'approx', 'contains', 'regex']).optional(),
+              tolerance: z.number().optional(),
+              mode: z.enum(['stdout']).optional(),
             }),
           )
           .nullable(),
+        targetFn: z.string().nullable(),
         difficulty: difficultySchema,
         baseXp: z.number(),
       })
