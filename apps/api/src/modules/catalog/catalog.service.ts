@@ -172,6 +172,7 @@ export async function createNewChallenge(moduleId: string, body: CreateChallenge
     order,
     baseXp: body.baseXp ?? 10,
     validationModeOverride: body.validationModeOverride,
+    targetFn: body.targetFn,
   })
 
   return { challenge }
@@ -190,6 +191,7 @@ export async function updateExistingChallenge(challengeId: string, body: UpdateC
     order: body.order,
     baseXp: body.baseXp,
     validationModeOverride: body.validationModeOverride,
+    targetFn: body.targetFn,
   })
 
   return { challenge: challenge! }

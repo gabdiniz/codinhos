@@ -36,6 +36,8 @@ const testCaseSchema = z.object({
   input: z.unknown(),
   expected: z.unknown(),
   description: z.string(),
+  matcher: z.enum(['equal', 'approx', 'contains', 'regex']).optional(),
+  tolerance: z.number().optional(),
 })
 
 export const createChallengeBodySchema = z.object({
@@ -45,6 +47,7 @@ export const createChallengeBodySchema = z.object({
   testCases: z.array(testCaseSchema).optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('easy'),
   baseXp: z.number().int().positive().optional(),
+  targetFn: z.string().nullable().optional(),
 })
 
 export const updateChallengeBodySchema = z.object({
@@ -54,6 +57,7 @@ export const updateChallengeBodySchema = z.object({
   testCases: z.array(testCaseSchema).nullable().optional(),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   baseXp: z.number().int().positive().optional(),
+  targetFn: z.string().nullable().optional(),
 })
 
 // ─── Responses ────────────────────────────────────────────────────────────────
@@ -77,6 +81,7 @@ const challengeSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   baseXp: z.number(),
   order: z.number(),
+  targetFn: z.string().nullable(),
 })
 
 const moduleSchema = z.object({

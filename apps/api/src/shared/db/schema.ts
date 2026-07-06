@@ -32,19 +32,11 @@ export type TenantSettings = {
 
 export type TenantTheme = Record<string, string>
 
-export type TestCase = {
-  input: unknown
-  expected: unknown
-  description: string
-}
-
-export type TestResult = {
-  passed: boolean
-  input: unknown
-  expected: unknown
-  actual: unknown
-  description: string
-}
+// Tipos do runner de desafios — fonte única em @codinhos/runner (mesma lógica
+// usada pelo Web Worker do front). Reexportados aqui porque as colunas jsonb
+// os referenciam via $type<...>().
+export type { Matcher, TestCase, TestResult } from '@codinhos/runner'
+import type { TestCase, TestResult } from '@codinhos/runner' 
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -186,6 +178,9 @@ export const challenges = pgTable('challenges', {
   order: integer('order').notNull(),
   baseXp: integer('base_xp').default(10).notNull(),
   validationModeOverride: validationModeEnum('validation_mode_override'),
+  // Nome da função avaliada nos testes. Null = usa a primeira função declarada
+  // (retrocompatível). Permite que o aluno escreva funções auxiliares.
+  targetFn: text('target_fn'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [

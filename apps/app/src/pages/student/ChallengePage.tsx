@@ -56,6 +56,7 @@ interface Challenge {
   testCases: TestCase[] | null
   difficulty: Difficulty
   baseXp: number
+  targetFn?: string | null
 }
 
 interface ModuleDetail {
@@ -766,7 +767,7 @@ function CodiDrawer({
         />
         <button
           className={styles.codiSendBtn}
-          onClick={handleSend}
+          onClick={() => handleSend()}
           disabled={sending || !input.trim() || limitReached}
           aria-label="Enviar mensagem"
         >
@@ -938,7 +939,7 @@ export default function ChallengePage() {
       }])
     }
 
-    worker.postMessage({ code: codeRef.current, testCases: challenge.testCases })
+    worker.postMessage({ code: codeRef.current, testCases: challenge.testCases, targetFn: challenge.targetFn })
   }, [moduleData])
 
   // ── Enviar submissão ──

@@ -66,6 +66,8 @@ const testCaseSchema = z.object({
   input: z.unknown(),
   expected: z.unknown(),
   description: z.string(),
+  matcher: z.enum(['equal', 'approx', 'contains', 'regex']).optional(),
+  tolerance: z.number().optional(),
 })
 
 export const createChallengeBodySchema = z.object({
@@ -77,6 +79,7 @@ export const createChallengeBodySchema = z.object({
   order: z.number().int().nonnegative().optional(),
   baseXp: z.number().int().positive().optional(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable().optional(),
+  targetFn: z.string().nullable().optional(),
 })
 
 export const updateChallengeBodySchema = z.object({
@@ -88,6 +91,7 @@ export const updateChallengeBodySchema = z.object({
   order: z.number().int().nonnegative().optional(),
   baseXp: z.number().int().positive().optional(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable().optional(),
+  targetFn: z.string().nullable().optional(),
 })
 
 // ─── Response schemas ─────────────────────────────────────────────────────────
@@ -110,6 +114,7 @@ const challengeSummarySchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']),
   order: z.number(),
   baseXp: z.number(),
+  targetFn: z.string().nullable(),
 })
 
 const moduleWithChallengesSchema = z.object({
@@ -140,6 +145,7 @@ const challengeSchema = z.object({
   order: z.number(),
   baseXp: z.number(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable(),
+  targetFn: z.string().nullable(),
 })
 
 export const listTrailsResponseSchema = z.object({

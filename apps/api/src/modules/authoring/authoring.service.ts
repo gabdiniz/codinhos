@@ -166,6 +166,7 @@ export async function addMyChallenge(tenantId: string, moduleId: string, body: C
     difficulty: body.difficulty,
     baseXp: body.baseXp ?? 10,
     order,
+    targetFn: body.targetFn,
   })
   return { challenge }
 }
@@ -180,6 +181,7 @@ export async function updateMyChallenge(tenantId: string, challengeId: string, b
     testCases: body.testCases as TestCase[] | null | undefined,
     difficulty: body.difficulty,
     baseXp: body.baseXp,
+    targetFn: body.targetFn,
   })
   return { challenge: challenge! }
 }

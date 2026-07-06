@@ -1,49 +1,23 @@
 import vm from 'node:vm'
+import { SAFE_GLOBALS, applyMatcher, resolveTargetFn } from '@codinhos/runner'
 import type { TestCase, TestResult } from '../db/schema.js'
 
-const SAFE_GLOBALS = {
-  Math,
-  Number,
-  String,
-  Array,
-  Object,
-  JSON,
-  parseInt,
-  parseFloat,
-  isNaN,
-  isFinite,
-  Boolean,
-  Date,
-  // Silence console output from student code
-  console: { log: () => {}, error: () => {}, warn: () => {}, info: () => {} },
-}
-
 /**
- * Extrai o nome da primeira função declarada no código (function ou arrow).
- * Mesma lógica do sandbox.worker.ts do frontend.
- */
-function extractFunctionName(code: string): string | null {
-  const fnDecl = code.match(/function\s+([a-zA-Z_$][\w$]*)\s*\(/)
-  if (fnDecl) return fnDecl[1]
-  const arrow = code.match(/(?:const|let)\s+([a-zA-Z_$][\w$]*)\s*=\s*(?:\([^)]*\)|[a-zA-Z_$][\w$]*)\s*=>/)
-  if (arrow) return arrow[1]
-  return null
-}
-
-/**
- * Executa o código do aluno contra os test cases.
+ * Executa o código do aluno contra os test cases (revalidação de nota).
  *
- * Suporta dois modos:
- *  - input: unknown[] → chama a primeira função encontrada no código com esses args
+ * A lógica pura (extração da função, comparação, matchers, globais curados)
+ * vem de @codinhos/runner — a MESMA usada pelo Web Worker do front, para que
+ * feedback e nota nunca divirjam. Aqui fica só a execução em node:vm.
+ *
+ * Dois modos:
+ *  - input: unknown[] → chama a função-alvo com esses args e compara o retorno
  *  - input: null      → executa o código e verifica typeof de uma variável
- *                       (nome extraído da description: "varName deve ser do tipo ...")
- *
- * Comparação para function tests: JSON.stringify (suporta arrays e objetos).
- * Comparação para type-check tests: igualdade estrita de string.
+ *                       (nome extraído da description: "varName deve ser ...")
  */
 export function runTests(
   code: string,
   testCases: TestCase[],
+  targetFn?: string | null,
 ): { results: TestResult[]; allPassed: boolean } {
   const results: TestResult[] = []
 
@@ -91,7 +65,7 @@ export function runTests(
       })
     } else {
       // ── Function-call test ────────────────────────────────────────────────
-      const fnName = extractFunctionName(code)
+      const fnName = resolveTargetFn(code, targetFn)
       if (!fnName) {
         results.push({
           passed: false,
@@ -109,7 +83,11 @@ export function runTests(
         vm.createContext(sandbox)
         vm.runInContext(code, sandbox, { timeout: 3000 })
 
-        const fn = (sandbox as Record<string, unknown>)[fnName]
+        // Avalia o nome como expressão no contexto (não como propriedade do
+        // sandbox): assim acha tanto `function nome()` quanto arrows via
+        // const/let — que NÃO viram propriedade do global no node:vm. Alinha
+        // ao worker do front, que resolve pela closure do new Function.
+        const fn = vm.runInContext(fnName, sandbox, { timeout: 500 })
         if (typeof fn !== 'function') {
           results.push({
             passed: false,
@@ -135,7 +113,7 @@ export function runTests(
       }
 
       results.push({
-        passed: JSON.stringify(actual) === JSON.stringify(tc.expected),
+        passed: applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance),
         input: tc.input,
         expected: tc.expected,
         actual,
