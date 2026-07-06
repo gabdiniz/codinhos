@@ -4,7 +4,8 @@ import { api, ApiError } from '../../lib/api.ts'
 import styles from './AuthoringTrailPage.module.css'
 
 type Difficulty = 'easy' | 'medium' | 'hard'
-interface TestCase { input: unknown; expected: unknown; description: string }
+type Matcher = 'equal' | 'approx' | 'contains' | 'regex'
+interface TestCase { input: unknown; expected: unknown; description: string; matcher?: Matcher; tolerance?: number; mode?: 'stdout' }
 interface Challenge {
   id: string
   title: string
@@ -14,6 +15,7 @@ interface Challenge {
   difficulty: Difficulty
   baseXp: number
   order: number
+  targetFn?: string | null
 }
 interface Module {
   id: string
@@ -103,21 +105,29 @@ function ModuleForm({ initial, onClose, onSave }: {
 function ChallengeForm({ initial, onClose, onSave }: {
   initial: Challenge | null
   onClose: () => void
-  onSave: (body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number }) => Promise<void>
+  onSave: (body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null }) => Promise<void>
 }) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [starterCode, setStarterCode] = useState(initial?.starterCode ?? '')
+  const [targetFn, setTargetFn] = useState(initial?.targetFn ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'easy')
   const [baseXp, setBaseXp] = useState(String(initial?.baseXp ?? 10))
-  const [rows, setRows] = useState<{ input: string; expected: string; description: string }[]>(
-    (initial?.testCases ?? []).map((t) => ({ input: stringifyValue(t.input), expected: stringifyValue(t.expected), description: t.description })),
+  const [rows, setRows] = useState<{ input: string; expected: string; description: string; matcher: string; tolerance: string; mode: string }[]>(
+    (initial?.testCases ?? []).map((t) => ({
+      input: stringifyValue(t.input),
+      expected: stringifyValue(t.expected),
+      description: t.description,
+      matcher: t.matcher ?? 'equal',
+      tolerance: t.tolerance != null ? String(t.tolerance) : '',
+      mode: t.mode ?? '',
+    })),
   )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  function addRow() { setRows((r) => [...r, { input: '', expected: '', description: '' }]) }
-  function setRow(i: number, k: 'input' | 'expected' | 'description', v: string) {
+  function addRow() { setRows((r) => [...r, { input: '', expected: '', description: '', matcher: 'equal', tolerance: '', mode: '' }]) }
+  function setRow(i: number, k: 'input' | 'expected' | 'description' | 'matcher' | 'tolerance' | 'mode', v: string) {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)))
   }
   function removeRow(i: number) { setRows((r) => r.filter((_, idx) => idx !== i)) }
@@ -125,9 +135,15 @@ function ChallengeForm({ initial, onClose, onSave }: {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true); setError(null)
-    const testCases = rows
+    const testCases: TestCase[] = rows
       .filter((r) => r.input !== '' || r.expected !== '' || r.description !== '')
-      .map((r) => ({ input: parseValue(r.input), expected: parseValue(r.expected), description: r.description }))
+      .map((r) => {
+        const tc: TestCase = { input: parseValue(r.input), expected: parseValue(r.expected), description: r.description }
+        if (r.mode === 'stdout') tc.mode = 'stdout'
+        if (r.matcher !== 'equal') tc.matcher = r.matcher as Matcher
+        if (r.matcher === 'approx' && r.tolerance.trim() !== '') tc.tolerance = Number(r.tolerance)
+        return tc
+      })
     try {
       await onSave({
         title: title.trim(),
@@ -136,6 +152,7 @@ function ChallengeForm({ initial, onClose, onSave }: {
         testCases: testCases.length ? testCases : undefined,
         difficulty,
         baseXp: Number(baseXp) || 10,
+        targetFn: targetFn.trim() || null,
       })
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Erro ao salvar.'); setSaving(false) }
   }
@@ -167,6 +184,10 @@ function ChallengeForm({ initial, onClose, onSave }: {
             <small className={styles.hint}>Pontos ao concluir.</small>
           </label>
         </div>
+        <label className={styles.label}>Função avaliada (opcional)
+          <input className={`${styles.input} ${styles.mono}`} value={targetFn} onChange={(e) => setTargetFn(e.target.value)} placeholder="Ex.: soma" />
+          <small className={styles.hint}>Nome da função testada. Vazio = usa a primeira função do código. Preencha se o aluno vai escrever funções auxiliares.</small>
+        </label>
 
         <div className={styles.testsHead}>
           <span className={styles.label}>Casos de teste</span>
@@ -174,11 +195,33 @@ function ChallengeForm({ initial, onClose, onSave }: {
         </div>
         <small className={styles.hint}>O aluno escreve uma função; o sistema chama com o <b>input</b> e compara o retorno com o <b>esperado</b>. Use JSON: texto entre aspas (<code>&quot;oi&quot;</code>), números e listas sem aspas (<code>[2, 3]</code>, <code>5</code>).</small>
         {rows.map((r, i) => (
-          <div key={i} className={styles.testRow}>
-            <input className={`${styles.input} ${styles.mono}`} value={r.input} onChange={(e) => setRow(i, 'input', e.target.value)} placeholder='input (ex: [2,3])' />
-            <input className={`${styles.input} ${styles.mono}`} value={r.expected} onChange={(e) => setRow(i, 'expected', e.target.value)} placeholder='esperado (ex: 5)' />
-            <input className={styles.input} value={r.description} onChange={(e) => setRow(i, 'description', e.target.value)} placeholder='descrição' />
-            <button type="button" className={styles.btnRemoveSm} onClick={() => removeRow(i)} aria-label="Remover caso">×</button>
+          <div key={i} className={styles.testCase}>
+            <div className={styles.testRow}>
+              <input className={`${styles.input} ${styles.mono}`} value={r.input} onChange={(e) => setRow(i, 'input', e.target.value)} placeholder='input (ex: [2,3])' />
+              <input className={`${styles.input} ${styles.mono}`} value={r.expected} onChange={(e) => setRow(i, 'expected', e.target.value)} placeholder='esperado (ex: 5)' />
+              <input className={styles.input} value={r.description} onChange={(e) => setRow(i, 'description', e.target.value)} placeholder='descrição' />
+              <button type="button" className={styles.btnRemoveSm} onClick={() => removeRow(i)} aria-label="Remover caso">×</button>
+            </div>
+            <div className={styles.testRowOpts}>
+              <span className={styles.hint}>tipo:</span>
+              <select className={styles.selectSm} value={r.mode} onChange={(e) => setRow(i, 'mode', e.target.value)}>
+                <option value="">retorno da função</option>
+                <option value="stdout">saída (console.log)</option>
+              </select>
+              <span className={styles.hint}>comparação:</span>
+              <select className={styles.selectSm} value={r.matcher} onChange={(e) => setRow(i, 'matcher', e.target.value)}>
+                <option value="equal">igual (padrão)</option>
+                <option value="approx">aproximado (número)</option>
+                <option value="contains">contém</option>
+                <option value="regex">regex</option>
+              </select>
+              {r.matcher === 'approx' && (
+                <input className={styles.selectSm} type="number" step="any" min={0} value={r.tolerance} onChange={(e) => setRow(i, 'tolerance', e.target.value)} placeholder="tolerância (ex: 0.01)" />
+              )}
+            </div>
+            {r.mode === 'stdout' && (
+              <small className={styles.hint}>Saída do console: em <b>esperado</b> coloque o texto impresso. Para várias linhas, use uma string JSON com <code>\n</code> (ex.: <code>&quot;linha 1\nlinha 2&quot;</code>). <b>input</b> só é usado se o aluno escreve uma função que imprime.</small>
+            )}
           </div>
         ))}
 
@@ -228,7 +271,7 @@ export default function AuthoringTrailPage() {
     try { await api.delete(`/api/${slug}/authoring/modules/${id}`); setToast('Módulo removido.'); await load() }
     catch (err) { setToast(err instanceof ApiError ? err.message : 'Erro ao remover.') }
   }
-  async function saveChallenge(body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number }) {
+  async function saveChallenge(body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null }) {
     if (!slug || !challengeForm) return
     if (challengeForm.editing) await api.patch(`/api/${slug}/authoring/challenges/${challengeForm.editing.id}`, body)
     else await api.post(`/api/${slug}/authoring/modules/${challengeForm.moduleId}/challenges`, body)

@@ -16,6 +16,12 @@ export interface TestCase {
   matcher?: Matcher
   /** Tolerância para o matcher 'approx' (default 1e-9). */
   tolerance?: number
+  /**
+   * Modo de teste. Ausente = comportamento clássico (chamada de função quando
+   * input é array; type-check quando input é null). 'stdout' compara a SAÍDA
+   * impressa com console.log — abre "imprima a tabuada", FizzBuzz, padrões etc.
+   */
+  mode?: 'stdout'
 }
 
 export interface TestResult {

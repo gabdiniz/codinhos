@@ -16,8 +16,11 @@
  *  - input: null      → executa o código e verifica typeof de uma variável
  */
 import {
+  type CaptureConsole,
   DENIED_WORKER_GLOBALS,
   applyMatcher,
+  createCaptureConsole,
+  normalizeOutput,
   resolveTargetFn,
   type TestCase,
   type TestResult,
@@ -39,7 +42,16 @@ const DENY_ARGS = DENY.map(() => undefined)
  * sombreados, e retorna o valor da expressão `retExpr` (ex.: "nomeFn" ou
  * "typeof x"). O Worker não tem DOM; new Function roda no escopo do worker.
  */
-function evalInSandbox(code: string, retExpr: string): unknown {
+function evalInSandbox(
+  code: string,
+  retExpr: string,
+  captureConsole?: CaptureConsole['console'],
+): unknown {
+  if (captureConsole) {
+    // console vira parâmetro (sombreia o global) -> console.log do aluno é capturado
+    const factory = new Function(...DENY, 'console', `${code}\nreturn (${retExpr})`)
+    return factory(...DENY_ARGS, captureConsole)
+  }
   const factory = new Function(...DENY, `${code}\nreturn (${retExpr})`)
   return factory(...DENY_ARGS)
 }
@@ -125,6 +137,43 @@ function runTypeCheckTest(code: string, tc: TestCase): TestResult {
   }
 }
 
+function runStdoutTest(code: string, tc: TestCase, targetFn?: string | null): TestResult {
+  let actual: unknown
+  try {
+    const cap = createCaptureConsole()
+    if (Array.isArray(tc.input)) {
+      const fnName = resolveTargetFn(code, targetFn)
+      const fn = evalInSandbox(code, fnName ?? 'undefined', cap.console)
+      if (typeof fn === 'function') {
+        cap.clear()
+        ;(fn as (...a: unknown[]) => unknown)(...(tc.input as unknown[]))
+      }
+    } else {
+      evalInSandbox(code, 'undefined', cap.console)
+    }
+    actual = normalizeOutput(cap.getOutput())
+  } catch (err) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: undefined,
+      description: tc.description,
+      error: err instanceof Error ? err.message : String(err),
+      errorName: err instanceof Error ? err.name : undefined,
+    }
+  }
+
+  const expected = typeof tc.expected === 'string' ? normalizeOutput(tc.expected) : tc.expected
+  return {
+    passed: applyMatcher(actual, expected, tc.matcher, tc.tolerance),
+    input: tc.input,
+    expected: tc.expected,
+    actual,
+    description: tc.description,
+  }
+}
+
 // ─── Message handler ──────────────────────────────────────────────────────────
 
 self.addEventListener('message', (e: MessageEvent<InMessage>) => {
@@ -132,6 +181,9 @@ self.addEventListener('message', (e: MessageEvent<InMessage>) => {
 
   const results: TestResult[] = testCases.map((tc) => {
     try {
+      if (tc.mode === 'stdout') {
+        return runStdoutTest(code, tc, targetFn)
+      }
       if (tc.input === null) {
         return runTypeCheckTest(code, tc)
       }

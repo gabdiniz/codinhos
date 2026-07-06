@@ -35,6 +35,9 @@ interface TestCase {
   input: unknown
   expected: unknown
   description: string
+  matcher?: 'equal' | 'approx' | 'contains' | 'regex'
+  tolerance?: number
+  mode?: 'stdout'
 }
 
 interface TestResult {

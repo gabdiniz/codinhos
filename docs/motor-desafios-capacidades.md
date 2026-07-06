@@ -229,3 +229,47 @@ igual a `NaN` (antes o backend os igualava via `"null"`), e `undefined` em objet
 db:migrate` (aplica a 0009), e `pnpm --filter @codinhos/runner test` + `--filter @codinhos/api
 test` + `typecheck`. Feito no sandbox: typecheck isolado (runner, run-tests, worker) e o
 diferencial em Node com o código real compilado.
+
+---
+
+## 9. D2 — avaliação por console.log (feito)
+
+Ramo sugerido `feat/d2-console-output`. O motor passa a suportar um terceiro modo de
+teste, `mode: 'stdout'`, que compara a **saída impressa com console.log** em vez do retorno
+da função. Destrava a experiência de programação mais natural para 11–14: imprimir.
+
+**Runner (`@codinhos/runner`, `console.ts`):** formatação de saída pura e compartilhada
+(`formatConsoleLine`), console de captura (`createCaptureConsole` — só `log` acumula; `warn`/
+`error`/`info` são no-op) e `normalizeOutput`. A formatação é a MESMA nos dois ambientes — não
+usamos o console nativo (o `util.inspect` do Node difere do navegador); injetamos o nosso.
+
+**Normalização (decisão de design):** apara espaços à direita de cada linha e linhas em branco
+no início/fim; **preserva indentação à esquerda e linhas internas** — de propósito, senão
+"desenhe um triângulo" com espaços quebraria.
+
+**Backend (`run-tests.ts`) e worker (`sandbox.worker.ts`):** novo branch stdout. Executa o
+código capturando `console.log`; se `input` é array, roda a função-alvo e considera só a saída
+dela (limpa o topo antes de chamar); senão captura a saída do código no topo. Compara
+`normalizeOutput(saída)` com `expected` via `applyMatcher` — então `contains` e `regex` também
+funcionam sobre a saída ("a saída contém 15", "bate com `total: \d+`").
+
+**Dispatch:** `mode === 'stdout'` → stdout; senão `input === null` → type-check; senão →
+função. Totalmente retrocompatível: os 84 desafios existentes não têm `mode`.
+
+**Autoria:** zod (authoring + catalog) aceita `mode`; formulários do gestor e do admin ganharam
+um seletor de **tipo de teste** ("retorno da função" / "saída (console.log)") por caso, com dica
+de usar string JSON com `\n` para saída de várias linhas.
+
+**Conteúdo (seed):** módulo novo na trilha JS — lição de `console.log` + desafios **C.1 Olá,
+mundo!**, **C.2 Conte de 1 a 5**, **C.3 Tabuada** (função `tabuada(n)` com `targetFn`, testada
+com n=3 e n=7) e **C.4 FizzBuzz**. As saídas esperadas foram geradas pelo runner real (exatas).
+
+**Verificação:** `run-tests.stdout.test.ts` (backend + concordância com réplica do worker, 9
+casos) e `console.test.ts` no runner (11 asserts). Diferencial rodado com o código real
+compilado: back e front produzem saída e veredito idênticos; modos antigos (função/type-check)
+seguem intactos.
+
+**Pendência de polish (não bloqueante):** o painel de resultado do aluno mostra saída multilinha
+com `\n` escapado numa linha só (via `JSON.stringify`); um `<pre>` renderizaria melhor, mas
+mexe num caminho de serialização compartilhado por todos os tipos de teste — deixado para uma
+iteração com verificação visual.
