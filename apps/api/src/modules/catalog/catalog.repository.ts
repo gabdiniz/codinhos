@@ -101,6 +101,7 @@ export async function findTrailWithModules(trailId: string) {
     difficulty: 'easy' | 'medium' | 'hard'
     order: number
     baseXp: number
+    targetFn: string | null
   }[] = []
 
   if (moduleIds.length > 0) {
@@ -115,6 +116,7 @@ export async function findTrailWithModules(trailId: string) {
         difficulty: challenges.difficulty,
         order: challenges.order,
         baseXp: challenges.baseXp,
+        targetFn: challenges.targetFn,
       })
       .from(challenges)
       .where(inArray(challenges.moduleId, moduleIds))
@@ -308,6 +310,7 @@ export async function findChallengeById(id: string) {
       order: challenges.order,
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
+      targetFn: challenges.targetFn,
     })
     .from(challenges)
     .where(eq(challenges.id, id))
@@ -336,6 +339,7 @@ type CreateChallengeInput = {
   order: number
   baseXp: number
   validationModeOverride?: 'auto' | 'auto_review' | 'manual' | null
+  targetFn?: string | null
 }
 
 export async function createChallenge(input: CreateChallengeInput) {
@@ -353,6 +357,7 @@ export async function createChallenge(input: CreateChallengeInput) {
       order: challenges.order,
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
+      targetFn: challenges.targetFn,
     })
   return challenge!
 }
@@ -366,6 +371,7 @@ type UpdateChallengeInput = {
   order?: number
   baseXp?: number
   validationModeOverride?: 'auto' | 'auto_review' | 'manual' | null
+  targetFn?: string | null
 }
 
 export async function updateChallenge(id: string, input: UpdateChallengeInput) {
@@ -382,6 +388,7 @@ export async function updateChallenge(id: string, input: UpdateChallengeInput) {
       ...(input.validationModeOverride !== undefined && {
         validationModeOverride: input.validationModeOverride,
       }),
+      ...(input.targetFn !== undefined && { targetFn: input.targetFn }),
     })
     .where(eq(challenges.id, id))
     .returning({
@@ -395,6 +402,7 @@ export async function updateChallenge(id: string, input: UpdateChallengeInput) {
       order: challenges.order,
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
+      targetFn: challenges.targetFn,
     })
   return challenge ?? null
 }

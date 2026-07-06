@@ -34,6 +34,7 @@ export async function findChallengeForSubmission(challengeId: string) {
       title: challenges.title,
       baseXp: challenges.baseXp,
       testCases: challenges.testCases,
+      targetFn: challenges.targetFn,
       validationModeOverride: challenges.validationModeOverride,
     })
     .from(challenges)
