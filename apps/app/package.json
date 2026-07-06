@@ -21,7 +21,8 @@
     "@codemirror/view": "^6.35.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "@codinhos/runner": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
