@@ -38,6 +38,7 @@ const testCaseSchema = z.object({
   description: z.string(),
   matcher: z.enum(['equal', 'approx', 'contains', 'regex']).optional(),
   tolerance: z.number().optional(),
+  mode: z.enum(['stdout']).optional(),
 })
 
 export const createChallengeBodySchema = z.object({

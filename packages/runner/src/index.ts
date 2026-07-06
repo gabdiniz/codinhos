@@ -9,3 +9,10 @@ export type { Matcher, TestCase, TestResult } from './types.js'
 export { extractFunctionName, resolveTargetFn } from './extract.js'
 export { deepEqual, applyMatcher } from './compare.js'
 export { SAFE_GLOBALS, DENIED_WORKER_GLOBALS } from './globals.js'
+export {
+  formatConsoleArg,
+  formatConsoleLine,
+  createCaptureConsole,
+  normalizeOutput,
+  type CaptureConsole,
+} from './console.js'

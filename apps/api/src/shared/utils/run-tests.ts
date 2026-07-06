@@ -1,5 +1,11 @@
 import vm from 'node:vm'
-import { SAFE_GLOBALS, applyMatcher, resolveTargetFn } from '@codinhos/runner'
+import {
+  SAFE_GLOBALS,
+  applyMatcher,
+  createCaptureConsole,
+  normalizeOutput,
+  resolveTargetFn,
+} from '@codinhos/runner'
 import type { TestCase, TestResult } from '../db/schema.js'
 
 /**
@@ -22,7 +28,47 @@ export function runTests(
   const results: TestResult[] = []
 
   for (const tc of testCases) {
-    if (tc.input === null) {
+    if (tc.mode === 'stdout') {
+      // ── Console-output test ───────────────────────────────────────────────
+      // Executa o código capturando console.log e compara a SAÍDA impressa.
+      let actual: unknown
+      try {
+        const cap = createCaptureConsole()
+        const sandbox = { ...SAFE_GLOBALS, console: cap.console }
+        vm.createContext(sandbox)
+        vm.runInContext(code, sandbox, { timeout: 3000 })
+        // Se houver input (array), roda a função-alvo e considera só a saída
+        // dela (limpa o que foi impresso no topo do código antes de chamar).
+        if (Array.isArray(tc.input)) {
+          const fnName = resolveTargetFn(code, targetFn)
+          const fn = fnName ? vm.runInContext(fnName, sandbox, { timeout: 500 }) : undefined
+          if (typeof fn === 'function') {
+            cap.clear()
+            ;(fn as (...a: unknown[]) => unknown)(...tc.input)
+          }
+        }
+        actual = normalizeOutput(cap.getOutput())
+      } catch (err) {
+        results.push({
+          passed: false,
+          input: tc.input,
+          expected: tc.expected,
+          actual: `Erro: ${err instanceof Error ? err.message : String(err)}`,
+          description: tc.description,
+        })
+        continue
+      }
+
+      const expected =
+        typeof tc.expected === 'string' ? normalizeOutput(tc.expected) : tc.expected
+      results.push({
+        passed: applyMatcher(actual, expected, tc.matcher, tc.tolerance),
+        input: tc.input,
+        expected: tc.expected,
+        actual,
+        description: tc.description,
+      })
+    } else if (tc.input === null) {
       // ── Type-check test ───────────────────────────────────────────────────
       const varMatch = (tc.description as string).match(/^([a-zA-Z_$][\w$]*)/)
       if (!varMatch) {

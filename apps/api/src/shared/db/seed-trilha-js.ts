@@ -40,7 +40,15 @@ type Modulo = {
   baseXp: number
   description: string
   starterCode: string
-  testCases: { input: unknown; expected: unknown; description: string }[]
+  targetFn?: string
+  testCases: {
+    input: unknown
+    expected: unknown
+    description: string
+    mode?: 'stdout'
+    matcher?: 'equal' | 'approx' | 'contains' | 'regex'
+    tolerance?: number
+  }[]
 }
 
 const trilhaModules: Modulo[] = [
@@ -3402,6 +3410,121 @@ const trilhaModules: Modulo[] = [
         "description": "2024 = MMXXIV"
       }
     ]
+  },
+  {
+    "kind": "lesson",
+    "title": "Lição — Mostrando coisas na tela (console.log)",
+    "concept": "Até agora suas funções **devolviam** um valor com `return`. Mas muitas vezes queremos **mostrar** algo na tela enquanto o programa roda — e para isso usamos `console.log(...)`.\n\nCada `console.log` imprime uma **linha**. Dá para imprimir texto, números e juntar tudo: `console.log(\"Total: \" + 10)`.\n\nNos próximos desafios, em vez de comparar o que a função devolve, o Codinhos vai comparar **exatamente o que você imprime** — a mesma ordem de linhas e o mesmo texto. Capriche!",
+    "exampleCode": "console.log(\"Oi!\")\nconsole.log(\"Tudo bem?\")\n// imprime duas linhas",
+    "vocabulary": [
+      "console.log"
+    ],
+    "difficulty": "easy",
+    "baseXp": 5,
+    "description": "",
+    "starterCode": "",
+    "testCases": []
+  },
+  {
+    "kind": "challenge",
+    "title": "C.1 Olá, mundo!",
+    "concept": "`console.log(texto)` mostra uma linha na tela. O texto vai entre aspas.",
+    "exampleCode": "console.log(\"Bom dia!\")",
+    "vocabulary": [
+      "console.log"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Imprima exatamente a mensagem: **Olá, mundo!**",
+    "starterCode": "// Use console.log para imprimir a mensagem\n",
+    "testCases": [
+      {
+        "input": null,
+        "expected": "Olá, mundo!",
+        "description": "imprime a saudação",
+        "mode": "stdout"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "C.2 Conte de 1 a 5",
+    "concept": "Um `for` repete um bloco. A cada volta, imprima o número com `console.log(i)`.",
+    "exampleCode": "for (let i = 1; i <= 3; i++) {\n  console.log(i)\n}",
+    "vocabulary": [
+      "console.log",
+      "for"
+    ],
+    "difficulty": "easy",
+    "baseXp": 10,
+    "description": "Imprima os números de **1 a 5**, um por linha.",
+    "starterCode": "for (let i = 1; i <= 5; i++) {\n  // imprima i\n}\n",
+    "testCases": [
+      {
+        "input": null,
+        "expected": "1\n2\n3\n4\n5",
+        "description": "imprime de 1 a 5",
+        "mode": "stdout"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "C.3 Tabuada",
+    "concept": "Escreva a função `tabuada(n)` que **imprime** a tabuada de `n` do 1 ao 10, uma linha por multiplicação, no formato `n x i = resultado`.",
+    "exampleCode": "function tabuada(n) {\n  for (let i = 1; i <= 10; i++) {\n    console.log(n + \" x \" + i + \" = \" + (n * i))\n  }\n}",
+    "vocabulary": [
+      "console.log",
+      "for",
+      "function"
+    ],
+    "difficulty": "medium",
+    "baseXp": 15,
+    "description": "Escreva a função **tabuada(n)** que imprime a tabuada de n do 1 ao 10 (ex.: `3 x 1 = 3`).",
+    "starterCode": "function tabuada(n) {\n  // imprima cada linha da tabuada de n\n}\n",
+    "targetFn": "tabuada",
+    "testCases": [
+      {
+        "input": [
+          3
+        ],
+        "expected": "3 x 1 = 3\n3 x 2 = 6\n3 x 3 = 9\n3 x 4 = 12\n3 x 5 = 15\n3 x 6 = 18\n3 x 7 = 21\n3 x 8 = 24\n3 x 9 = 27\n3 x 10 = 30",
+        "description": "tabuada do 3",
+        "mode": "stdout"
+      },
+      {
+        "input": [
+          7
+        ],
+        "expected": "7 x 1 = 7\n7 x 2 = 14\n7 x 3 = 21\n7 x 4 = 28\n7 x 5 = 35\n7 x 6 = 42\n7 x 7 = 49\n7 x 8 = 56\n7 x 9 = 63\n7 x 10 = 70",
+        "description": "tabuada do 7",
+        "mode": "stdout"
+      }
+    ]
+  },
+  {
+    "kind": "challenge",
+    "title": "C.4 FizzBuzz",
+    "concept": "Imprima de 1 a 15. Múltiplo de 3 → `Fizz`; de 5 → `Buzz`; de 3 e 5 → `FizzBuzz`; senão o próprio número. Use `%` (resto da divisão) e cheque o múltiplo de 15 primeiro.",
+    "exampleCode": "if (6 % 3 === 0) console.log(\"Fizz\")",
+    "vocabulary": [
+      "console.log",
+      "for",
+      "%",
+      "if"
+    ],
+    "difficulty": "medium",
+    "baseXp": 15,
+    "description": "Imprima de 1 a 15 aplicando as regras do **FizzBuzz**.",
+    "starterCode": "for (let i = 1; i <= 15; i++) {\n  // aplique as regras e imprima\n}\n",
+    "testCases": [
+      {
+        "input": null,
+        "expected": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz",
+        "description": "FizzBuzz de 1 a 15",
+        "mode": "stdout"
+      }
+    ]
   }
 ]
 
@@ -3470,12 +3593,13 @@ async function seedTrilha() {
         testCases: m.testCases,
         difficulty: m.difficulty,
         baseXp: m.baseXp,
+        targetFn: m.targetFn ?? null,
         order: 1,
       })
     } else {
       await db
         .update(challenges)
-        .set({ title: m.title, description: m.description, starterCode: m.starterCode, testCases: m.testCases, difficulty: m.difficulty, baseXp: m.baseXp })
+        .set({ title: m.title, description: m.description, starterCode: m.starterCode, testCases: m.testCases, difficulty: m.difficulty, baseXp: m.baseXp, targetFn: m.targetFn ?? null })
         .where(eq(challenges.id, ch.id))
     }
     desafios++
