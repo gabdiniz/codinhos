@@ -462,6 +462,20 @@
   color: var(--color-text);
 }
 
+.resultOutput {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  margin: 0.15rem 0 0;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .resultError {
   font-family: var(--font-sans);
   font-size: 0.75rem;
