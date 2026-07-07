@@ -24,6 +24,14 @@ export const sendMessageBodySchema = z.object({
   currentCode: z.string().max(10000).optional(),
   /** Contexto do teste que falhou — só é usado se o tenant tiver a feature habilitada */
   failedTest: failedTestSchema.optional(),
+  /**
+   * Intenção da mensagem. 'hint' aciona o modo de dica progressiva (dica do nível
+   * pedido, sem entregar a solução). 'review' aciona o code review pós-acerto.
+   * Ausente = conversa normal.
+   */
+  intent: z.enum(['chat', 'hint', 'review']).optional(),
+  /** Nível da dica progressiva (1 = conceitual, 2 = onde olhar, 3 = passo concreto). */
+  hintLevel: z.number().int().min(1).max(3).optional(),
 })
 
 export type SendMessageBody = z.infer<typeof sendMessageBodySchema>

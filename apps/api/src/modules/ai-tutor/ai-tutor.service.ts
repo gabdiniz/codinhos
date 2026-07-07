@@ -48,6 +48,8 @@ function buildSystemPrompt(opts: {
   language: string
   currentCode: string | undefined
   failedTest: FailedTestContext | undefined
+  hintLevel: number | undefined
+  reviewMode: boolean
 }): string {
   const {
     studentName,
@@ -60,6 +62,8 @@ function buildSystemPrompt(opts: {
     language,
     currentCode,
     failedTest,
+    hintLevel,
+    reviewMode,
   } = opts
 
   const codeBlock = currentCode
@@ -72,6 +76,25 @@ function buildSystemPrompt(opts: {
 
 O aluno pediu ajuda especificamente sobre esse erro. Explique a causa de forma
 construtiva, sem reescrever o código corrigido.`
+    : ''
+
+  const hintBlock = hintLevel
+    ? `\n\n## Modo DICA (nível ${hintLevel} de 3) — prioridade sobre o resto
+O aluno clicou em "Pedir uma dica". Dê UMA única dica curta, do nível ${hintLevel}, e nada além disso:
+- Nível 1: uma cutucada conceitual — relembre o conceito-chave ou faça uma pergunta que oriente o raciocínio, SEM apontar o código dele.
+- Nível 2: aponte ONDE olhar no código atual (a linha, o trecho ou a lógica com problema), SEM escrever a correção.
+- Nível 3: descreva o PASSO concreto que falta (a abordagem ou a estrutura que resolve), ainda SEM escrever o código pronto.
+Máximo 1-2 frases + no máximo uma pergunta. Em NENHUM nível entregue a solução completa ou escreva o código corrigido.`
+    : ''
+
+  const reviewBlock = reviewMode
+    ? `\n\n## Modo REVIEW (o aluno ACERTOU o desafio) — prioridade sobre o resto
+O aluno resolveu o desafio corretamente e pediu um review do código atual. Responda assim:
+- Comece com um elogio curto e sincero (1 frase).
+- Dê no MÁXIMO 1-2 sugestões concretas de como o código poderia ficar melhor: clareza, nomes de variáveis, JavaScript mais idiomático, ou um caso de borda a considerar.
+- NÃO reescreva o código pronto para ele — aponte o caminho e deixe o aluno aplicar.
+- Se o código já está muito bom, diga isso com sinceridade e destaque 1 ponto forte, sem inventar problema.
+Tom encorajador e curto (no máximo 2 parágrafos).`
     : ''
 
   return `Você é o Codi, tutor de programação da plataforma Codinhos.
@@ -108,7 +131,7 @@ ${challengeDescription ? `- Enunciado: ${challengeDescription}` : ''}${codeBlock
 - Use crase para nomes de variáveis, funções e trechos de código (ex: \`soma\`, \`if\`) — nunca escreva código sem marcação
 - Use **negrito** com moderação, só em 1-2 termos-chave por resposta — não negrite frases inteiras
 - Se a explicação envolver passos ou opções, use uma lista curta (3-4 itens) em vez de um parágrafo corrido
-- A pergunta que guia o raciocínio do aluno deve ficar isolada no último parágrafo, nunca misturada com a explicação`
+- A pergunta que guia o raciocínio do aluno deve ficar isolada no último parágrafo, nunca misturada com a explicação${hintBlock}${reviewBlock}`
 }
 
 // ─── getConversation ──────────────────────────────────────────────────────────
@@ -202,6 +225,8 @@ export async function sendMessage(
         language: context.language,
         currentCode: body.currentCode,
         failedTest,
+        hintLevel: body.intent === 'hint' ? body.hintLevel : undefined,
+        reviewMode: body.intent === 'review',
       }),
       messages: apiMessages,
     })

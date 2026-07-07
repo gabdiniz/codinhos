@@ -21,7 +21,6 @@ import styles from './ChallengePage.module.css'
 
 const QUICK_REPLIES = [
   'Poderia me explicar o desafio?',
-  'Me dê uma dica, sem a resposta',
   'Como posso melhorar meu código?',
   'Por que meu código falhou?',
 ]
@@ -591,8 +590,8 @@ interface CodiDrawerProps {
   conversation: AiConversationData | null
   /** Pedido de ajuda originado de um clique em "Pedir ajuda ao Codi" num teste falho */
   pendingHelpRequest: HelpRequest | null
-  /** Mensagem disparada automaticamente (ex.: botão "Me ajude com este desafio") */
-  autoMessage: { text: string; nonce: number } | null
+  /** Mensagem disparada automaticamente (ex.: botão "Me ajude com este desafio", review) */
+  autoMessage: { text: string; nonce: number; intent?: 'review' } | null
   /** Módulo atual — usado no modo lição (sem desafio) */
   moduleId: string | null
   /** true quando o módulo é uma lição (sem desafio) */
@@ -618,6 +617,7 @@ function CodiDrawer({
   const [dailyLimit, setDailyLimit] = useState<number | null>(null)
   const [usedToday, setUsedToday] = useState(0)
   const [pendingFailedTest, setPendingFailedTest] = useState<FailedTestContext | null>(null)
+  const [hintsUsed, setHintsUsed] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Sincroniza com a conversa carregada pelo ChallengePage
@@ -626,6 +626,7 @@ function CodiDrawer({
     setMessages(conversation.messages)
     setUsedToday(conversation.messagesUsedToday)
     setDailyLimit(conversation.dailyLimit)
+    setHintsUsed(0)
   }, [conversation])
 
   // Pré-popula o campo ao receber um pedido de ajuda vindo de um teste que falhou
@@ -641,7 +642,7 @@ function CodiDrawer({
   useEffect(() => {
     if (!autoMessage || autoMessage.nonce === lastAutoNonce.current) return
     lastAutoNonce.current = autoMessage.nonce
-    handleSend(autoMessage.text)
+    handleSend(autoMessage.text, autoMessage.intent ? { intent: autoMessage.intent } : undefined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoMessage])
 
@@ -650,7 +651,7 @@ function CodiDrawer({
     if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  async function handleSend(textArg?: string) {
+  async function handleSend(textArg?: string, opts?: { intent?: 'hint' | 'review'; hintLevel?: number }) {
     const text = (typeof textArg === 'string' ? textArg : input).trim()
     if (!text || sending) return
 
@@ -690,6 +691,7 @@ function CodiDrawer({
           message: text,
           currentCode: getCode(),
           ...(pendingFailedTest ? { failedTest: pendingFailedTest } : {}),
+          ...(opts?.intent ? { intent: opts.intent, ...(opts.hintLevel ? { hintLevel: opts.hintLevel } : {}) } : {}),
         })
         setMessages((prev) => [...prev, res.data.message])
         setUsedToday(res.data.messagesUsedToday)
@@ -706,6 +708,16 @@ function CodiDrawer({
   }
 
   const limitReached = dailyLimit !== null && usedToday >= dailyLimit
+
+  // Dica progressiva: nível cresce a cada clique (1→2→3), depois mantém no 3.
+  function requestHint() {
+    if (sending || limitReached) return
+    const level = Math.min(hintsUsed + 1, 3)
+    setHintsUsed((n) => n + 1)
+    const text = level === 1 ? 'Pode me dar uma dica? 💡' : 'Pode me dar outra dica, um pouco mais específica? 💡'
+    handleSend(text, { intent: 'hint', hintLevel: level })
+  }
+  const hintLabel = hintsUsed === 0 ? 'Pedir uma dica' : hintsUsed >= 3 ? 'Outra dica' : `Dica ${hintsUsed + 1}`
 
   return (
     <div className={`${styles.codiDrawer} ${open ? styles.codiDrawerOpen : ''}`} aria-label="Tutor Codi">
@@ -755,6 +767,9 @@ function CodiDrawer({
       {/* Mensagens rápidas */}
       {!limitReached && (
         <div className={styles.codiChips}>
+          <button type="button" className={styles.codiHintBtn} onClick={requestHint} disabled={sending}>
+            💡 {hintLabel}
+          </button>
           {QUICK_REPLIES.map((q) => (
             <button key={q} type="button" className={styles.codiChip} onClick={() => handleSend(q)} disabled={sending}>
               {q}
@@ -826,7 +841,7 @@ export default function ChallengePage() {
   const [aiData, setAiData] = useState<AiConversationData | null>(null)
   const [helpRequest, setHelpRequest] = useState<HelpRequest | null>(null)
   const helpRequestSeq = useRef(0)
-  const [autoMsg, setAutoMsg] = useState<{ text: string; nonce: number } | null>(null)
+  const [autoMsg, setAutoMsg] = useState<{ text: string; nonce: number; intent?: 'review' } | null>(null)
   const autoMsgSeq = useRef(0)
   const [lessonResult, setLessonResult] = useState<{ xpEarned: number; alreadyCompleted: boolean; nextModuleId: string | null } | null>(null)
   const [completingLesson, setCompletingLesson] = useState(false)
@@ -1194,6 +1209,19 @@ export default function ChallengePage() {
           {submitResult && <SubmitResultPanel result={submitResult} />}
           {submitResult?.submission.status === 'passed' && (
             <div className={styles.nextActions}>
+              {challenge && (
+                <button
+                  type="button"
+                  className={styles.btnReview}
+                  onClick={() => {
+                    setCodiOpen(true)
+                    autoMsgSeq.current += 1
+                    setAutoMsg({ text: 'Acertei! Pode dar um review no meu código?', nonce: autoMsgSeq.current, intent: 'review' })
+                  }}
+                >
+                  ✨ Pedir review ao Codi
+                </button>
+              )}
               {moduleData?.nextModuleId ? (
                 <Link
                   to={`/${slug}/learn/${trailId}/module/${moduleData.nextModuleId}`}

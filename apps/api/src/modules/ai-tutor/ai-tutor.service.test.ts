@@ -219,6 +219,97 @@ describe('ai-tutor.service', () => {
     })
   })
 
+  // ── sendMessage — modo dica progressiva (D3) ────────────────────────────
+
+  describe('sendMessage — modo dica progressiva', () => {
+    it('inclui o bloco de dica do nível pedido quando intent=hint', async () => {
+      vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
+
+      await sendMessage(
+        'tenant-id',
+        'student-id',
+        'challenge-id',
+        { message: 'Pode me dar uma dica?', intent: 'hint', hintLevel: 2 },
+        student,
+        tenantEnabled,
+      )
+
+      const callArgs = mockCreate.mock.calls[0]![0]
+      expect(callArgs.system).toContain('## Modo DICA (nível 2 de 3)')
+      expect(callArgs.system).toContain('SEM escrever a correção')
+      expect(callArgs.system).toContain('SEM escrever o código pronto')
+    })
+
+    it('NÃO inclui o bloco de dica numa conversa normal', async () => {
+      vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
+
+      await sendMessage(
+        'tenant-id',
+        'student-id',
+        'challenge-id',
+        { message: 'oi' },
+        student,
+        tenantEnabled,
+      )
+
+      const callArgs = mockCreate.mock.calls[0]![0]
+      expect(callArgs.system).not.toContain('## Modo DICA')
+    })
+
+    it('ignora hintLevel quando intent não é hint', async () => {
+      vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
+
+      await sendMessage(
+        'tenant-id',
+        'student-id',
+        'challenge-id',
+        { message: 'oi', hintLevel: 3 },
+        student,
+        tenantEnabled,
+      )
+
+      const callArgs = mockCreate.mock.calls[0]![0]
+      expect(callArgs.system).not.toContain('## Modo DICA')
+    })
+  })
+
+  // ── sendMessage — modo review (code review, D3 2ª leva) ─────────────────
+
+  describe('sendMessage — modo review', () => {
+    it('inclui o bloco de review quando intent=review', async () => {
+      vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
+
+      await sendMessage(
+        'tenant-id',
+        'student-id',
+        'challenge-id',
+        { message: 'Pode revisar meu código?', intent: 'review' },
+        student,
+        tenantEnabled,
+      )
+
+      const callArgs = mockCreate.mock.calls[0]![0]
+      expect(callArgs.system).toContain('## Modo REVIEW')
+      expect(callArgs.system).toContain('NÃO reescreva o código pronto')
+    })
+
+    it('NÃO inclui o bloco de review numa conversa normal', async () => {
+      vi.mocked(countStudentMessagesToday).mockResolvedValue(0)
+
+      await sendMessage(
+        'tenant-id',
+        'student-id',
+        'challenge-id',
+        { message: 'oi' },
+        student,
+        tenantEnabled,
+      )
+
+      const callArgs = mockCreate.mock.calls[0]![0]
+      expect(callArgs.system).not.toContain('## Modo REVIEW')
+    })
+  })
+
   // ── sendMessage — persistência ──────────────────────────────────────────
 
   describe('sendMessage — persistência', () => {
