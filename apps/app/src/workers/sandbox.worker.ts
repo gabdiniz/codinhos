@@ -21,6 +21,7 @@ import {
   applyMatcher,
   createCaptureConsole,
   normalizeOutput,
+  resolveMaybeAsync,
   resolveTargetFn,
   type TestCase,
   type TestResult,
@@ -58,7 +59,7 @@ function evalInSandbox(
 
 // ─── Runners ──────────────────────────────────────────────────────────────────
 
-function runFunctionTest(code: string, tc: TestCase, targetFn?: string | null): TestResult {
+async function runFunctionTest(code: string, tc: TestCase, targetFn?: string | null): Promise<TestResult> {
   const fnName = resolveTargetFn(code, targetFn)
   if (!fnName) {
     return {
@@ -75,7 +76,7 @@ function runFunctionTest(code: string, tc: TestCase, targetFn?: string | null): 
   let actual: unknown
   try {
     const fn = evalInSandbox(code, fnName) as (...a: unknown[]) => unknown
-    actual = fn(...args)
+    actual = await resolveMaybeAsync(fn(...args))
   } catch (err) {
     return {
       passed: false,
@@ -137,7 +138,7 @@ function runTypeCheckTest(code: string, tc: TestCase): TestResult {
   }
 }
 
-function runStdoutTest(code: string, tc: TestCase, targetFn?: string | null): TestResult {
+async function runStdoutTest(code: string, tc: TestCase, targetFn?: string | null): Promise<TestResult> {
   let actual: unknown
   try {
     const cap = createCaptureConsole()
@@ -146,7 +147,7 @@ function runStdoutTest(code: string, tc: TestCase, targetFn?: string | null): Te
       const fn = evalInSandbox(code, fnName ?? 'undefined', cap.console)
       if (typeof fn === 'function') {
         cap.clear()
-        ;(fn as (...a: unknown[]) => unknown)(...(tc.input as unknown[]))
+        await resolveMaybeAsync((fn as (...a: unknown[]) => unknown)(...(tc.input as unknown[])))
       }
     } else {
       evalInSandbox(code, 'undefined', cap.console)
@@ -176,30 +177,32 @@ function runStdoutTest(code: string, tc: TestCase, targetFn?: string | null): Te
 
 // ─── Message handler ──────────────────────────────────────────────────────────
 
-self.addEventListener('message', (e: MessageEvent<InMessage>) => {
+self.addEventListener('message', async (e: MessageEvent<InMessage>) => {
   const { code, testCases, targetFn } = e.data
 
-  const results: TestResult[] = testCases.map((tc) => {
-    try {
-      if (tc.mode === 'stdout') {
-        return runStdoutTest(code, tc, targetFn)
+  const results: TestResult[] = await Promise.all(
+    testCases.map(async (tc): Promise<TestResult> => {
+      try {
+        if (tc.mode === 'stdout') {
+          return await runStdoutTest(code, tc, targetFn)
+        }
+        if (tc.input === null) {
+          return runTypeCheckTest(code, tc)
+        }
+        return await runFunctionTest(code, tc, targetFn)
+      } catch (err) {
+        return {
+          passed: false,
+          input: tc.input,
+          expected: tc.expected,
+          actual: undefined,
+          description: tc.description,
+          error: err instanceof Error ? err.message : String(err),
+          errorName: err instanceof Error ? err.name : undefined,
+        }
       }
-      if (tc.input === null) {
-        return runTypeCheckTest(code, tc)
-      }
-      return runFunctionTest(code, tc, targetFn)
-    } catch (err) {
-      return {
-        passed: false,
-        input: tc.input,
-        expected: tc.expected,
-        actual: undefined,
-        description: tc.description,
-        error: err instanceof Error ? err.message : String(err),
-        errorName: err instanceof Error ? err.name : undefined,
-      }
-    }
-  })
+    }),
+  )
 
   self.postMessage({ results })
 })

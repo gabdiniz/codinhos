@@ -33,8 +33,8 @@ function workerPassed(code: string, tc: TestCase, targetFn?: string | null): boo
   }
 }
 
-function backendPassed(code: string, tc: TestCase, targetFn?: string | null): boolean {
-  return runTests(code, [tc], targetFn).results[0]!.passed
+async function backendPassed(code: string, tc: TestCase, targetFn?: string | null): Promise<boolean> {
+  return (await runTests(code, [tc], targetFn)).results[0]!.passed
 }
 
 type Case = { name: string; code: string; tc: TestCase; targetFn?: string | null }
@@ -55,21 +55,21 @@ const cases: Case[] = [
 
 describe('runner diferencial: backend (node:vm) x front (worker)', () => {
   for (const c of cases) {
-    it(`concordam: ${c.name}`, () => {
-      const back = backendPassed(c.code, c.tc, c.targetFn)
+    it(`concordam: ${c.name}`, async () => {
+      const back = await backendPassed(c.code, c.tc, c.targetFn)
       const front = workerPassed(c.code, c.tc, c.targetFn)
       expect(back).toBe(front)
     })
   }
 
-  it('objeto fora de ordem agora PASSA nos dois (falso-vermelho corrigido)', () => {
+  it('objeto fora de ordem agora PASSA nos dois (falso-vermelho corrigido)', async () => {
     const c = cases[1]!
-    expect(backendPassed(c.code, c.tc)).toBe(true)
+    expect(await backendPassed(c.code, c.tc)).toBe(true)
     expect(workerPassed(c.code, c.tc)).toBe(true)
   })
 
-  it('arrow via const agora PASSA no backend (antes falhava)', () => {
+  it('arrow via const agora PASSA no backend (antes falhava)', async () => {
     const c = cases[3]!
-    expect(backendPassed(c.code, c.tc)).toBe(true)
+    expect(await backendPassed(c.code, c.tc)).toBe(true)
   })
 })
