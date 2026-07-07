@@ -19,6 +19,15 @@ const silentConsole = {
   info: () => {},
 }
 
+// setTimeout/clearTimeout (do Node no backend) — necessários para desafios
+// async ("espere e então..."). O worker do front já os expõe nativamente, então
+// incluí-los aqui mantém os dois lados iguais. Pegamos do globalThis para não
+// exigir as libs DOM/node no tsconfig do pacote.
+const timers = globalThis as unknown as {
+  setTimeout: (cb: (...a: unknown[]) => void, ms?: number) => unknown
+  clearTimeout: (id: unknown) => void
+}
+
 /** Whitelist de globais para o sandbox do backend (node:vm). */
 export const SAFE_GLOBALS = {
   Math,
@@ -33,6 +42,8 @@ export const SAFE_GLOBALS = {
   isFinite,
   Boolean,
   Date,
+  setTimeout: timers.setTimeout,
+  clearTimeout: timers.clearTimeout,
   console: silentConsole,
 } as const
 

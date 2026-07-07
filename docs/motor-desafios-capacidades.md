@@ -309,3 +309,34 @@ padrão da dica (só um `intent` novo). Arquivos: `ai-tutor.schema.ts` (intent '
 CSS. Testes no `ai-tutor.service.test.ts` (bloco de review entra só com intent=review).
 
 **D3 completa.** Próximo: D4 (geração de desafios por IA) ou D5 (async/AST/Python/p5.js).
+
+---
+
+## 11. D5 (async/await) — feito
+
+Ramo sugerido `feat/d5-async`. O motor deixou de ser estritamente síncrono: agora
+**aguarda a Promise** que uma função `async` retorna antes de comparar. Destrava desafios de
+`async`/`await`, `Promise.resolve/all/race` e "espere e então" (`setTimeout`).
+
+**Runner (`@codinhos/runner`, `async.ts`):** `isThenable` + `resolveMaybeAsync(value, ms=3000)`
+— se o valor for uma Promise, aguarda com **timeout** (Promise que não resolve em 3s rejeita, o
+teste reprova); valores síncronos passam direto. Puro e compartilhado, então back e front
+esperam igual. Também adicionei `setTimeout`/`clearTimeout` ao `SAFE_GLOBALS` do backend (o
+worker já os tinha — havia uma divergência latente aí).
+
+**Backend (`run-tests.ts`):** `runTests` virou **async**; os branches de função e stdout
+aguardam a chamada via `resolveMaybeAsync`. `submissions.service` passou a `await runTests`.
+**Worker:** handler assíncrono (`Promise.all`), `runFunctionTest`/`runStdoutTest` async.
+
+**Verificação:** `run-tests.async.test.ts` (backend + concordância com réplica do worker: async
+retorna valor, await interno, `Promise.all`, stdout async, síncrono ainda funciona, rejeição/
+resultado errado reprovam, timeout de Promise pendente) e `async.test.ts` no runner. Os testes
+diferencial e stdout foram atualizados para `await runTests`.
+
+**Importante ao subir:** como o pacote `@codinhos/runner` ganhou arquivo novo (`async.ts`),
+**rebuildar o dist** (`pnpm install` ou `pnpm --filter @codinhos/runner build`) antes de
+`docker compose restart api` — senão o import de `resolveMaybeAsync` quebra em runtime.
+
+**Escopo v1 / limites:** captura de `console.log` async só dentro de função-alvo (não do topo do
+código); sync infinito dentro da função ainda não tem timeout (só o async tem) — herança do
+modelo atual. Restam da D5: AST ("use recursão"), Python (Pyodide), p5.js.

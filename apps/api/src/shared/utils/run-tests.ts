@@ -4,6 +4,7 @@ import {
   applyMatcher,
   createCaptureConsole,
   normalizeOutput,
+  resolveMaybeAsync,
   resolveTargetFn,
 } from '@codinhos/runner'
 import type { TestCase, TestResult } from '../db/schema.js'
@@ -20,11 +21,11 @@ import type { TestCase, TestResult } from '../db/schema.js'
  *  - input: null      → executa o código e verifica typeof de uma variável
  *                       (nome extraído da description: "varName deve ser ...")
  */
-export function runTests(
+export async function runTests(
   code: string,
   testCases: TestCase[],
   targetFn?: string | null,
-): { results: TestResult[]; allPassed: boolean } {
+): Promise<{ results: TestResult[]; allPassed: boolean }> {
   const results: TestResult[] = []
 
   for (const tc of testCases) {
@@ -44,7 +45,7 @@ export function runTests(
           const fn = fnName ? vm.runInContext(fnName, sandbox, { timeout: 500 }) : undefined
           if (typeof fn === 'function') {
             cap.clear()
-            ;(fn as (...a: unknown[]) => unknown)(...tc.input)
+            await resolveMaybeAsync((fn as (...a: unknown[]) => unknown)(...tc.input))
           }
         }
         actual = normalizeOutput(cap.getOutput())
@@ -146,7 +147,7 @@ export function runTests(
         }
 
         const args = Array.isArray(tc.input) ? tc.input : [tc.input]
-        actual = (fn as (...a: unknown[]) => unknown)(...args)
+        actual = await resolveMaybeAsync((fn as (...a: unknown[]) => unknown)(...args))
       } catch (err) {
         results.push({
           passed: false,

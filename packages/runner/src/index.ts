@@ -16,3 +16,4 @@ export {
   normalizeOutput,
   type CaptureConsole,
 } from './console.js'
+export { isThenable, resolveMaybeAsync } from './async.js'

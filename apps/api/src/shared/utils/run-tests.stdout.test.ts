@@ -41,8 +41,8 @@ function workerStdoutPassed(code: string, tc: TestCase, targetFn?: string | null
   }
 }
 
-function backendPassed(code: string, tc: TestCase, targetFn?: string | null): boolean {
-  return runTests(code, [tc], targetFn).results[0]!.passed
+async function backendPassed(code: string, tc: TestCase, targetFn?: string | null): Promise<boolean> {
+  return (await runTests(code, [tc], targetFn)).results[0]!.passed
 }
 
 const tabuada =
@@ -62,16 +62,16 @@ const cases: { name: string; code: string; tc: TestCase; targetFn?: string | nul
 
 describe('modo stdout: backend', () => {
   for (const c of cases) {
-    it(`${c.name} -> ${c.expectPass ? 'passa' : 'reprova'}`, () => {
-      expect(backendPassed(c.code, c.tc, c.targetFn)).toBe(c.expectPass)
+    it(`${c.name} -> ${c.expectPass ? 'passa' : 'reprova'}`, async () => {
+      expect(await backendPassed(c.code, c.tc, c.targetFn)).toBe(c.expectPass)
     })
   }
 })
 
 describe('modo stdout: backend x front concordam', () => {
   for (const c of cases) {
-    it(`concordam: ${c.name}`, () => {
-      expect(backendPassed(c.code, c.tc, c.targetFn)).toBe(workerStdoutPassed(c.code, c.tc, c.targetFn))
+    it(`concordam: ${c.name}`, async () => {
+      expect(await backendPassed(c.code, c.tc, c.targetFn)).toBe(workerStdoutPassed(c.code, c.tc, c.targetFn))
     })
   }
 })
