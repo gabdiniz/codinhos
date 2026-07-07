@@ -273,3 +273,39 @@ seguem intactos.
 com `\n` escapado numa linha só (via `JSON.stringify`); um `<pre>` renderizaria melhor, mas
 mexe num caminho de serialização compartilhado por todos os tipos de teste — deixado para uma
 iteração com verificação visual.
+
+---
+
+## 10. D3 (1ª leva) — dicas progressivas pelo Codi (feito)
+
+Ramo sugerido `feat/d3-dicas-progressivas`. Primeira leva da direção pedagógica: **dicas
+progressivas geradas por IA**, reaproveitando o tutor Codi (Haiku) que já existe. (Code review
+pós-acerto fica para a 2ª leva.)
+
+**Como funciona:** um botão **"Pedir uma dica"** no painel do Codi. A cada clique o nível sobe
+(1 → 2 → 3, depois mantém no 3) e o front manda `intent:'hint'` + `hintLevel` + o código atual.
+O system prompt ganha um bloco de **Modo DICA** que instrui o Codi a dar UMA dica curta do
+nível pedido, sem nunca entregar a solução:
+- Nível 1: cutucada conceitual (sem apontar o código).
+- Nível 2: aponta ONDE olhar no código (sem escrever a correção).
+- Nível 3: descreve o passo/estrutura que falta (ainda sem o código pronto).
+
+**Reaproveitamento:** usa a mesma conversa persistida, o limite diário de mensagens e o
+contexto de desafio já montados — zero migration. É a direção que consome o orçamento de IA da
+planilha (mais mensagens por aluno), mas a margem segue ~80%+.
+
+**Arquivos:** `ai-tutor.schema.ts` (intent/hintLevel), `ai-tutor.service.ts` (bloco de dica no
+buildSystemPrompt + repasse no sendMessage), `ChallengePage.tsx` (estado hintsUsed, requestHint,
+botão) + CSS. Testes em `ai-tutor.service.test.ts` (o bloco de dica do nível certo entra no
+system prompt; conversa normal não o inclui; hintLevel sem intent=hint é ignorado).
+
+### 2ª leva — code review pelo Codi (feito)
+Após o aluno **acertar**, um botão **"✨ Pedir review ao Codi"** no bloco de conclusão abre o
+Codi e manda `intent:'review'` + o código que passou. O system prompt ganha um bloco **Modo
+REVIEW**: elogio curto + no máximo 1-2 sugestões concretas (clareza, nomes, JS idiomático, caso
+de borda), sem reescrever o código; se já está ótimo, diz isso e aponta um ponto forte. Mesmo
+padrão da dica (só um `intent` novo). Arquivos: `ai-tutor.schema.ts` (intent 'review'),
+`ai-tutor.service.ts` (bloco reviewMode), `ChallengePage.tsx` (botão + autoMsg carrega intent) +
+CSS. Testes no `ai-tutor.service.test.ts` (bloco de review entra só com intent=review).
+
+**D3 completa.** Próximo: D4 (geração de desafios por IA) ou D5 (async/AST/Python/p5.js).
