@@ -21,6 +21,9 @@
 .challengeMeta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-text-muted); }
 .addChallenge { align-self: flex-start; background: none; border: 1px dashed var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-muted); font-family: var(--font-sans); font-size: 0.82rem; padding: 0.4rem 0.8rem; cursor: pointer; }
 .addChallenge:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.challengeActionsRow { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.genChallenge { align-self: flex-start; background: color-mix(in srgb, var(--color-primary) 10%, transparent); border: 1px solid var(--color-primary); border-radius: var(--radius-sm); color: var(--color-primary); font-family: var(--font-sans); font-size: 0.82rem; font-weight: 600; padding: 0.4rem 0.8rem; cursor: pointer; }
+.genChallenge:hover { background: color-mix(in srgb, var(--color-primary) 18%, transparent); }
 
 .btnPrimary { font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; cursor: pointer; background: var(--color-primary); color: var(--color-on-primary); border: none; border-radius: var(--radius-md); padding: 0.5rem 1rem; white-space: nowrap; }
 .btnPrimary:disabled { opacity: 0.6; cursor: default; }
