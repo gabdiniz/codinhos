@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
+// Biblioteca p5.js empacotada como texto (?raw) e injetada no iframe de prévia
+// dos desafios visuais — roda offline, sem CDN, dentro de um sandbox isolado.
+import p5Src from 'p5/lib/p5.min.js?raw'
 import { EditorState } from '@codemirror/state'
 import {
   EditorView,
@@ -37,7 +40,10 @@ interface TestCase {
   matcher?: 'equal' | 'approx' | 'contains' | 'regex'
   tolerance?: number
   mode?: 'stdout' | 'ast'
-  astRule?: { kind: 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod'; name?: string }
+  astRule?: {
+    kind: 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod' | 'requireCall' | 'forbidCall'
+    name?: string
+  }
 }
 
 interface TestResult {
@@ -60,6 +66,7 @@ interface Challenge {
   difficulty: Difficulty
   baseXp: number
   targetFn?: string | null
+  renderMode?: 'js' | 'p5' | null
 }
 
 interface ModuleDetail {
@@ -809,6 +816,45 @@ function CodiDrawer({
   )
 }
 
+// ─── P5Preview ────────────────────────────────────────────────────────────────
+// Prévia visual dos desafios p5.js. Roda o sketch do aluno DENTRO de um iframe
+// sandbox="allow-scripts" (sem allow-same-origin): o código não enxerga o DOM,
+// cookies nem a origem do app. A p5 é inlinada (offline). Isto é só o "ver" — a
+// NOTA continua vindo dos testCases (regras AST), avaliados no worker/back.
+function P5Preview({ code }: { code: string }) {
+  const srcDoc = useMemo(
+    () =>
+      `<!doctype html><html><head><meta charset="utf-8"><style>` +
+      `html,body{margin:0;padding:0;overflow:hidden;background:transparent}` +
+      `.p5-err{font:12px/1.4 monospace;padding:8px;white-space:pre-wrap;color:crimson}` +
+      `</style></head><body><script>${p5Src}</script><script>` +
+      `window.addEventListener('error',function(ev){var p=document.createElement('pre');` +
+      `p.className='p5-err';p.textContent='Erro: '+((ev.error&&ev.error.message)||ev.message);` +
+      `document.body.appendChild(p)});try{\n${code}\n}catch(e){var p=document.createElement('pre');` +
+      `p.className='p5-err';p.textContent='Erro: '+e;document.body.appendChild(p)}` +
+      `</script></body></html>`,
+    [code],
+  )
+  return (
+    <div className={styles.section}>
+      <h2 className={styles.sectionTitle}>// prévia</h2>
+      <iframe
+        title="Prévia do desenho (p5.js)"
+        sandbox="allow-scripts"
+        srcDoc={srcDoc}
+        style={{
+          width: '100%',
+          height: 420,
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          background: 'var(--color-surface)',
+          display: 'block',
+        }}
+      />
+    </div>
+  )
+}
+
 // ─── ChallengePage ────────────────────────────────────────────────────────────
 
 export default function ChallengePage() {
@@ -831,6 +877,9 @@ export default function ChallengePage() {
   const [runState, setRunState] = useState<'idle' | 'running' | 'done'>('idle')
   const [testResults, setTestResults] = useState<TestResult[] | null>(null)
   const workerRef = useRef<Worker | null>(null)
+
+  // Prévia p5.js: código congelado no último "Executar" (não a cada tecla).
+  const [previewCode, setPreviewCode] = useState<string | null>(null)
 
   // Submissão
   const [submitState, setSubmitState] = useState<'idle' | 'submitting'>('idle')
@@ -865,11 +914,16 @@ export default function ChallengePage() {
     setLessonResult(null)
     setCompletingLesson(false)
     setResetNonce(0)
+    setPreviewCode(null)
     api
       .get<{ data: ModuleDetail }>(`/api/${slug}/learn/modules/${moduleId}`)
       .then((res) => {
         setModuleData(res.data)
         codeRef.current = res.data.challenge?.starterCode ?? ''
+        // Desafio visual: já mostra o sketch inicial na prévia.
+        if (res.data.challenge?.renderMode === 'p5') {
+          setPreviewCode(res.data.challenge.starterCode ?? '')
+        }
       })
       .catch((err) => setLoadError(err instanceof ApiError ? err.message : 'Erro ao carregar desafio.'))
       .finally(() => setLoading(false))
@@ -1048,6 +1102,7 @@ export default function ChallengePage() {
   const { module: mod, challenge } = moduleData
   const starterCode = challenge?.starterCode ?? '// Escreva seu código aqui\n'
   const hasTests = (challenge?.testCases?.length ?? 0) > 0
+  const isP5 = challenge?.renderMode === 'p5'
 
   return (
     <div className={styles.root}>
@@ -1168,15 +1223,18 @@ export default function ChallengePage() {
 
           {/* Botões de ação */}
           <div className={styles.actionBar}>
-            {hasTests && (
+            {(hasTests || isP5) && (
               <button
                 className={styles.runBtn}
-                onClick={handleRun}
+                onClick={() => {
+                  if (isP5) setPreviewCode(codeRef.current)
+                  handleRun()
+                }}
                 disabled={runState === 'running'}
                 aria-busy={runState === 'running'}
               >
                 <IconPlay />
-                {runState === 'running' ? 'Executando...' : 'Executar'}
+                {runState === 'running' ? 'Executando...' : isP5 ? 'Rodar desenho' : 'Executar'}
               </button>
             )}
 
@@ -1241,6 +1299,9 @@ export default function ChallengePage() {
             </div>
           )}
           {submitError && <p className={styles.submitError}>{submitError}</p>}
+
+          {/* Prévia visual (p5.js) */}
+          {isP5 && previewCode !== null && <P5Preview code={previewCode} />}
 
           {/* Resultados dos testes */}
           {testResults && runState === 'done' && (

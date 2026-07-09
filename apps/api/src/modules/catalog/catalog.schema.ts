@@ -71,7 +71,14 @@ const testCaseSchema = z.object({
   mode: z.enum(['stdout', 'ast']).optional(),
   astRule: z
     .object({
-      kind: z.enum(['requireRecursion', 'forbidLoops', 'requireMethod', 'forbidMethod']),
+      kind: z.enum([
+        'requireRecursion',
+        'forbidLoops',
+        'requireMethod',
+        'forbidMethod',
+        'requireCall',
+        'forbidCall',
+      ]),
       name: z.string().max(50).optional(),
     })
     .optional(),
@@ -87,6 +94,7 @@ export const createChallengeBodySchema = z.object({
   baseXp: z.number().int().positive().optional(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable().optional(),
   targetFn: z.string().nullable().optional(),
+  renderMode: z.enum(['js', 'p5']).nullable().optional(),
 })
 
 export const updateChallengeBodySchema = z.object({
@@ -99,6 +107,7 @@ export const updateChallengeBodySchema = z.object({
   baseXp: z.number().int().positive().optional(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable().optional(),
   targetFn: z.string().nullable().optional(),
+  renderMode: z.enum(['js', 'p5']).nullable().optional(),
 })
 
 // ─── Response schemas ─────────────────────────────────────────────────────────
@@ -122,6 +131,7 @@ const challengeSummarySchema = z.object({
   order: z.number(),
   baseXp: z.number(),
   targetFn: z.string().nullable(),
+  renderMode: z.enum(['js', 'p5']).nullable(),
 })
 
 const moduleWithChallengesSchema = z.object({
@@ -153,6 +163,7 @@ const challengeSchema = z.object({
   baseXp: z.number(),
   validationModeOverride: z.enum(['auto', 'auto_review', 'manual']).nullable(),
   targetFn: z.string().nullable(),
+  renderMode: z.enum(['js', 'p5']).nullable(),
 })
 
 export const listTrailsResponseSchema = z.object({

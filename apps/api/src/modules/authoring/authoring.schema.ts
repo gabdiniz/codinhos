@@ -41,7 +41,14 @@ const testCaseSchema = z.object({
   mode: z.enum(['stdout', 'ast']).optional(),
   astRule: z
     .object({
-      kind: z.enum(['requireRecursion', 'forbidLoops', 'requireMethod', 'forbidMethod']),
+      kind: z.enum([
+        'requireRecursion',
+        'forbidLoops',
+        'requireMethod',
+        'forbidMethod',
+        'requireCall',
+        'forbidCall',
+      ]),
       name: z.string().max(50).optional(),
     })
     .optional(),
@@ -55,6 +62,7 @@ export const createChallengeBodySchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('easy'),
   baseXp: z.number().int().positive().optional(),
   targetFn: z.string().nullable().optional(),
+  renderMode: z.enum(['js', 'p5']).nullable().optional(),
 })
 
 export const updateChallengeBodySchema = z.object({
@@ -65,6 +73,7 @@ export const updateChallengeBodySchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   baseXp: z.number().int().positive().optional(),
   targetFn: z.string().nullable().optional(),
+  renderMode: z.enum(['js', 'p5']).nullable().optional(),
 })
 
 // ─── Responses ────────────────────────────────────────────────────────────────
@@ -89,6 +98,7 @@ const challengeSchema = z.object({
   baseXp: z.number(),
   order: z.number(),
   targetFn: z.string().nullable(),
+  renderMode: z.enum(['js', 'p5']).nullable(),
 })
 
 const moduleSchema = z.object({

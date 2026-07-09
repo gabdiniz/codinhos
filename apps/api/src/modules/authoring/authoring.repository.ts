@@ -97,6 +97,7 @@ export async function getOwnedTrailDetail(trailId: string, tenantId: string) {
     baseXp: number
     order: number
     targetFn: string | null
+    renderMode: string | null
   }[] = []
   if (moduleIds.length > 0) {
     challengeRows = await db
@@ -111,6 +112,7 @@ export async function getOwnedTrailDetail(trailId: string, tenantId: string) {
         baseXp: challenges.baseXp,
         order: challenges.order,
         targetFn: challenges.targetFn,
+        renderMode: challenges.renderMode,
       })
       .from(challenges)
       .where(inArray(challenges.moduleId, moduleIds))

@@ -181,6 +181,10 @@ export const challenges = pgTable('challenges', {
   // Nome da função avaliada nos testes. Null = usa a primeira função declarada
   // (retrocompatível). Permite que o aluno escreva funções auxiliares.
   targetFn: text('target_fn'),
+  // Modo de renderização do desafio. Null/'js' = normal (só saída/testes).
+  // 'p5' = visual: o front mostra um preview do sketch p5.js num iframe sandbox;
+  // a nota continua vindo dos testCases (regras AST) — o backend revalida.
+  renderMode: text('render_mode'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [

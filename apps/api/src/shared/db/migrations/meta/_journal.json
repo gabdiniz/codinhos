@@ -71,6 +71,13 @@
       "when": 1782872841640,
       "tag": "0009_target_fn_challenges",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782872841641,
+      "tag": "0010_render_mode_challenges",
+      "breakpoints": true
     }
   ]
 }

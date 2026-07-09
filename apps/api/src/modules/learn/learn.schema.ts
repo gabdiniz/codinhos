@@ -107,7 +107,14 @@ export const moduleDetailResponseSchema = z.object({
               mode: z.enum(['stdout', 'ast']).optional(),
               astRule: z
                 .object({
-                  kind: z.enum(['requireRecursion', 'forbidLoops', 'requireMethod', 'forbidMethod']),
+                  kind: z.enum([
+                    'requireRecursion',
+                    'forbidLoops',
+                    'requireMethod',
+                    'forbidMethod',
+                    'requireCall',
+                    'forbidCall',
+                  ]),
                   name: z.string().max(50).optional(),
                 })
                 .optional(),
@@ -115,6 +122,7 @@ export const moduleDetailResponseSchema = z.object({
           )
           .nullable(),
         targetFn: z.string().nullable(),
+        renderMode: z.enum(['js', 'p5']).nullable(),
         difficulty: difficultySchema,
         baseXp: z.number(),
       })
