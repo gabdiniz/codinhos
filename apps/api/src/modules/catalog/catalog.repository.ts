@@ -102,6 +102,7 @@ export async function findTrailWithModules(trailId: string) {
     order: number
     baseXp: number
     targetFn: string | null
+    renderMode: string | null
   }[] = []
 
   if (moduleIds.length > 0) {
@@ -117,6 +118,7 @@ export async function findTrailWithModules(trailId: string) {
         order: challenges.order,
         baseXp: challenges.baseXp,
         targetFn: challenges.targetFn,
+        renderMode: challenges.renderMode,
       })
       .from(challenges)
       .where(inArray(challenges.moduleId, moduleIds))
@@ -311,6 +313,7 @@ export async function findChallengeById(id: string) {
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
       targetFn: challenges.targetFn,
+      renderMode: challenges.renderMode,
     })
     .from(challenges)
     .where(eq(challenges.id, id))
@@ -340,6 +343,7 @@ type CreateChallengeInput = {
   baseXp: number
   validationModeOverride?: 'auto' | 'auto_review' | 'manual' | null
   targetFn?: string | null
+  renderMode?: 'js' | 'p5' | null
 }
 
 export async function createChallenge(input: CreateChallengeInput) {
@@ -358,6 +362,7 @@ export async function createChallenge(input: CreateChallengeInput) {
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
       targetFn: challenges.targetFn,
+      renderMode: challenges.renderMode,
     })
   return challenge!
 }
@@ -372,6 +377,7 @@ type UpdateChallengeInput = {
   baseXp?: number
   validationModeOverride?: 'auto' | 'auto_review' | 'manual' | null
   targetFn?: string | null
+  renderMode?: 'js' | 'p5' | null
 }
 
 export async function updateChallenge(id: string, input: UpdateChallengeInput) {
@@ -389,6 +395,7 @@ export async function updateChallenge(id: string, input: UpdateChallengeInput) {
         validationModeOverride: input.validationModeOverride,
       }),
       ...(input.targetFn !== undefined && { targetFn: input.targetFn }),
+      ...(input.renderMode !== undefined && { renderMode: input.renderMode }),
     })
     .where(eq(challenges.id, id))
     .returning({
@@ -403,6 +410,7 @@ export async function updateChallenge(id: string, input: UpdateChallengeInput) {
       baseXp: challenges.baseXp,
       validationModeOverride: challenges.validationModeOverride,
       targetFn: challenges.targetFn,
+      renderMode: challenges.renderMode,
     })
   return challenge ?? null
 }

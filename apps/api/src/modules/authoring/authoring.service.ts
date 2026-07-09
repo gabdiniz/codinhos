@@ -167,6 +167,7 @@ export async function addMyChallenge(tenantId: string, moduleId: string, body: C
     baseXp: body.baseXp ?? 10,
     order,
     targetFn: body.targetFn,
+    renderMode: body.renderMode,
   })
   return { challenge }
 }
@@ -182,6 +183,7 @@ export async function updateMyChallenge(tenantId: string, challengeId: string, b
     difficulty: body.difficulty,
     baseXp: body.baseXp,
     targetFn: body.targetFn,
+    renderMode: body.renderMode,
   })
   return { challenge: challenge! }
 }

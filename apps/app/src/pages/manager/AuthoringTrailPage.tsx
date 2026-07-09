@@ -5,7 +5,8 @@ import styles from './AuthoringTrailPage.module.css'
 
 type Difficulty = 'easy' | 'medium' | 'hard'
 type Matcher = 'equal' | 'approx' | 'contains' | 'regex'
-type AstRuleKind = 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod'
+type AstRuleKind = 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod' | 'requireCall' | 'forbidCall'
+type RenderMode = 'js' | 'p5'
 interface TestCase { input: unknown; expected: unknown; description: string; matcher?: Matcher; tolerance?: number; mode?: 'stdout' | 'ast'; astRule?: { kind: AstRuleKind; name?: string } }
 interface Challenge {
   id: string
@@ -17,6 +18,7 @@ interface Challenge {
   baseXp: number
   order: number
   targetFn?: string | null
+  renderMode?: RenderMode | null
 }
 type GeneratedChallenge = {
   title: string
@@ -121,12 +123,13 @@ function ModuleForm({ initial, onClose, onSave }: {
 function ChallengeForm({ initial, onClose, onSave }: {
   initial: Partial<Challenge> | null
   onClose: () => void
-  onSave: (body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null }) => Promise<void>
+  onSave: (body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null; renderMode?: RenderMode | null }) => Promise<void>
 }) {
   const [title, setTitle] = useState(initial?.title ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [starterCode, setStarterCode] = useState(initial?.starterCode ?? '')
   const [targetFn, setTargetFn] = useState(initial?.targetFn ?? '')
+  const [renderMode, setRenderMode] = useState<RenderMode>(initial?.renderMode === 'p5' ? 'p5' : 'js')
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'easy')
   const [baseXp, setBaseXp] = useState(String(initial?.baseXp ?? 10))
   const [rows, setRows] = useState<{ input: string; expected: string; description: string; matcher: string; tolerance: string; mode: string; astRuleKind: string; astRuleName: string }[]>(
@@ -158,7 +161,7 @@ function ChallengeForm({ initial, onClose, onSave }: {
       .map((r) => {
         if (r.mode === 'ast') {
           const kind = r.astRuleKind as AstRuleKind
-          const needsName = kind === 'requireMethod' || kind === 'forbidMethod'
+          const needsName = kind === 'requireMethod' || kind === 'forbidMethod' || kind === 'requireCall' || kind === 'forbidCall'
           return {
             input: null,
             expected: r.description,
@@ -182,6 +185,7 @@ function ChallengeForm({ initial, onClose, onSave }: {
         difficulty,
         baseXp: Number(baseXp) || 10,
         targetFn: targetFn.trim() || null,
+        renderMode,
       })
     } catch (err) { setError(err instanceof ApiError ? err.message : 'Erro ao salvar.'); setSaving(false) }
   }
@@ -217,6 +221,13 @@ function ChallengeForm({ initial, onClose, onSave }: {
           <input className={`${styles.input} ${styles.mono}`} value={targetFn} onChange={(e) => setTargetFn(e.target.value)} placeholder="Ex.: soma" />
           <small className={styles.hint}>Nome da função testada. Vazio = usa a primeira função do código. Preencha se o aluno vai escrever funções auxiliares.</small>
         </label>
+        <label className={styles.label}>Tipo de desafio
+          <select className={styles.input} value={renderMode} onChange={(e) => setRenderMode(e.target.value as RenderMode)}>
+            <option value="js">código (padrão)</option>
+            <option value="p5">visual (p5.js)</option>
+          </select>
+          <small className={styles.hint}>Visual mostra o desenho do sketch numa prévia; a nota vem dos casos de teste do tipo <b>estrutura do código</b> (ex.: exige <code>ellipse</code>) ou de validação manual.</small>
+        </label>
 
         <div className={styles.testsHead}>
           <span className={styles.label}>Casos de teste</span>
@@ -244,11 +255,16 @@ function ChallengeForm({ initial, onClose, onSave }: {
                   <select className={styles.selectSm} value={r.astRuleKind} onChange={(e) => setRow(i, 'astRuleKind', e.target.value)}>
                     <option value="requireRecursion">exige recursão</option>
                     <option value="forbidLoops">proíbe laços (for/while)</option>
-                    <option value="requireMethod">exige método</option>
-                    <option value="forbidMethod">proíbe método</option>
+                    <option value="requireMethod">exige método (.nome())</option>
+                    <option value="forbidMethod">proíbe método (.nome())</option>
+                    <option value="requireCall">exige função (nome())</option>
+                    <option value="forbidCall">proíbe função (nome())</option>
                   </select>
                   {(r.astRuleKind === 'requireMethod' || r.astRuleKind === 'forbidMethod') && (
                     <input className={styles.selectSm} value={r.astRuleName} onChange={(e) => setRow(i, 'astRuleName', e.target.value)} placeholder="método (ex: map)" />
+                  )}
+                  {(r.astRuleKind === 'requireCall' || r.astRuleKind === 'forbidCall') && (
+                    <input className={styles.selectSm} value={r.astRuleName} onChange={(e) => setRow(i, 'astRuleName', e.target.value)} placeholder="função (ex: ellipse)" />
                   )}
                 </>
               ) : (

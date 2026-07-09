@@ -34,4 +34,18 @@ describe('checkAstRule', () => {
     expect(checkAstRule('function f(a){ return a }', 'f', { kind: 'requireMethod', name: 'map' }).passed).toBe(false)
     expect(checkAstRule('function f(a){ return a.map((x) => x) }', 'f', { kind: 'forbidMethod', name: 'map' }).passed).toBe(false)
   })
+  it('requireCall detecta chamada solta (p5) e não confunde com método homônimo', () => {
+    expect(checkAstRule('function setup(){ createCanvas(400,400) }', null, { kind: 'requireCall', name: 'createCanvas' }).passed).toBe(true)
+    expect(checkAstRule('function draw(){ ellipse(50,50,80,80) }', null, { kind: 'requireCall', name: 'ellipse' }).passed).toBe(true)
+    expect(checkAstRule('function draw(){ background(200) }', null, { kind: 'requireCall', name: 'ellipse' }).passed).toBe(false)
+    expect(checkAstRule('function f(o){ return o.ellipse() }', 'f', { kind: 'requireCall', name: 'ellipse' }).passed).toBe(false)
+  })
+  it('requireCall não falseia com "ellipse" em comentário/string nem prefixo', () => {
+    expect(checkAstRule('function draw(){ /* use ellipse */ background(0) }', null, { kind: 'requireCall', name: 'ellipse' }).passed).toBe(false)
+    expect(checkAstRule('function draw(){ myEllipse(1) }', null, { kind: 'requireCall', name: 'ellipse' }).passed).toBe(false)
+  })
+  it('forbidCall reprova quando a função proibida é chamada', () => {
+    expect(checkAstRule('function draw(){ rect(0,0,10,10) }', null, { kind: 'forbidCall', name: 'rect' }).passed).toBe(false)
+    expect(checkAstRule('function draw(){ ellipse(0,0,10,10) }', null, { kind: 'forbidCall', name: 'rect' }).passed).toBe(true)
+  })
 })

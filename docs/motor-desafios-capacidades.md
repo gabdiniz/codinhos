@@ -413,3 +413,43 @@ igual à D5-async.
 **Limite (heurístico, não AST real):** casos muito exóticos (regex literais com `for` dentro,
 `arguments.callee`) podem escapar; para a faixa 11–14 e as regras acima é robusto. Se um dia
 precisar de precisão total, trocar por acorn. **Restam da D5:** Python/Pyodide, p5.js.
+
+---
+
+## 14. D5 (p5.js) — desafios visuais (feito)
+
+Ramo sugerido `feat/d5-p5`. O motor passou a suportar desafios **visuais**: o aluno escreve
+um sketch p5.js (setup/draw) e **vê o desenho**. Novo campo `renderMode` no desafio
+(`'js'` padrão | `'p5'`).
+
+**A ideia que resolve a nota: separar VER de AVALIAR.**
+
+**Ver (prévia):** um `<iframe sandbox="allow-scripts">` (SEM `allow-same-origin`) renderiza o
+sketch no front. O código do aluno não enxerga o DOM, cookies nem a origem do app. A p5 é
+**empacotada** (`import p5Src from 'p5/lib/p5.min.js?raw'`) e inlinada no `srcDoc` — roda
+offline, sem CDN. A prévia atualiza no "Rodar desenho" (não a cada tecla). Roda no main thread
+(o Web Worker de correção não tem canvas), mas isolada pelo sandbox do iframe.
+
+**Avaliar (nota):** reaproveita a AST (§13). Não há comparação de pixels (frágil e o backend
+não renderiza) — o aluno é avaliado pela **estrutura**: "chamou `createCanvas`?", "usou
+`ellipse`?", "sem `for`?". Duas regras novas na AST: **`requireCall`/`forbidCall`** (chamada de
+função solta `nome(`, distinta de método `.nome()` via lookbehind `(?<![.\w$])`). Assim o
+**backend continua revalidando a nota** (AST é pura) e back≡front continua de graça. Desafios
+criativos abertos usam o modo **`manual`** que já existe (gestor aprova).
+
+**Onde mexeu:** runner (`ast.ts`: requireCall/forbidCall + `usesCall`); `render_mode` na tabela
+`challenges` (migration 0010) + schema Drizzle; zod nos três schemas (authoring/catalog/**learn**)
+com o enum de regra estendido e `renderMode`; repositories/services propagando `renderMode`;
+front do aluno (`P5Preview` + botão "Rodar desenho" quando `renderMode==='p5'`); autoria (gestor
+e admin) com "Tipo de desafio: visual (p5.js)" e as regras "exige/proíbe função (nome())".
+
+**Testes:** `ast.test.ts` cobre requireCall/forbidCall (inclusive método homônimo, comentário e
+prefixo não contam). Validado contra o runner compilado.
+
+**Ao subir (3 pontos):** (1) `render_mode` é coluna nova → rodar a **migration** (docker migrate).
+(2) `ast.ts` tem lógica nova → **rebuildar o dist do runner** antes dos testes da API. (3) **p5 é
+dependência nova** do `apps/app` → `pnpm install` e, no Docker, **recriar o volume de deps do
+container `app`** (mesmo cuidado de "pacote novo quebra volumes", agora no app, não na api).
+
+**Limite:** grava "usou as primitivas certas", não "ficou bonito". Pixel-match fica fora (fura o
+back≡front). Para 11–14 e as regras acima é o encaixe certo. **Fim da trilha D5** (async, AST, p5).

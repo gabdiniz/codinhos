@@ -22,7 +22,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^6.28.0",
-    "@codinhos/runner": "workspace:*"
+    "@codinhos/runner": "workspace:*",
+    "p5": "^1.11.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

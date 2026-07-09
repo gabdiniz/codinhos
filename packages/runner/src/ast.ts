@@ -8,11 +8,22 @@
  */
 import { resolveTargetFn } from './extract.js'
 
-export type AstRuleKind = 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod'
+export type AstRuleKind =
+  | 'requireRecursion'
+  | 'forbidLoops'
+  | 'requireMethod'
+  | 'forbidMethod'
+  | 'requireCall'
+  | 'forbidCall'
 
 export interface AstRule {
   kind: AstRuleKind
-  /** Nome do método para requireMethod/forbidMethod (ex.: 'map'). */
+  /**
+   * Nome do alvo:
+   * - requireMethod/forbidMethod → método (ex.: 'map', checado como `.map(`).
+   * - requireCall/forbidCall → função solta (ex.: 'ellipse', checado como `ellipse(`,
+   *   usado nos desafios visuais p5.js).
+   */
   name?: string
 }
 
@@ -110,6 +121,16 @@ function usesMethod(clean: string, name: string): boolean {
   return new RegExp(`\\.\\s*${escapeRegExp(name)}\\s*\\(`).test(clean)
 }
 
+/**
+ * Detecta uma CHAMADA de função solta `nome(` — não precedida por ponto (para não
+ * confundir com um método `obj.nome(`). Usado nos desafios visuais (p5.js): "usou
+ * `ellipse`?", "chamou `createCanvas`?".
+ */
+function usesCall(clean: string, name: string): boolean {
+  if (!name) return false
+  return new RegExp(`(?<![.\\w$])${escapeRegExp(name)}\\s*\\(`).test(clean)
+}
+
 /** Verifica uma regra estrutural. `passed` = regra satisfeita. */
 export function checkAstRule(
   code: string,
@@ -156,6 +177,18 @@ export function checkAstRule(
       return usesMethod(clean, name)
         ? { passed: false, message: `Não use .${name}() neste desafio.` }
         : { passed: true, message: `Não usou .${name}().` }
+    }
+    case 'requireCall': {
+      const name = rule.name ?? ''
+      return usesCall(clean, name)
+        ? { passed: true, message: `Usa ${name}() como pedido.` }
+        : { passed: false, message: `Você precisa usar ${name}() neste desafio.` }
+    }
+    case 'forbidCall': {
+      const name = rule.name ?? ''
+      return usesCall(clean, name)
+        ? { passed: false, message: `Não use ${name}() neste desafio.` }
+        : { passed: true, message: `Não usou ${name}().` }
     }
     default:
       return { passed: false, message: 'Regra de estrutura desconhecida.' }
