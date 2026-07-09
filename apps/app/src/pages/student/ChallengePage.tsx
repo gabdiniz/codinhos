@@ -36,7 +36,8 @@ interface TestCase {
   description: string
   matcher?: 'equal' | 'approx' | 'contains' | 'regex'
   tolerance?: number
-  mode?: 'stdout'
+  mode?: 'stdout' | 'ast'
+  astRule?: { kind: 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod'; name?: string }
 }
 
 interface TestResult {

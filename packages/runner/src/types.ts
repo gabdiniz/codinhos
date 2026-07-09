@@ -1,3 +1,4 @@
+import type { AstRule } from './ast.js'
 /**
  * Tipos compartilhados do runner de desafios.
  *
@@ -19,9 +20,11 @@ export interface TestCase {
   /**
    * Modo de teste. Ausente = comportamento clássico (chamada de função quando
    * input é array; type-check quando input é null). 'stdout' compara a SAÍDA
-   * impressa com console.log — abre "imprima a tabuada", FizzBuzz, padrões etc.
+   * impressa com console.log. 'ast' verifica a ESTRUTURA do código (ver astRule).
    */
-  mode?: 'stdout'
+  mode?: 'stdout' | 'ast'
+  /** Regra estrutural, usada quando mode === 'ast' (ex.: exigir recursão). */
+  astRule?: AstRule
 }
 
 export interface TestResult {
