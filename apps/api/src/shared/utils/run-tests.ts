@@ -2,6 +2,7 @@ import vm from 'node:vm'
 import {
   SAFE_GLOBALS,
   applyMatcher,
+  checkAstRule,
   createCaptureConsole,
   normalizeOutput,
   resolveMaybeAsync,
@@ -29,7 +30,27 @@ export async function runTests(
   const results: TestResult[] = []
 
   for (const tc of testCases) {
-    if (tc.mode === 'stdout') {
+    if (tc.mode === 'ast') {
+      // ── AST test (verificação estrutural, sem execução) ───────────────────
+      if (!tc.astRule) {
+        results.push({
+          passed: false,
+          input: tc.input,
+          expected: tc.expected,
+          actual: 'Regra de estrutura não configurada.',
+          description: tc.description,
+        })
+        continue
+      }
+      const { passed, message } = checkAstRule(code, targetFn, tc.astRule)
+      results.push({
+        passed,
+        input: tc.input,
+        expected: tc.expected,
+        actual: message,
+        description: tc.description,
+      })
+    } else if (tc.mode === 'stdout') {
       // ── Console-output test ───────────────────────────────────────────────
       // Executa o código capturando console.log e compara a SAÍDA impressa.
       let actual: unknown

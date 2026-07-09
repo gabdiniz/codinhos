@@ -19,6 +19,7 @@ import {
   type CaptureConsole,
   DENIED_WORKER_GLOBALS,
   applyMatcher,
+  checkAstRule,
   createCaptureConsole,
   normalizeOutput,
   resolveMaybeAsync,
@@ -175,6 +176,27 @@ async function runStdoutTest(code: string, tc: TestCase, targetFn?: string | nul
   }
 }
 
+function runAstTest(code: string, tc: TestCase, targetFn?: string | null): TestResult {
+  if (!tc.astRule) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: undefined,
+      description: tc.description,
+      error: 'Regra de estrutura não configurada.',
+    }
+  }
+  const { passed, message } = checkAstRule(code, targetFn, tc.astRule)
+  return {
+    passed,
+    input: tc.input,
+    expected: tc.expected,
+    actual: message,
+    description: tc.description,
+  }
+}
+
 // ─── Message handler ──────────────────────────────────────────────────────────
 
 self.addEventListener('message', async (e: MessageEvent<InMessage>) => {
@@ -183,6 +205,9 @@ self.addEventListener('message', async (e: MessageEvent<InMessage>) => {
   const results: TestResult[] = await Promise.all(
     testCases.map(async (tc): Promise<TestResult> => {
       try {
+        if (tc.mode === 'ast') {
+          return runAstTest(code, tc, targetFn)
+        }
         if (tc.mode === 'stdout') {
           return await runStdoutTest(code, tc, targetFn)
         }

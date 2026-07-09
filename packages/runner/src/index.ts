@@ -17,3 +17,4 @@ export {
   type CaptureConsole,
 } from './console.js'
 export { isThenable, resolveMaybeAsync } from './async.js'
+export { checkAstRule, stripCommentsAndStrings, type AstRule, type AstRuleKind } from './ast.js'

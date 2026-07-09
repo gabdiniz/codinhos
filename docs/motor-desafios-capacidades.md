@@ -378,3 +378,38 @@ o string do modelo `claude-sonnet-5` precisa ser válido na conta; se não for, 
 **Roadmap:** o motor cobriu D1 (unificação+targetFn+matchers), D2 (console.log), D3 (dicas+
 review), D5-async e D4 (geração). Restam de motor: AST ("use recursão"), Python/Pyodide, p5.js;
 e de pedagogia: dificuldade adaptativa, revisão espaçada.
+
+---
+
+## 13. D5 (AST) — avaliar o "como" (feito)
+
+Ramo sugerido `feat/d5-ast`. O motor passou a avaliar a **estrutura do código**, não só o
+resultado: "use recursão", "sem laços", "use `map`". Novo `mode: 'ast'` + `astRule` no TestCase.
+
+**Sem parser (de propósito):** para não trazer dependência (acorn etc.) ao pacote e evitar o
+custo de "pacote novo no Docker", a análise é dirigida sobre o código **limpo** —
+`stripCommentsAndStrings` remove comentários e conteúdo de strings/templates (para a palavra
+`for` num comentário não virar "laço"). Puro e compartilhado → back e front dão o mesmo veredito.
+
+**Regras v1 (`checkAstRule`):** `requireRecursion` (a função-alvo chama a si mesma; usa o corpo
+entre chaves, com fallback para arrow de expressão), `forbidLoops` (sem for/while/forEach),
+`requireMethod`/`forbidMethod` (usa/não usa `.nome(`).
+
+**Runner:** `ast.ts` (`stripCommentsAndStrings`, `checkAstRule`). **Backend/worker:** branch
+`mode:'ast'` → `checkAstRule` (sem execução; `actual` = mensagem explicativa). **Zod:** mode 'ast'
++ astRule nos três schemas (authoring, catalog, **learn** — o do aluno). **Autoria:** o seletor
+"tipo" ganhou "estrutura do código", com um seletor de regra + campo de método (para
+require/forbidMethod), nos formulários do gestor e do admin. Uso típico: **um** caso de teste AST
+(ex.: "exige recursão") junto dos casos normais que checam o resultado.
+
+**Testes:** `ast.test.ts` no runner (regras + os guardas contra falso-positivo: "for" em
+comentário/string/identificador não conta) e `run-tests.ast.test.ts` (despacho pelo runTests).
+Validado contra o runner compilado.
+
+**Ao subir:** o pacote `@codinhos/runner` ganhou arquivo novo (`ast.ts`) → **rebuildar o dist**
+(`pnpm install` ou `pnpm --filter @codinhos/runner build`) antes de `docker compose restart api`,
+igual à D5-async.
+
+**Limite (heurístico, não AST real):** casos muito exóticos (regex literais com `for` dentro,
+`arguments.callee`) podem escapar; para a faixa 11–14 e as regras acima é robusto. Se um dia
+precisar de precisão total, trocar por acorn. **Restam da D5:** Python/Pyodide, p5.js.

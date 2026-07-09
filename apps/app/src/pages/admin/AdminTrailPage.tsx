@@ -5,7 +5,8 @@ import styles from './AdminTrailPage.module.css'
 
 type Difficulty = 'easy' | 'medium' | 'hard'
 type Matcher = 'equal' | 'approx' | 'contains' | 'regex'
-interface TestCase { input: unknown; expected: unknown; description: string; matcher?: Matcher; tolerance?: number; mode?: 'stdout' }
+type AstRuleKind = 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod'
+interface TestCase { input: unknown; expected: unknown; description: string; matcher?: Matcher; tolerance?: number; mode?: 'stdout' | 'ast'; astRule?: { kind: AstRuleKind; name?: string } }
 interface Challenge {
   id: string
   title: string
@@ -113,7 +114,7 @@ function ChallengeForm({ initial, onClose, onSave }: {
   const [targetFn, setTargetFn] = useState(initial?.targetFn ?? '')
   const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? 'easy')
   const [baseXp, setBaseXp] = useState(String(initial?.baseXp ?? 10))
-  const [rows, setRows] = useState<{ input: string; expected: string; description: string; matcher: string; tolerance: string; mode: string }[]>(
+  const [rows, setRows] = useState<{ input: string; expected: string; description: string; matcher: string; tolerance: string; mode: string; astRuleKind: string; astRuleName: string }[]>(
     (initial?.testCases ?? []).map((t) => ({
       input: stringifyValue(t.input),
       expected: stringifyValue(t.expected),
@@ -121,13 +122,15 @@ function ChallengeForm({ initial, onClose, onSave }: {
       matcher: t.matcher ?? 'equal',
       tolerance: t.tolerance != null ? String(t.tolerance) : '',
       mode: t.mode ?? '',
+      astRuleKind: t.astRule?.kind ?? 'requireRecursion',
+      astRuleName: t.astRule?.name ?? '',
     })),
   )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
-  function addRow() { setRows((r) => [...r, { input: '', expected: '', description: '', matcher: 'equal', tolerance: '', mode: '' }]) }
-  function setRow(i: number, k: 'input' | 'expected' | 'description' | 'matcher' | 'tolerance' | 'mode', v: string) {
+  function addRow() { setRows((r) => [...r, { input: '', expected: '', description: '', matcher: 'equal', tolerance: '', mode: '', astRuleKind: 'requireRecursion', astRuleName: '' }]) }
+  function setRow(i: number, k: 'input' | 'expected' | 'description' | 'matcher' | 'tolerance' | 'mode' | 'astRuleKind' | 'astRuleName', v: string) {
     setRows((r) => r.map((row, idx) => (idx === i ? { ...row, [k]: v } : row)))
   }
   function removeRow(i: number) { setRows((r) => r.filter((_, idx) => idx !== i)) }
@@ -136,8 +139,19 @@ function ChallengeForm({ initial, onClose, onSave }: {
     e.preventDefault()
     setSaving(true); setError(null)
     const testCases: TestCase[] = rows
-      .filter((r) => r.input !== '' || r.expected !== '' || r.description !== '')
+      .filter((r) => r.input !== '' || r.expected !== '' || r.description !== '' || r.mode === 'ast')
       .map((r) => {
+        if (r.mode === 'ast') {
+          const kind = r.astRuleKind as AstRuleKind
+          const needsName = kind === 'requireMethod' || kind === 'forbidMethod'
+          return {
+            input: null,
+            expected: r.description,
+            description: r.description,
+            mode: 'ast' as const,
+            astRule: { kind, ...(needsName && r.astRuleName.trim() ? { name: r.astRuleName.trim() } : {}) },
+          }
+        }
         const tc: TestCase = { input: parseValue(r.input), expected: parseValue(r.expected), description: r.description }
         if (r.mode === 'stdout') tc.mode = 'stdout'
         if (r.matcher !== 'equal') tc.matcher = r.matcher as Matcher
@@ -207,20 +221,41 @@ function ChallengeForm({ initial, onClose, onSave }: {
               <select className={styles.selectSm} value={r.mode} onChange={(e) => setRow(i, 'mode', e.target.value)}>
                 <option value="">retorno da função</option>
                 <option value="stdout">saída (console.log)</option>
+                <option value="ast">estrutura do código</option>
               </select>
-              <span className={styles.hint}>comparação:</span>
-              <select className={styles.selectSm} value={r.matcher} onChange={(e) => setRow(i, 'matcher', e.target.value)}>
-                <option value="equal">igual (padrão)</option>
-                <option value="approx">aproximado (número)</option>
-                <option value="contains">contém</option>
-                <option value="regex">regex</option>
-              </select>
-              {r.matcher === 'approx' && (
-                <input className={styles.selectSm} type="number" step="any" min={0} value={r.tolerance} onChange={(e) => setRow(i, 'tolerance', e.target.value)} placeholder="tolerância (ex: 0.01)" />
+              {r.mode === 'ast' ? (
+                <>
+                  <span className={styles.hint}>regra:</span>
+                  <select className={styles.selectSm} value={r.astRuleKind} onChange={(e) => setRow(i, 'astRuleKind', e.target.value)}>
+                    <option value="requireRecursion">exige recursão</option>
+                    <option value="forbidLoops">proíbe laços (for/while)</option>
+                    <option value="requireMethod">exige método</option>
+                    <option value="forbidMethod">proíbe método</option>
+                  </select>
+                  {(r.astRuleKind === 'requireMethod' || r.astRuleKind === 'forbidMethod') && (
+                    <input className={styles.selectSm} value={r.astRuleName} onChange={(e) => setRow(i, 'astRuleName', e.target.value)} placeholder="método (ex: map)" />
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className={styles.hint}>comparação:</span>
+                  <select className={styles.selectSm} value={r.matcher} onChange={(e) => setRow(i, 'matcher', e.target.value)}>
+                    <option value="equal">igual (padrão)</option>
+                    <option value="approx">aproximado (número)</option>
+                    <option value="contains">contém</option>
+                    <option value="regex">regex</option>
+                  </select>
+                  {r.matcher === 'approx' && (
+                    <input className={styles.selectSm} type="number" step="any" min={0} value={r.tolerance} onChange={(e) => setRow(i, 'tolerance', e.target.value)} placeholder="tolerância (ex: 0.01)" />
+                  )}
+                </>
               )}
             </div>
             {r.mode === 'stdout' && (
               <small className={styles.hint}>Saída do console: em <b>esperado</b> coloque o texto impresso. Para várias linhas, use uma string JSON com <code>\n</code> (ex.: <code>&quot;linha 1\nlinha 2&quot;</code>). <b>input</b> só é usado se o aluno escreve uma função que imprime.</small>
+            )}
+            {r.mode === 'ast' && (
+              <small className={styles.hint}>Verifica a <b>estrutura</b> do código (não usa input/esperado) — ex.: exigir recursão ou proibir laços. Use a <b>descrição</b> para explicar a regra ao aluno.</small>
             )}
           </div>
         ))}

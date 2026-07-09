@@ -38,7 +38,13 @@ const testCaseSchema = z.object({
   description: z.string(),
   matcher: z.enum(['equal', 'approx', 'contains', 'regex']).optional(),
   tolerance: z.number().optional(),
-  mode: z.enum(['stdout']).optional(),
+  mode: z.enum(['stdout', 'ast']).optional(),
+  astRule: z
+    .object({
+      kind: z.enum(['requireRecursion', 'forbidLoops', 'requireMethod', 'forbidMethod']),
+      name: z.string().max(50).optional(),
+    })
+    .optional(),
 })
 
 export const createChallengeBodySchema = z.object({
