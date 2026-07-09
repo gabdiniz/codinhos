@@ -112,3 +112,33 @@ export type CreateModuleBody = z.infer<typeof createModuleBodySchema>
 export type UpdateModuleBody = z.infer<typeof updateModuleBodySchema>
 export type CreateChallengeBody = z.infer<typeof createChallengeBodySchema>
 export type UpdateChallengeBody = z.infer<typeof updateChallengeBodySchema>
+
+// ─── Geração de desafio por IA (D4) ───────────────────────────────────────────
+
+export const generateChallengeBodySchema = z.object({
+  /** Tema/tópico livre que o gestor quer virar desafio. */
+  topic: z.string().min(3).max(500),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  /** Tipo de teste desejado: retorno de função ('call') ou saída de console ('stdout'). */
+  testMode: z.enum(['call', 'stdout']).optional(),
+})
+export type GenerateChallengeBody = z.infer<typeof generateChallengeBodySchema>
+
+export const generateChallengeResponseSchema = z.object({
+  data: z.object({
+    challenge: z.object({
+      title: z.string(),
+      description: z.string(),
+      starterCode: z.string(),
+      targetFn: z.string().nullable(),
+      difficulty: z.enum(['easy', 'medium', 'hard']),
+      baseXp: z.number(),
+      testCases: z.array(testCaseSchema),
+    }),
+    /** Solução de referência gerada — usada só para verificar/prévia, não é salva. */
+    referenceSolution: z.string(),
+    /** true = a solução de referência passou em todos os testCases no runner. */
+    verified: z.boolean(),
+    message: z.string(),
+  }),
+})

@@ -17,6 +17,21 @@ interface Challenge {
   order: number
   targetFn?: string | null
 }
+type GeneratedChallenge = {
+  title: string
+  description: string
+  starterCode: string
+  targetFn: string | null
+  difficulty: Difficulty
+  baseXp: number
+  testCases: TestCase[]
+}
+interface GenerateResult {
+  challenge: GeneratedChallenge
+  referenceSolution: string
+  verified: boolean
+  message: string
+}
 interface Module {
   id: string
   title: string
@@ -103,7 +118,7 @@ function ModuleForm({ initial, onClose, onSave }: {
 // ─── Form de desafio ───────────────────────────────────────────────────────────
 
 function ChallengeForm({ initial, onClose, onSave }: {
-  initial: Challenge | null
+  initial: Partial<Challenge> | null
   onClose: () => void
   onSave: (body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null }) => Promise<void>
 }) {
@@ -235,6 +250,64 @@ function ChallengeForm({ initial, onClose, onSave }: {
   )
 }
 
+function GenerateChallengeModal({ slug, onClose, onGenerated }: {
+  slug: string
+  onClose: () => void
+  onGenerated: (result: GenerateResult) => void
+}) {
+  const [topic, setTopic] = useState('')
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+  const [testMode, setTestMode] = useState<'call' | 'stdout'>('call')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!topic.trim() || loading) return
+    setLoading(true); setError(null)
+    try {
+      const res = await api.post<{ data: GenerateResult }>(`/api/${slug}/authoring/generate-challenge`, {
+        topic: topic.trim(),
+        difficulty,
+        testMode,
+      })
+      onGenerated(res.data)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível gerar o desafio agora.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+      <form className={styles.modal} onClick={(e) => e.stopPropagation()} onSubmit={submit}>
+        <h2 className={styles.modalTitle}>✨ Gerar desafio com IA</h2>
+        <label className={styles.label}>Tema
+          <textarea className={styles.textarea} value={topic} onChange={(e) => setTopic(e.target.value)} rows={2} placeholder="Ex.: somar os números pares de uma lista" required />
+          <small className={styles.hint}>Descreva o assunto. A IA gera enunciado, testes e uma solução — que é executada no runner para verificar antes de você revisar.</small>
+        </label>
+        <div className={styles.rowTwo}>
+          <label className={styles.label}>Dificuldade
+            <select className={styles.input} value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)}>
+              <option value="easy">Fácil</option><option value="medium">Médio</option><option value="hard">Difícil</option>
+            </select>
+          </label>
+          <label className={styles.label}>Tipo de teste
+            <select className={styles.input} value={testMode} onChange={(e) => setTestMode(e.target.value as 'call' | 'stdout')}>
+              <option value="call">Retorno da função</option><option value="stdout">Saída (console.log)</option>
+            </select>
+          </label>
+        </div>
+        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.actions}>
+          <button type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>Cancelar</button>
+          <button type="submit" className={styles.btnPrimary} disabled={loading || !topic.trim()}>{loading ? 'Gerando...' : 'Gerar'}</button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 // ─── Página ────────────────────────────────────────────────────────────────────
 
 export default function AuthoringTrailPage() {
@@ -244,7 +317,8 @@ export default function AuthoringTrailPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [moduleForm, setModuleForm] = useState<{ open: boolean; editing: Module | null }>({ open: false, editing: null })
-  const [challengeForm, setChallengeForm] = useState<{ open: boolean; moduleId: string; editing: Challenge | null } | null>(null)
+  const [challengeForm, setChallengeForm] = useState<{ open: boolean; moduleId: string; editing: Challenge | null; prefill?: Partial<Challenge> | null } | null>(null)
+  const [genModal, setGenModal] = useState<{ open: boolean; moduleId: string } | null>(null)
 
   const load = useCallback(async () => {
     if (!slug || !trailId) return
@@ -271,6 +345,16 @@ export default function AuthoringTrailPage() {
     try { await api.delete(`/api/${slug}/authoring/modules/${id}`); setToast('Módulo removido.'); await load() }
     catch (err) { setToast(err instanceof ApiError ? err.message : 'Erro ao remover.') }
   }
+  function handleGenerated(moduleId: string, result: GenerateResult) {
+    setGenModal(null)
+    setChallengeForm({ open: true, moduleId, editing: null, prefill: result.challenge })
+    setToast(
+      result.verified
+        ? 'Desafio gerado e verificado ✓ — revise e salve.'
+        : 'Desafio gerado, mas a solução não passou na verificação automática. Revise os testes antes de salvar.',
+    )
+  }
+
   async function saveChallenge(body: { title: string; description?: string; starterCode?: string; testCases?: TestCase[]; difficulty: Difficulty; baseXp?: number; targetFn?: string | null }) {
     if (!slug || !challengeForm) return
     if (challengeForm.editing) await api.patch(`/api/${slug}/authoring/challenges/${challengeForm.editing.id}`, body)
@@ -327,14 +411,24 @@ export default function AuthoringTrailPage() {
                   </div>
                 </div>
               ))}
-              <button className={styles.addChallenge} onClick={() => setChallengeForm({ open: true, moduleId: m.id, editing: null })}>+ Adicionar desafio</button>
+              <div className={styles.challengeActionsRow}>
+                <button className={styles.addChallenge} onClick={() => setChallengeForm({ open: true, moduleId: m.id, editing: null })}>+ Adicionar desafio</button>
+                <button className={styles.genChallenge} onClick={() => setGenModal({ open: true, moduleId: m.id })}>✨ Gerar com IA</button>
+              </div>
             </div>
           </section>
         ))
       )}
 
       {moduleForm.open && <ModuleForm initial={moduleForm.editing} onClose={() => setModuleForm({ open: false, editing: null })} onSave={saveModule} />}
-      {challengeForm?.open && <ChallengeForm initial={challengeForm.editing} onClose={() => setChallengeForm(null)} onSave={saveChallenge} />}
+      {genModal?.open && (
+        <GenerateChallengeModal
+          slug={slug!}
+          onClose={() => setGenModal(null)}
+          onGenerated={(r) => handleGenerated(genModal.moduleId, r)}
+        />
+      )}
+      {challengeForm?.open && <ChallengeForm initial={challengeForm.editing ?? challengeForm.prefill ?? null} onClose={() => setChallengeForm(null)} onSave={saveChallenge} />}
       {toast && <div className={styles.toast}>{toast}</div>}
     </div>
   )

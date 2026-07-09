@@ -340,3 +340,41 @@ diferencial e stdout foram atualizados para `await runTests`.
 **Escopo v1 / limites:** captura de `console.log` async só dentro de função-alvo (não do topo do
 código); sync infinito dentro da função ainda não tem timeout (só o async tem) — herança do
 modelo atual. Restam da D5: AST ("use recursão"), Python (Pyodide), p5.js.
+
+---
+
+## 12. D4 — geração de desafios por IA (feito)
+
+Ramo sugerido `feat/d4-gerar-desafio`. Escala a produção de conteúdo: o gestor descreve um
+tema e a IA gera um desafio completo, **verificado automaticamente pelo runner** antes de o
+gestor revisar. Nada é salvo sem revisão humana.
+
+**Fluxo:** botão **"✨ Gerar com IA"** por módulo → modal (tema + dificuldade + tipo de teste) →
+`POST /:slug/authoring/generate-challenge` (guard manager). O serviço (`challenge-gen.service.ts`)
+usa **Sonnet** (`claude-sonnet-5`) para gerar um JSON estruturado — enunciado, `starterCode`,
+`targetFn`, `testCases` (com matcher/mode) **e uma solução de referência**. Então roda a solução
+contra os testCases no **mesmo `runTests`** que corrige o aluno; se passa em todos, marca
+`verified: true`. Se não, **tenta uma vez mais** realimentando o erro. Devolve o rascunho (não
+persiste) + a solução de referência + o selo de verificação.
+
+No front, o rascunho **pré-preenche o formulário de desafio existente** (o `initial` do
+`ChallengeForm` foi relaxado para `Partial<Challenge>`), com um toast dizendo se foi verificado.
+O gestor edita/salva pelo fluxo normal de criação.
+
+**Por que é sólido:** a IA às vezes erra os testCases; a verificação pelo runner (agora robusto,
+com async/stdout/matchers) pega isso antes de virar conteúdo. Sem migration (não há coluna de
+solução — ela é só para verificar e pré-visualizar).
+
+**Testes:** `challenge-gen.service.test.ts` mocka a Anthropic mas usa o `runTests` REAL —
+cobre: verificado quando a solução passa, extração de JSON com crases, retentativa quando a 1ª
+falha, `verified:false` quando nem o retry passa, e `UnprocessableError` para JSON inválido. A
+lógica de verificação foi validada contra o runner compilado (solução boa/ruim, call/stdout).
+
+**Ao subir:** só `docker compose restart api` (novo código de backend) + HMR do app — **não** há
+arquivo novo no `@codinhos/runner`, então não precisa rebuildar o dist desta vez. **Verificar:**
+o string do modelo `claude-sonnet-5` precisa ser válido na conta; se não for, a geração retorna
+503 (AiServiceError) — é um `const` fácil de trocar em `challenge-gen.service.ts`.
+
+**Roadmap:** o motor cobriu D1 (unificação+targetFn+matchers), D2 (console.log), D3 (dicas+
+review), D5-async e D4 (geração). Restam de motor: AST ("use recursão"), Python/Pyodide, p5.js;
+e de pedagogia: dificuldade adaptativa, revisão espaçada.

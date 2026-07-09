@@ -3,6 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { resolveTenant } from '../../shared/middlewares/resolve-tenant.js'
 import { authenticate } from '../../shared/middlewares/authenticate.js'
 import { requireRole } from '../../shared/middlewares/require-role.js'
+import { generateChallenge } from './challenge-gen.service.js'
 import {
   getMyTrails,
   createMyTrail,
@@ -26,6 +27,8 @@ import {
   createModuleBodySchema,
   updateModuleBodySchema,
   createChallengeBodySchema,
+  generateChallengeBodySchema,
+  generateChallengeResponseSchema,
   updateChallengeBodySchema,
   listTrailsResponseSchema,
   trailResponseSchema,
@@ -87,4 +90,9 @@ export async function authoringRoutes(app: FastifyInstance) {
   f.delete('/:slug/authoring/challenges/:challengeId',
     { schema: { params: challengeParamsSchema, response: { 200: messageResponseSchema } }, preHandler: guard },
     async (req, reply) => { await removeMyChallenge(req.resolvedTenantId, req.params.challengeId); return reply.status(200).send({ data: { message: 'Desafio removido' } }) })
+
+  // ── Geração de desafio por IA (D4) ──────────────────────────────────────────
+  f.post('/:slug/authoring/generate-challenge',
+    { schema: { params: slugParamsSchema, body: generateChallengeBodySchema, response: { 200: generateChallengeResponseSchema } }, preHandler: guard },
+    async (req, reply) => reply.status(200).send({ data: await generateChallenge(req.body) }))
 }
