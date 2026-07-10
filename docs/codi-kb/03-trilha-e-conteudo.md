@@ -27,6 +27,8 @@ O catálogo cobre os fundamentos da programação de forma progressiva:
 - **Arrays e listas**.
 - **Mini-projetos** — como um jogo simples ou uma calculadora, para juntar tudo na prática.
 
+Os desafios têm **formatos variados**: alguns pedem uma resposta a partir de uma entrada; outros pedem que o programa **mostre o resultado na tela** (uma tabuada, um padrão, uma contagem). Isso deixa a prática mais próxima de "programar de verdade" desde cedo.
+
 Já existe uma trilha completa de JavaScript pronta para uso, cobrindo do fundamento ao algoritmo em uma sequência progressiva de desafios.
 
 ## Catálogo pronto ou trilha própria

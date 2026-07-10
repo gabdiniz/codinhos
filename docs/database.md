@@ -173,13 +173,29 @@ Auditoria de consentimento parental (LGPD / ECA Digital, Sprint 3.1) para alunos
 | `title` | varchar(255) | |
 | `description` | text | |
 | `starter_code` | text | código inicial dado ao aluno |
-| `test_cases` | jsonb | array de `{ input, expected, description }` |
+| `test_cases` | jsonb | array de casos — ver shape abaixo |
 | `difficulty` | enum | `easy`, `medium`, `hard` |
 | `order` | int | ordem dentro do módulo |
 | `base_xp` | int NOT NULL DEFAULT 10 | XP base por completar o desafio |
 | `validation_mode_override` | enum nullable | sobrescreve o `validation_mode` da turma para este desafio específico; `null` = usa o da turma |
+| `target_fn` | text nullable | nome da função avaliada; `null` = primeira função declarada (permite auxiliares) |
+| `render_mode` | text nullable | `null`/`js` = normal; `p5` = desafio **visual** (prévia em iframe; nota vem dos `test_cases`/manual) |
 | `created_at` | timestamp | |
 | `updated_at` | timestamp | |
+
+**Shape de cada item de `test_cases`** (correção pelo `@codinhos/runner`, back≡front):
+
+| Campo | Notas |
+|---|---|
+| `input` | array → chama a função com esses args; `null` → type-check (`typeof`) ou modo especial |
+| `expected` | valor/saída esperada |
+| `description` | texto do caso |
+| `matcher` | `equal` (padrão), `approx` (+`tolerance`), `contains`, `regex` |
+| `mode` | ausente = retorno de função; `stdout` = compara saída de `console.log`; `ast` = verificação estrutural |
+| `astRule` | quando `mode: 'ast'`: `{ kind, name? }` — `requireRecursion`, `forbidLoops`, `require/forbidMethod`, `require/forbidCall` |
+
+> Ao adicionar um campo aqui, atualizar o Zod de resposta de **todos** os módulos que devolvem
+> desafio (`authoring`, `catalog`, `learn`), senão o fastify-zod remove o campo da resposta.
 
 ---
 

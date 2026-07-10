@@ -321,6 +321,17 @@ O gestor cria e edita **trilhas próprias da escola** (`trails.tenant_id` = tena
 | PATCH/DELETE | `/authoring/trails/:trailId` | Edita / remove trilha própria |
 | POST | `/authoring/trails/:trailId/modules` · PATCH/DELETE `/authoring/modules/:moduleId` | Módulos |
 | POST | `/authoring/modules/:moduleId/challenges` · PATCH/DELETE `/authoring/challenges/:challengeId` | Desafios |
+| POST | `/authoring/generate-challenge` | Gera um rascunho de desafio por IA (Sonnet) e o **verifica no runner** antes de devolver |
+
+**Geração de desafio por IA (`generate-challenge`):** body `{ topic, difficulty?, testMode? }`.
+O modelo devolve enunciado + `testCases` + solução de referência; o backend roda a solução no
+`@codinhos/runner` contra os `testCases` (com 1 retentativa realimentando o erro) e responde
+`{ challenge, referenceSolution, verified, message }`. Nada é salvo — o gestor revisa e salva pela
+UI de autoria.
+
+**Campos de desafio (autoria):** além de `title`, `description`, `starterCode`, `difficulty`,
+`baseXp`, os desafios aceitam `targetFn` (função avaliada) e `renderMode` (`js`/`p5`). Os
+`testCases` seguem o shape do runner (`matcher`, `mode: stdout|ast`, `astRule`) — ver `database.md`.
 
 **Professores — turmas de um professor (gestor):** `GET /:slug/teachers/:teacherId/classes` → IDs das turmas atribuídas (usado na tela de Professores para marcar/desmarcar turmas).
 
@@ -1048,6 +1059,9 @@ CRUD do **catálogo global** (trilhas com `tenant_id` NULL). Guard: `super_admin
 ### Modelo e custo
 
 - **Modelo**: `claude-haiku-4-5-20251001` (mais rápido e barato)
+- **Camada pedagógica (`intent`)**: `chat` (padrão), `hint` (dica progressiva — o `hintLevel`
+  controla o quanto revela, sem entregar a resposta) e `review` (feedback de "como melhorar"
+  após o aluno acertar). O `intent` só ajusta o system prompt; a conversa e o limite são os mesmos.
 - **Histórico**: últimas 10 mensagens da conversa enviadas à API
 - **Conversa por desafio**: cada desafio tem sua própria conversa; trocar de desafio reinicia o contexto
 - **Limite diário**: configurável em `tenants.settings.ai_messages_per_day` (padrão: 20 msgs/aluno/dia)
@@ -1101,6 +1115,9 @@ Request: {
     error?: string
   }                         // ignorado pelo backend se o tenant tiver
                             // ai_error_explanation_enabled = false
+  intent?: 'chat' | 'hint' | 'review'  // chat (padrão); hint = dica progressiva
+                                        // (usa hintLevel); review = feedback pós-acerto
+  hintLevel?: number        // nível da dica progressiva quando intent = 'hint'
 }
 
 Response: {

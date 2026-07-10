@@ -64,17 +64,19 @@ O coração do produto. O aluno escreve e executa código diretamente no browser
 ### Características
 
 - **Execução client-side** — implementado via Web Worker + `new Function()` (não WebAssembly); isolado do DOM principal, sem latência de servidor
-- **Autocomplete contextual** *(planejado, não implementado)* — baseado no vocabulário já ensinado na trilha, não no vocabulário completo da linguagem (menos intimidador)
-- **Feedback de erro humanizado** *(planejado, não implementado)* — hoje o aluno vê a mensagem de erro nativa do JavaScript; mensagens em linguagem acessível para crianças ainda não foram construídas
-- **Blocos visuais** *(planejado, não implementado)* — o campo de configuração por trilha (`visualBlocksEnabled`) já existe no backend e é lido pelo frontend, mas não há editor de blocos construído; o aluno sempre usa o modo texto
+- **Autocomplete contextual** *(implementado — Sprint 7.1)* — sugere só o vocabulário já ensinado na trilha, não a linguagem inteira (menos intimidador)
+- **Feedback de erro humanizado** *(implementado — Sprint 2.3)* — mensagens de erro do JavaScript traduzidas para linguagem acessível à idade no painel de resultado
+- **Blocos visuais** *(modo isolado implementado — Sprint 7.2a)* — quando `visualBlocksEnabled` está ligado na trilha, o aluno monta a lógica com blocos (Blockly) que geram JavaScript. Os modos híbrido (blocos+texto) e a conversão bidirecional seguem no roadmap
 
-### Modos de interface (configurável pelo gestor) — visão de produto, não implementada
+### Modos de interface (configurável pelo gestor)
 
 ```
 Modo Blocos → Modo Híbrido (blocos + código lado a lado) → Modo Texto
 ```
 
-> Hoje só o **Modo Texto** (CodeMirror) existe.
+> Hoje existem o **Modo Texto** (CodeMirror) e o **Modo Blocos** isolado (Blockly, ligado por
+> `visualBlocksEnabled` na trilha). O **Modo Híbrido** (blocos+texto lado a lado, com conversão)
+> segue no roadmap.
 
 ---
 
@@ -86,6 +88,22 @@ A validação é baseada em **testes de comportamento**, não em comparação de
 - `function soma(a, b) { return a + b }` ✅
 - `const soma = (a, b) => a + b` ✅
 - Qualquer implementação que passe em: `soma(2,3) === 5`, `soma(-1,1) === 0` ✅
+
+### O que o motor consegue avaliar
+
+A correção é feita por um runner compartilhado entre backend e frontend (mesmo veredito nos dois
+lados; o backend revalida a nota). Hoje um desafio pode avaliar:
+
+- **Retorno de função** (com matchers: igualdade, aproximado para floats, contém, regex).
+- **`typeof` de variável** declarada no código.
+- **Saída de `console.log`** — desafios em que o aluno imprime o resultado.
+- **`async`/`await`** — o runner aguarda promessas com timeout.
+- **Estrutura do código (AST)** — regras como "use recursão", "sem laço", "use/proíbe `map`" ou
+  uma função (ex.: `ellipse`), sem executar.
+- **Desafios visuais (p5.js)** — o aluno programa um desenho; o front mostra uma prévia num iframe
+  isolado e a nota vem das regras estruturais ou de validação manual.
+
+> Detalhe e evolução em `docs/motor-desafios-capacidades.md`.
 
 ### Modos de validação (configurável pelo gestor por desafio ou trilha)
 
@@ -376,11 +394,11 @@ Login
 |---|---|
 | **Multi-tenant** | Super Admin + Gestor + Aluno; criação de tenants e turmas |
 | **Trilhas** | Catálogo fixo JS, seleção e ordenação pelo gestor, modo sequencial |
-| **Sandbox** | Execução JS client-side (Web Worker). Autocomplete contextual e erros humanizados ainda não implementados |
+| **Sandbox** | Execução JS client-side (Web Worker) com correção compartilhada com o backend (back≡front). Autocomplete contextual, erros humanizados e modo de blocos já implementados. Avalia retorno, saída de `console.log`, async, estrutura (AST) e desafios visuais (p5) |
 | **Validação** | Automática por testes de comportamento; modo manual opcional |
 | **Gamificação** | XP, níveis, badges, ranking da turma, streak diário. Desafio da semana com backend pronto, UI pendente |
-| **Chat IA** | Tutor com modo dica, contexto do desafio atual |
-| **Configurações gestor** | Modo de progressão, modo de validação. Toggle de blocos visuais existe na config, mas editor de blocos ainda não foi construído |
+| **Chat IA** | Tutor com dica progressiva (níveis), explicação de erro e review pós-acerto; contexto do desafio atual |
+| **Configurações gestor** | Modo de progressão, modo de validação, blocos visuais (editor Blockly já construído para o modo isolado) |
 
 ### V2
 

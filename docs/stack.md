@@ -16,6 +16,8 @@ apps/
 packages/
   ui/           → componentes React compartilhados entre web e app
   types/        → tipos TypeScript compartilhados (DTOs, entidades)
+  runner/       → @codinhos/runner: lógica pura de correção de desafios, compartilhada
+                  entre o backend (node:vm) e o worker do front (back≡front)
   config/       → eslint, tsconfig e prettier base
 ```
 
@@ -177,9 +179,19 @@ Migração para AWS (RDS, S3, CloudFront) avaliada quando o negócio escalar e d
 
 ## Provedor de IA
 
-**Anthropic — Claude Haiku** (modelo mais recente da família Haiku). Escolhido pelo custo-benefício em chamadas de alta frequência (uma por mensagem do aluno) e pela qualidade para tarefas de tutoria guiada.
+**Anthropic — Claude.** Dois usos, dois modelos por custo-benefício:
 
-O modelo é referenciado via variável de ambiente `ANTHROPIC_API_KEY` + constante `AI_MODEL` no código — troca de modelo sem alteração de lógica.
+- **Tutor Codi — Haiku:** alta frequência (uma chamada por mensagem do aluno), tutoria guiada.
+  Suporta `intent` (`chat` normal, `hint` para dica progressiva, `review` para feedback pós-acerto).
+- **Geração de desafios por IA — Sonnet:** baixo volume (gestor), gera rascunho de desafio que é
+  **verificado automaticamente no runner** (a solução de referência precisa passar) antes de ir ao
+  gestor revisar.
+
+O modelo é referenciado via variável de ambiente `ANTHROPIC_API_KEY` — troca de modelo sem
+alteração de lógica.
+
+Há ainda o **Codi público** da landing page (`apps/web`), assistente de dúvidas sobre o produto
+alimentado pela KB curada em `docs/codi-kb/`.
 
 ---
 
@@ -191,11 +203,25 @@ Usado no MVP para: convite de primeiro acesso e recuperação de senha.
 
 ---
 
-## Sandbox JS — Execução Segura no Browser
+## Sandbox JS — Execução Segura e Correção
 
-JavaScript do aluno roda em um **iframe sandboxado** — isolado do DOM principal, sem acesso ao `window` da aplicação. A comunicação entre o app e o iframe ocorre via `postMessage`.
+O JavaScript do aluno é **corrigido nos dois lados**, com a mesma lógica pura
+(`@codinhos/runner`), garantindo veredito idêntico (back≡front):
 
-Isso evita que código malicioso (ou acidental) de um aluno interfira na plataforma. Quando Python for adicionado (V2), usa Pyodide via WebAssembly no mesmo modelo.
+- **Front (feedback imediato):** roda num **Web Worker** com `new Function()` — sem DOM, sem
+  acesso ao `window` da aplicação.
+- **Back (nota que vale):** re-executa com `node:vm` (timeout) e **revalida** a submissão.
+
+O runner suporta: retorno de função, `typeof` de variável, **saída de `console.log`** (desafios
+que imprimem), **async/await**, e **verificação estrutural** (regras "use recursão", "sem laço",
+"use/proíbe função ou método") — esta última sem executar o código.
+
+**Desafios visuais (p5.js):** além disso, o front mostra uma **prévia** do sketch do aluno num
+`<iframe sandbox="allow-scripts">` (sem `allow-same-origin`), com a p5 empacotada e inlinada —
+o preview é isolado do app; a **nota** vem das regras estruturais/validação manual, não do pixel.
+
+Quando Python for adicionado, usa Pyodide via WebAssembly (rompe o "backend revalida" — decisão
+de produto em aberto).
 
 ---
 

@@ -3,7 +3,7 @@
 > Baseado em `docs/analise-mercado-funcionalidades.md` (17/06/2026). Cada sprint é dimensionado por complexidade, não por tempo fixo — ajustar duração conforme capacidade do time.
 > Convenção de branch: `feat/<nome>` a partir de `develop`, PR de volta para `develop` (ver `agent_docs/commits.md`). Toda query nova deve filtrar por `tenant_id`; toda cor nova via `var(--color-*)`; rotas sempre `routes → service → repository → schema`.
 
-**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Sprint 7.2 fase (a) concluída (editor de blocos isolado). Roadmap principal coberto. **Sprint 9 (autoria híbrida de conteúdo)** concluída: 9.1 — gestor cria trilhas próprias (`trails.tenant_id`, migration 0007) + scoping do catálogo; 9.2 — UI de catálogo (CRUD) na área do Super Admin. **Certificado por escola** concluído (migration 0008 `certificate_templates`, PDF parametrizado, construtor no gestor). UIs de gestão concluídas na interface (Professores, Responsáveis, importação CSV, Google Classroom, reset de senha pelo admin). Trilha embutida **"JavaScript: do Fundamento ao Algoritmo"** (96 módulos: 84 desafios + 12 lições teóricas intercaladas, reordenados por pré-requisito) via `db:seed:trilha`. Faltam só refinos (7.2 b/c) e backlog opcional.
+**Status:** Sprints 1–3 concluídas e mergeadas na `main` (até 22/06/2026). Sprint 4 (Papel de Professor) **concluída** (backend `feat/auth-teacher-role` + UI `feat/app-professor-ui`, 23/06/2026). Sprint 5 (Portal de responsáveis) **concluída** (backend + UI). Sprint 6 (rostering Google Classroom) concluída no backend. Sprint 7.1 (autocomplete) e Sprint 8 (certificados + portfólio) concluídas. Sprint 7.2 fase (a) concluída (editor de blocos isolado). Roadmap principal coberto. **Sprint 9 (autoria híbrida de conteúdo)** concluída: 9.1 — gestor cria trilhas próprias (`trails.tenant_id`, migration 0007) + scoping do catálogo; 9.2 — UI de catálogo (CRUD) na área do Super Admin. **Certificado por escola** concluído (migration 0008 `certificate_templates`, PDF parametrizado, construtor no gestor). UIs de gestão concluídas na interface (Professores, Responsáveis, importação CSV, Google Classroom, reset de senha pelo admin). Trilha embutida **"JavaScript: do Fundamento ao Algoritmo"** (96 módulos: 84 desafios + 12 lições teóricas intercaladas, reordenados por pré-requisito) via `db:seed:trilha`. **Evolução do motor de aprendizado (D1–D5)** concluída e mergeada — runner unificado, saída de `console.log`, Codi pedagógico (dica/review), geração de desafios por IA, async/await, verificação estrutural (AST) e desafios visuais p5.js (ver seção própria + `docs/motor-desafios-capacidades.md`). Faltam só refinos (7.2 b/c), conteúdo de catálogo para os modos novos, e backlog opcional.
 
 ---
 
@@ -154,6 +154,33 @@ Itens de baixa prioridade na análise original — exigem validação de demanda
 ## Conteúdo — trilha JS embutida ✅
 
 - ✅ Seed **"JavaScript: do Fundamento ao Algoritmo"** no catálogo global — 96 módulos: 84 desafios + 12 lições teóricas intercaladas (variáveis → algoritmos), temas ordenados por pré-requisito (nada usado antes de ensinado), casos de teste verificados contra o runner real. Comando: `pnpm --filter @codinhos/api db:seed:trilha` (idempotente e atualizável).
+
+---
+
+## Evolução do motor de aprendizado (D1–D5) ✅
+
+Frente dedicada a **ampliar o que um desafio consegue avaliar**, cada direção implementada,
+testada (unit + diferencial back≡front) e mergeada na `main`. Detalhe vivo em
+`docs/motor-desafios-capacidades.md`. Base transversal: pacote novo `@codinhos/runner` (lógica
+pura compartilhada entre backend `node:vm` e worker do front).
+
+- ✅ **D1 — Unificação do runner** (`feat/runner-unify`): fonte única de correção; corrige o bug
+  de ordem de chaves de objeto (front≡back via `deepEqual`); função-alvo por `targetFn`; matchers
+  `equal`/`approx`/`contains`/`regex`.
+- ✅ **D2 — Saída de `console.log`** (`feat/d2-console-output`): `mode: 'stdout'` — desafios em que
+  o aluno **imprime** o resultado (tabuada, FizzBuzz, padrões). Lição: ao adicionar campo em
+  `TestCase`, atualizar o Zod de resposta de todos os módulos (o do aluno inclusive).
+- ✅ **D3 — Camada pedagógica no Codi** (`feat/d3-codi-pedagogico`): `intent` `hint` (dica
+  progressiva por nível) e `review` (feedback pós-acerto).
+- ✅ **D4 — Geração de desafios por IA** (`feat/d4-gerar-desafio`): gestor gera rascunho (Sonnet)
+  **verificado no runner** antes de revisar. Endpoint `POST /authoring/generate-challenge`.
+- ✅ **D5 — Horizonte do motor** (um por vez): **async/await** (`feat/d5-async`, `runTests`
+  assíncrona); **AST** (`feat/d5-ast`, `mode: 'ast'` + `astRule` — "use recursão", "sem laço",
+  usa/proíbe método/função, heurístico sem dependência); **p5.js visual** (`feat/d5-p5`, coluna
+  `render_mode`, migration `0010`; prévia do sketch em iframe sandbox; nota por regra estrutural).
+
+**Restam da D5 (fase de produto):** Python via Pyodide (rompe o "backend revalida"). Falta também
+**conteúdo de catálogo** que exercite os modos novos (desafios de console, recursão e visuais).
 
 ---
 

@@ -124,3 +124,20 @@ Fase (a) = **modo blocos isolado** (o toggle `visualBlocksEnabled` já existia e
 - `docs/sprints-roadmap.md` e este relatório vão na branch `docs/atualiza-relatorio-sprint4`.
 - ✅ **UI do professor** em `apps/app` entregue (`feat/app-professor-ui`): shell, turmas atribuídas, detalhe de turma/aluno e fila de revisão.
 - Próxima do roadmap: **Sprint 5 — Portal para responsáveis** (fica mais simples após a 3.1, que já captura e-mail/consentimento do responsável).
+
+---
+
+## Evolução do motor de aprendizado (D1–D5)
+
+Frente posterior às sprints acima, toda mergeada na `main`. O detalhe por direção vive em
+`docs/sprints-roadmap.md` (seção "Evolução do motor") e `docs/motor-desafios-capacidades.md`
+(fonte de verdade, §1–14). Resumo:
+
+- **D1** unificação do runner (`@codinhos/runner`, back≡front, corrige ordem de chaves, `targetFn`, matchers).
+- **D2** avaliação por saída de `console.log` (`mode: 'stdout'`).
+- **D3** Codi pedagógico: dica progressiva (`intent: hint`) + code review (`intent: review`).
+- **D4** geração de desafios por IA (Sonnet) com verificação automática no runner.
+- **D5** async/await, verificação estrutural (AST — "use recursão") e desafios visuais p5.js
+  (coluna `render_mode`, migration `0010`, prévia em iframe).
+
+Restam Python/Pyodide (decisão de produto) e conteúdo de catálogo para os modos novos.

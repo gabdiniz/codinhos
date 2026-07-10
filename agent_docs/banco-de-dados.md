@@ -49,6 +49,23 @@ export const users = pgTable('users', {
 }))
 ```
 
+## Desafios: colunas do motor e `testCases`
+
+A tabela `challenges` guarda os casos de teste como **jsonb** (`test_cases`) e tem duas colunas
+nullable ligadas ao motor:
+
+- `target_fn` (text) — nome da função avaliada. Null = usa a primeira função declarada
+  (retrocompatível). Permite que o aluno escreva funções auxiliares.
+- `render_mode` (text) — `null`/`'js'` = desafio normal; `'p5'` = desafio **visual** (o front
+  mostra uma prévia do sketch num iframe; a nota vem dos `testCases`/validação manual).
+
+Cada item de `test_cases` pode ter: `input`, `expected`, `description`, `matcher`
+(`equal`/`approx`/`contains`/`regex`) + `tolerance`, `mode` (`'stdout'`/`'ast'`) e `astRule`
+(`{ kind, name? }`). **Atenção (lição da D2):** ao adicionar um campo em `TestCase`, atualizar
+o schema Zod de resposta de **todos** os módulos que devolvem desafio (`authoring`, `catalog` e
+principalmente `learn` — o do aluno), senão o fastify-zod **remove** o campo desconhecido da
+resposta. Ver `docs/motor-desafios-capacidades.md` e `docs/database.md`.
+
 ## Migrations
 
 ```bash

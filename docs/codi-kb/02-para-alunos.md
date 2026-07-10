@@ -20,7 +20,7 @@ Ao acertar, ele avança para o próximo módulo e ganha **XP e conquistas**. Se 
 
 ## O sandbox (onde a mágica acontece)
 
-O sandbox é o coração do produto: o aluno **escreve e executa código direto no navegador**, sem instalar nada e sem espera. Ele roda o código, vê o resultado na hora e ajusta até resolver o desafio.
+O sandbox é o coração do produto: o aluno **escreve e executa código direto no navegador**, sem instalar nada e sem espera. Ele roda o código, vê o resultado na hora e ajusta até resolver o desafio. Os desafios têm formatos variados: uns pedem uma resposta certa, outros pedem para o programa **mostrar resultados na tela** (como uma tabuada ou um padrão), sempre com retorno imediato.
 
 Alguns apoios deixam essa experiência mais acolhedora para quem está começando:
 
@@ -30,7 +30,7 @@ Alguns apoios deixam essa experiência mais acolhedora para quem está começand
 
 ## O Codi, tutor de IA
 
-O Codi é o assistente que acompanha o aluno. O princípio é pedagógico: **ele não entrega a resposta pronta**. Em vez disso, dá dicas progressivas e ajuda o aluno a pensar. Quando um desafio falha, o aluno pode pedir ao Codi para explicar o que deu errado — e o Codi guia o raciocínio sem resolver por ele. Errar faz parte do aprendizado, e o aluno decide quando quer ajuda.
+O Codi é o assistente que acompanha o aluno. O princípio é pedagógico: **ele não entrega a resposta pronta**. Em vez disso, dá **dicas em níveis** — revela um pouco de cada vez, no ritmo do aluno — e ajuda a pensar. Quando um desafio falha, o aluno pode pedir ao Codi para explicar o que deu errado, e o Codi guia o raciocínio sem resolver por ele. E depois de **acertar**, o aluno ainda pode pedir um comentário de **como deixar o código melhor** — um empurrãozinho para evoluir, não só para passar. Errar faz parte do aprendizado, e o aluno decide quando quer ajuda.
 
 ## Desafio da semana
 
