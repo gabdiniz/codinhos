@@ -25,7 +25,10 @@ O conteúdo vem de um catálogo pronto e de qualidade, mantido pela equipe do Co
 A avaliação olha se o código funciona (o comportamento), o que permite várias soluções válidas. A escola escolhe entre avaliação automática, automática com revisão do educador, ou totalmente manual.
 
 **O que é o Codi?**
-É o tutor de IA que acompanha o aluno. Ele ajuda com dicas quando o aluno trava, mas nunca entrega a resposta pronta — o objetivo é fazer o aluno pensar e aprender.
+É o tutor de IA que acompanha o aluno. Ele ajuda com dicas em níveis quando o aluno trava, explica o que deu errado quando um desafio falha e, depois que o aluno acerta, pode comentar como deixar o código melhor — mas nunca entrega a resposta pronta. O objetivo é fazer o aluno pensar e aprender.
+
+**Que tipos de desafio o aluno resolve?**
+Vários formatos, sempre praticando: desde escrever uma função que devolve o resultado certo até programas que mostram resultados na tela. Como a avaliação olha se o código funciona, quase sempre há mais de uma maneira válida de resolver.
 
 **Professores têm acesso?**
 Sim. Cada professor tem login próprio e vê apenas as turmas atribuídas a ele, onde acompanha o progresso e revisa as entregas que precisam de avaliação manual.
