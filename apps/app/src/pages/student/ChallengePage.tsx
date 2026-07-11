@@ -476,13 +476,15 @@ function renderResultValue(v: unknown) {
 
 interface TestResultsPanelProps {
   results: TestResult[]
+  /** Test cases originais (mesma ordem dos results) — usado só para saber o `mode` de cada teste. */
+  testCases?: TestCase[]
   /** Chamado quando o aluno clica em "Pedir ajuda ao Codi" num teste que falhou */
   onAskCodi?: (result: TestResult) => void
   /** Tarefa 3.3 — esconde o botão quando o tenant desabilitou a explicação de erro */
   aiHelpEnabled?: boolean
 }
 
-function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPanelProps) {
+function TestResultsPanel({ results, testCases, onAskCodi, aiHelpEnabled }: TestResultsPanelProps) {
   const passed = results.filter((r) => r.passed).length
   const total = results.length
   const allPassed = passed === total
@@ -506,6 +508,12 @@ function TestResultsPanel({ results, onAskCodi, aiHelpEnabled }: TestResultsPane
             </span>
             <div className={styles.resultBody}>
               <span className={styles.resultDescription}>{r.description}</span>
+              {r.passed && testCases?.[i]?.mode === 'stdout' && typeof r.actual === 'string' && (
+                <div className={styles.resultOutputBlock}>
+                  <span className={styles.resultOutputLabel}>saída:</span>
+                  <pre className={styles.resultOutput}>{r.actual}</pre>
+                </div>
+              )}
               {!r.passed && (
                 <div className={styles.resultDetail}>
                   {(() => {
@@ -1307,6 +1315,7 @@ export default function ChallengePage() {
           {testResults && runState === 'done' && (
             <TestResultsPanel
               results={testResults}
+              testCases={moduleData?.challenge?.testCases ?? undefined}
               onAskCodi={handleAskCodi}
               aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
             />

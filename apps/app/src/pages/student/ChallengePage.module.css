@@ -476,6 +476,18 @@
   box-sizing: border-box;
 }
 
+.resultOutputBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.resultOutputLabel {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
 .resultError {
   font-family: var(--font-sans);
   font-size: 0.75rem;
