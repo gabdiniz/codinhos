@@ -247,6 +247,53 @@ comentários que descreviam o G6 como pendência — ficam como registro histór
 escritos; o comportamento real agora é o descrito aqui. Também não toquei em nenhum outro conteúdo
 de trilha.
 
+### 1.4 G2 resolvido — `input()` simulado via fila de stdin (12/07/2026)
+
+Motivação: `input()` era só **mencionado** na trilha 1 (lição 2), nunca cobrado em teste — o
+comentário deixado em `seed-trilha-python-01.ts`/`docs/trilha-python-01-primeiros-passos.md`
+registrava isso como gap G2, justamente pra evitar ensinar um recurso que a plataforma não
+conseguia testar de verdade. Sem stdin real dentro de um `worker_thread`/Web Worker, um `input()`
+não interceptado travaria a execução esperando por uma entrada que nunca chega.
+
+**Implementação — campo novo no `TestCase`, não um modo novo:**
+
+- `TestCase` (`packages/runner/src/types.ts`, tipo compartilhado) ganhou `stdin?: string[]` — fila
+  de respostas na ORDEM de consumo (1ª chamada de `input()` pega `stdin[0]`, e assim por diante).
+  Ausente/vazio = qualquer `input()` reprova. Diferente de `mode` (que muda o TIPO de verificação),
+  `stdin` é um parâmetro extra que vale pra QUALQUER execução real (function-call, type-check,
+  stdout, instance-call) — por isso não é um `PythonOp` novo, é só mais um campo do `RunRequest`.
+- **Sem mutar `builtins` (decisão de design deliberada):** a primeira ideia óbvia seria sobrescrever
+  `builtins.input` — mas isso mutaria um módulo COMPARTILHADO por toda a instância Pyodide (que
+  fica quente entre várias submissões no mesmo worker), quebrando a mesma disciplina de isolamento
+  que o resto do arquivo já segue ("namespace isolado por execução"). Solução mais simples e mais
+  segura: define `input` DIRETO no dict `g` isolado da execução (`STDIN_SETUP_WRAPPER`, roda ANTES
+  de `req.code`, no MESMO `g`) — como `exec(code, g)` resolve um nome global primeiro em `g`, o
+  `input()` do aluno encontra a versão simulada sem precisar tocar em nada global/compartilhado.
+- **Fiel ao Python real:** escreve o prompt no stdout (`print(prompt, end="")`, mesmo buffer
+  capturado por `pyodide.setStdout` no modo `stdout`) mas não ecoa a resposta digitada (isso é o
+  terminal que ecoa, não o Python). Fila esgotada = `EOFError("EOF when reading a line")` — o
+  MESMO erro que um `input()` real dá quando o stdin acaba (ex.: rodando um script com `< arquivo`
+  e o arquivo tem menos linhas do que `input()` chamado) — propaga pro `catch` genérico que já
+  envolve `pyodide.runPython(req.code, ...)`, sem precisar de nenhum tratamento especial de erro.
+- **Cobre `input()` em qualquer lugar do código** — nível de módulo (ex.: `nome = input()` direto
+  no topo do script) ou dentro de uma função definida pelo aluno, já que a função criada por
+  `req.code` herda `g` como seu `__globals__`.
+- **Validado fora do repo antes de integrar** (mesma disciplina do G5/G6): simulei a pipeline
+  completa (setup + código do aluno + chamada de função, via `exec` com dict compartilhado, mesma
+  semântica que `pyodide.runPython(..., {globals: g})` usa) contra Python 3.10 real no sandbox — 6
+  cenários (dois `input()` em sequência preenchendo variáveis; fila esgotada vira `EOFError`;
+  `input()` dentro de função; nenhum `input()` chamado não quebra nada; isolamento entre duas
+  execuções em sequência, fila de uma não vaza pra outra) — todos corretos.
+- **Testes novos** em `run-python-tests.test.ts` (4 cenários via `runPythonTests`: retorno de
+  função que lê 2 valores via `input()`, fila esgotada, `input()` sem `stdin` nenhum configurado,
+  isolamento entre submissões) — mesma ressalva de sempre: não executados neste sandbox.
+
+**Não fiz:** não editei `seed-trilha-python-01.ts` pra passar a EXIGIR `input()` de verdade em
+algum desafio — a trilha 1 continua exatamente como estava (menciona o recurso, não cobra em
+teste). Agora que o motor suporta, isso é uma melhoria de conteúdo opcional pra uma sessão futura,
+não urgente (nenhum aluno é prejudicado por `input()` continuar não-testado na trilha 1 — só deixa
+de aproveitar uma capacidade nova).
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -261,15 +308,17 @@ de evolução paralelas do mesmo motor.
 | **P3** | ~~AST estrutural pra Python~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G5**~~ | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
 | **P4** | ~~Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM)~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G6**~~ | P | Trilha 10 (capstone) e trilha 7 (`functools`) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
-| **Horizonte** (sem trilha bloqueada hoje) | G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+| **Horizonte** (sem trilha bloqueada hoje) | ~~G2 (stdin simulado)~~ **RESOLVIDO fora de ordem, ver abaixo**, G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | ~~G2~~, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
 
-**G7, G5 e G6 resolvidos fora de ordem (12/07/2026)** — ver §1.1, §1.2 e §1.3 acima. Nenhum dos
-três estava na sequência estrita P1→P5 no momento (G7 nem tinha fase própria, era horizonte; G5
-era P3; G6 era P4), mas o Gabriel pediu pra adiantar os três antes do primeiro seed — G7 melhora a
-precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha 8 completa como desenhada
-("sem loop"/"usa recursão" verificado de verdade, não só documentado), G6 fecha a allowlist de
-imports que a trilha 10 (e a 7, com `functools`) já dependiam sem bloqueio real. **Motor sem
-nenhum gap pendente pras 10 trilhas já desenhadas — falta só rodar o primeiro seed.**
+**G7, G5, G6 e G2 resolvidos fora de ordem (12/07/2026)** — ver §1.1, §1.2, §1.3 e §1.4 acima.
+Nenhum estava na sequência estrita P1→P5 no momento (G7 e G2 nem tinham fase própria, eram
+horizonte; G5 era P3; G6 era P4), mas o Gabriel pediu pra fechar tudo que dava pra fechar antes do
+primeiro seed — G7 melhora a precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha
+8 completa como desenhada ("sem loop"/"usa recursão" verificado de verdade, não só documentado),
+G6 fecha a allowlist de imports que a trilha 10 (e a 7, com `functools`) já dependiam sem bloqueio
+real, G2 destrava `input()` como recurso testável de verdade (não mais só mencionado). **Motor sem
+nenhum gap pendente pras 10 trilhas já desenhadas — falta só rodar o primeiro seed.** Só G3
+(completo) e G4 continuam no horizonte, sem nenhuma trilha esperando por eles.
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -280,7 +329,7 @@ puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
 
 Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 não
 bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já foram resolvidos
-(G5, G6 e G7, fora de ordem, ver §1.1/§1.2/§1.3).**
+(G5, G6, G7 e G2, fora de ordem, ver §1.1/§1.2/§1.3/§1.4).**
 
 | Gap | Bloqueia o quê | Quando entra |
 |---|---|---|
@@ -288,14 +337,16 @@ bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já
 | G5 (AST) | ~~Trilha 8, como desenhada ("sem loop")~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.2 |
 | G6 (allowlist de módulos) | ~~Trilha 10 (capstone usa `math`/`random`/`string`) e trilha 7 (`functools`)~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.3 |
 | G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
-| G2 (stdin) | Nenhuma — `input()` é só "sabia que existe" numa lição, não testável | Horizonte, sem trilha esperando |
+| G2 (stdin) | ~~Nenhuma bloqueava pra nota — `input()` era só "sabia que existe" numa lição, não testável~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.4 |
 | G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
 | G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
 Consequência prática: depois da P1, **as 10 trilhas já podem ser semeadas e publicadas sem esperar
-mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os dois últimos gaps com trilha
-esperando, e ambos foram resolvidos nesta rodada. O que resta (G2/G3-completo/G4) é horizonte, sem
-nenhuma trilha bloqueada.
+mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os últimos gaps com trilha
+esperando pra nota, e ambos foram resolvidos. G2 não bloqueava nenhuma trilha (só era um recurso
+mencionado sem poder ser testado), mas também foi resolvido — `input()` agora é testável de
+verdade, se algum conteúdo futuro quiser usar. Só G3(completo)/G4 seguem no horizonte, sem nenhuma
+trilha bloqueada.
 
 ---
 

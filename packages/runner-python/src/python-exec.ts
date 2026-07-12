@@ -24,6 +24,14 @@ export interface RunRequest {
   /** Usados só quando op === 'ast' (G5 — verificação estrutural). Ver AstRuleKind em @codinhos/runner. */
   astRuleKind?: string | null
   astRuleName?: string | null
+  /**
+   * G2 — fila de respostas simuladas pra `input()`, na ordem de consumo.
+   * Vale para QUALQUER op que executa código de verdade (function/typecheck/
+   * stdout/instance) — não é um op próprio, é um parâmetro extra da
+   * execução. Ausente/vazio = qualquer `input()` reprova com `EOFError`,
+   * nunca trava a thread esperando um stdin real que não existe no worker.
+   */
+  stdin?: string[] | null
 }
 
 export interface RunResponse {
@@ -301,6 +309,36 @@ function checkImportAllowlist(pyodide: PyodideInterface, code: string): string |
   }
 }
 
+// G2 — simula `input()` sem depender de stdin real (não existe stdin
+// interativo dentro de um worker_thread/Web Worker). Roda ANTES de
+// `req.code`, no MESMO `g` que `req.code` vai usar como globals — por isso
+// não precisa mexer no módulo `builtins` (que seria uma mutação
+// PROCESS-WIDE, vazando entre execuções que reusam a mesma instância quente
+// de Pyodide): basta definir `input` dentro do próprio dict `g`, porque
+// `exec(code, g)` resolve um nome global primeiro em `g`, só cai pro
+// `__builtins__` de verdade se não achar ali. Isso preserva a MESMA
+// disciplina de isolamento por execução que o resto do arquivo já segue
+// (dict novo por chamada).
+//
+// Fiel ao Python real: escreve o prompt no stdout (`print(prompt, end="")`,
+// vai pro mesmo buffer capturado por `pyodide.setStdout`) mas NÃO ecoa a
+// resposta (o terminal real ecoa por conta própria, não é o Python que
+// escreve o que o usuário digitou). Fila esgotada = `EOFError` (mesmo erro
+// que um `input()` real dá quando o stdin acaba) — propaga pro catch já
+// existente em volta de `pyodide.runPython(req.code, ...)`, sem precisar de
+// tratamento especial.
+const STDIN_SETUP_WRAPPER = `
+import json as __stdin_json_module
+
+__stdin_queue = __stdin_json_module.loads(__stdin_lines_json)
+
+def input(prompt=""):
+    print(prompt, end="")
+    if not __stdin_queue:
+        raise EOFError("EOF when reading a line")
+    return __stdin_queue.pop(0)
+`
+
 function formatPyError(err: unknown): string {
   if (err instanceof Error) {
     const lines = err.message.trim().split('\n')
@@ -363,6 +401,12 @@ export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunRe
   const g = pyodide.globals.get('dict')()
 
   try {
+    // G2 — `input()` simulado, configurado ANTES de req.code no MESMO `g`
+    // (ver STDIN_SETUP_WRAPPER acima) — precisa rodar cedo pra cobrir
+    // `input()` chamado direto no nível de módulo, não só dentro de função.
+    g.set('__stdin_lines_json', JSON.stringify(req.stdin ?? []))
+    pyodide.runPython(STDIN_SETUP_WRAPPER, { globals: g })
+
     try {
       pyodide.runPython(req.code, { globals: g })
     } catch (err) {

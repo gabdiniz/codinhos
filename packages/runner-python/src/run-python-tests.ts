@@ -9,6 +9,10 @@
  * (input null), stdout, instance-call (G7 — instancia uma classe e chama um
  * método nela, comparando o RETORNO do método) e ast (G5 — verificação
  * estrutural via `ast.parse` real do Python, nunca executa o código do aluno).
+ * `TestCase.stdin` (G2 — fila de respostas simuladas pra `input()`) é
+ * repassado direto pro worker em todo op que executa código de verdade
+ * (function/typecheck/stdout/instance) — não muda o dispatch, só um campo a
+ * mais no `RunRequest`.
  */
 import { applyMatcher, normalizeOutput, type TestCase, type TestResult } from '@codinhos/runner'
 import { resolveTargetClassPython, resolveTargetFnPython } from './extract.js'
@@ -67,7 +71,7 @@ async function runStdoutCase(
 ): Promise<TestResult> {
   const args = Array.isArray(tc.input) ? tc.input : null
   const fnName = args ? resolveTargetFnPython(code, targetFn) : null
-  const res = await pool.run({ code, op: 'stdout', targetFn: fnName, args })
+  const res = await pool.run({ code, op: 'stdout', targetFn: fnName, args, stdin: tc.stdin })
 
   if (!res.ok) {
     return {
@@ -106,7 +110,7 @@ async function runTypeCheckCase(
     }
   }
 
-  const res = await pool.run({ code, op: 'typecheck', varName: varMatch[1] })
+  const res = await pool.run({ code, op: 'typecheck', varName: varMatch[1], stdin: tc.stdin })
   if (!res.ok) {
     return {
       passed: false,
@@ -144,7 +148,7 @@ async function runFunctionCase(
   }
 
   const args = Array.isArray(tc.input) ? tc.input : [tc.input]
-  const res = await pool.run({ code, op: 'function', targetFn: fnName, args })
+  const res = await pool.run({ code, op: 'function', targetFn: fnName, args, stdin: tc.stdin })
   if (!res.ok) {
     return {
       passed: false,
@@ -249,6 +253,7 @@ async function runInstanceCase(code: string, tc: TestCase, pool: PythonRunner): 
     constructorArgs: tc.constructorArgs ?? [],
     methodName: tc.methodName,
     args: methodArgs,
+    stdin: tc.stdin,
   })
 
   if (!res.ok) {

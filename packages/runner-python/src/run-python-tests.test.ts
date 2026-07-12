@@ -469,6 +469,80 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'stdin: input() simulado via fila, valor de retorno confere (function-call)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def saudacao():\n    nome = input()\n    idade = input()\n    return f"Ola {nome}, {idade} anos"',
+        [
+          {
+            input: [],
+            expected: 'Ola Ana, 13 anos',
+            description: 'saudacao() lê nome e idade via input()',
+            stdin: ['Ana', '13'],
+          },
+        ],
+        'saudacao',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe('Ola Ana, 13 anos')
+    },
+    20000,
+  )
+
+  it(
+    'stdin: fila esgotada reprova com EOFError, sem travar o worker',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f():\n    a = input()\n    b = input()\n    return a + b',
+        [{ input: [], expected: 'x', description: 'f() pede 2 inputs, só 1 na fila', stdin: ['so-um'] }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/EOFError/)
+    },
+    20000,
+  )
+
+  it(
+    'stdin: input() sem stdin nenhum configurado reprova (nunca trava esperando stdin real)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f():\n    return input()',
+        [{ input: [], expected: 'x', description: 'f() chama input() sem stdin no testCase' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/EOFError/)
+    },
+    20000,
+  )
+
+  it(
+    'stdin: isolamento — fila de uma submissão não vaza pra próxima',
+    async () => {
+      const primeira = await runPythonTests(
+        'x = input()',
+        [{ input: null, expected: 'str', description: 'x deve ser do tipo str', stdin: ['ola'] }],
+        null,
+        pool,
+      )
+      expect(primeira.allPassed).toBe(true)
+
+      const segunda = await runPythonTests(
+        'x = input()',
+        [{ input: null, expected: 'str', description: 'x deve ser do tipo str' }], // sem stdin
+        null,
+        pool,
+      )
+      expect(segunda.results[0]?.passed).toBe(false) // sem fila própria, deve dar EOFError, não reusar a "ola" da execução anterior
+    },
+    20000,
+  )
+
+  it(
     'timeout: loop infinito reprova em vez de travar o teste',
     async () => {
       const { results, allPassed } = await runPythonTests(

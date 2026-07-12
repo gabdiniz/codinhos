@@ -40,6 +40,17 @@ export interface TestCase {
   className?: string
   constructorArgs?: unknown[]
   methodName?: string
+  /**
+   * G2 (docs/motor-python-capacidades.md) — fila de respostas simuladas para
+   * chamadas de `input()` no código do aluno, na ORDEM em que serão
+   * consumidas (1ª chamada pega `stdin[0]`, 2ª pega `stdin[1]`, ...). Se o
+   * código chamar `input()` mais vezes do que itens em `stdin`, a execução
+   * reprova com `EOFError` (mesmo comportamento do Python real quando o
+   * stdin acaba). Implementado hoje só no runner Python (`input()` não existe
+   * em JS da mesma forma — nenhum desafio JS usa este campo); ausente ou
+   * vazio = nenhuma resposta disponível, qualquer `input()` reprova.
+   */
+  stdin?: string[]
 }
 
 export interface TestResult {
