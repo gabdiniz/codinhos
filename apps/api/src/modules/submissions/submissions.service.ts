@@ -337,7 +337,12 @@ export async function createSubmission(
   if (effectiveMode === 'auto' || effectiveMode === 'auto_review') {
     const testCases = challenge.testCases ?? []
     if (testCases.length > 0) {
-      const { results, allPassed } = await runTests(body.code, testCases, challenge.targetFn)
+      const { results, allPassed } = await runTests(
+        body.code,
+        testCases,
+        challenge.targetFn,
+        challenge.language,
+      )
       testResults = results
       if (effectiveMode === 'auto') {
         submissionStatus = allPassed ? 'passed' : 'failed'

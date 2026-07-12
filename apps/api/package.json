@@ -36,7 +36,8 @@
     "resend": "^4.0.0",
     "zod": "^3.23.8",
     "pdfkit": "^0.15.1",
-    "@codinhos/runner": "workspace:*"
+    "@codinhos/runner": "workspace:*",
+    "@codinhos/runner-python": "workspace:*"
   },
   "devDependencies": {
     "@codinhos/types": "workspace:*",

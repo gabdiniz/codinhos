@@ -223,8 +223,12 @@ export async function findModuleWithChallenge(moduleId: string) {
       concept: trailModules.concept,
       exampleCode: trailModules.exampleCode,
       order: trailModules.order,
+      // Linguagem da trilha (P1 Python) — o front usa pra decidir se o
+      // sandbox.worker.ts roda o desafio em JS (node:vm-like) ou Python (Pyodide).
+      language: trails.language,
     })
     .from(trailModules)
+    .innerJoin(trails, eq(trails.id, trailModules.trailId))
     .where(eq(trailModules.id, moduleId))
     .limit(1)
   if (!mod) return null
