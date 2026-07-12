@@ -70,7 +70,14 @@ interface Challenge {
 }
 
 interface ModuleDetail {
-  module: { id: string; title: string; concept: string | null; exampleCode: string | null }
+  module: {
+    id: string
+    title: string
+    concept: string | null
+    exampleCode: string | null
+    /** Linguagem da trilha (P1 Python) — decide o runner do Worker: JS ou Pyodide. */
+    language: 'javascript' | 'python'
+  }
   challenge: Challenge | null
   progress: { status: ModuleStatus; attempts: number }
   visualBlocksEnabled: boolean
@@ -981,39 +988,62 @@ export default function ChallengePage() {
   }, [])
 
   // ── Executar testes localmente ──
+  //
+  // Python é um caso à parte: o worker carrega o Pyodide (WASM) na primeira
+  // mensagem, o que custa alguns segundos (medido em spike no backend: ~4s
+  // frio, ~10ms já quente — mesma ordem de grandeza esperada no navegador).
+  // Por isso, pra Python o worker NÃO é destruído a cada "Executar" como no
+  // JS (que é ~instantâneo e não tem custo de recriar) — ele fica vivo entre
+  // execuções, mantendo o Pyodide já carregado. O isolamento entre rodadas
+  // continua garantido do lado do worker (globals novo por execução, igual
+  // ao backend), então reaproveitar o mesmo worker é seguro.
   const handleRun = useCallback(() => {
     const challenge = moduleData?.challenge
+    const language = moduleData?.module.language ?? 'javascript'
     if (!challenge?.testCases?.length) return
-
-    // Termina worker anterior se ainda rodar
-    workerRef.current?.terminate()
 
     setRunState('running')
     setTestResults(null)
     setSubmitResult(null)
 
-    const worker = new Worker(
-      new URL('../../workers/sandbox.worker.ts', import.meta.url),
-      { type: 'module' },
-    )
-    workerRef.current = worker
+    const isPython = language === 'python'
+    // JS: sempre um worker novo (barato, evita estado de execução anterior).
+    // Python: reaproveita se já existir um worker vivo (mantém o Pyodide quente).
+    if (!isPython || !workerRef.current) {
+      workerRef.current?.terminate()
+      workerRef.current = new Worker(
+        new URL('../../workers/sandbox.worker.ts', import.meta.url),
+        { type: 'module' },
+      )
+    }
+    // `const` (não `let`) de propósito: TS não preserva o estreitamento de
+    // não-nulo de uma variável reatribuível dentro das closures abaixo
+    // (onmessage/onerror/timeout) — com `const` fica garantido pelo tipo.
+    const worker = workerRef.current
 
-    // Timeout de segurança: 5s
+    // Timeout de segurança: 5s pra JS (execução é imediata); pra Python, 20s
+    // pra dar folga ao load frio do Pyodide na primeira execução da sessão
+    // (rodadas seguintes no mesmo worker são rápidas, mas o limite continua
+    // alto pra não punir a primeira).
+    const timeoutMs = isPython ? 20000 : 5000
     const timeout = setTimeout(() => {
+      // Num timeout de verdade (loop infinito), o worker trava e precisa
+      // morrer de qualquer forma — a próxima "Executar" cria um worker novo.
       worker.terminate()
+      workerRef.current = null
       setRunState('done')
       setTestResults([{
         passed: false,
         input: null,
         expected: null,
         actual: null,
-        description: 'Tempo limite excedido (5s). Verifique se há loop infinito.',
+        description: `Tempo limite excedido (${timeoutMs / 1000}s). Verifique se há loop infinito.`,
       }])
-    }, 5000)
+    }, timeoutMs)
 
     worker.onmessage = (e: MessageEvent<{ results: TestResult[] }>) => {
       clearTimeout(timeout)
-      worker.terminate()
+      if (!isPython) worker.terminate()
       setTestResults(e.data.results)
       setRunState('done')
     }
@@ -1021,6 +1051,7 @@ export default function ChallengePage() {
     worker.onerror = () => {
       clearTimeout(timeout)
       worker.terminate()
+      workerRef.current = null
       setRunState('done')
       setTestResults([{
         passed: false,
@@ -1032,7 +1063,12 @@ export default function ChallengePage() {
       }])
     }
 
-    worker.postMessage({ code: codeRef.current, testCases: challenge.testCases, targetFn: challenge.targetFn })
+    worker.postMessage({
+      code: codeRef.current,
+      testCases: challenge.testCases,
+      targetFn: challenge.targetFn,
+      language,
+    })
   }, [moduleData])
 
   // ── Enviar submissão ──
