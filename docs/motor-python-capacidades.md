@@ -349,6 +349,74 @@ delas foi desenhada esperando essa exigência (a trilha 5, que mais fala de tupl
 foi desenhada justamente para não depender disso, ver `docs/pesquisa-trilhas-python.md`). É um
 recurso disponível pra conteúdo futuro, não uma correção de algo que estava quebrado.
 
+### 1.6 G4 resolvido — `mode: 'raises'` (12/07/2026)
+
+Motivação: tratamento de erro (`try/except`) ficou de fora do currículo por decisão de DESIGN, não
+só por limitação técnica (`docs/pesquisa-trilhas-python.md` §2.2: "conceito real... mas o motor
+atual não tem um jeito de testar que o código lança/trata uma exceção específica"). O gap em si —
+não ter como dizer "este teste passa SE o código lançar uma exceção X" — bloqueava qualquer
+conteúdo futuro nessa linha, mesmo que a decisão de currículo atual não dependa disso agora.
+
+**Implementação — reaproveita a infraestrutura de erro que já existia, não cria execução nova:**
+
+- `TestCase.mode` ganhou `'raises'` (`packages/runner/src/types.ts`) — chama a função-alvo com
+  `input` (mesma convenção de argumentos do function-call) e espera uma exceção. Reaproveita o
+  campo `expected` pra guardar o NOME da classe esperada (ex.: `'ZeroDivisionError'`) em vez de
+  criar um campo novo tipo `expectedException` — mais consistente com o padrão de `mode` já usado
+  em `stdout`/`ast`/`instance-call` (cada modo reinterpreta os campos existentes do jeito que faz
+  sentido pra ele, em vez de acumular campos exclusivos de um único modo).
+- **Comparação por NOME exato da classe, sem seguir hierarquia de subclasse** — `type(e).__name__
+  == expected`, mesma filosofia do `expectedType` do G3 completo (simples e previsível pra um
+  currículo de 11-14 anos; um `ValueError` customizado que herda de `ValueError` não "engana" o
+  teste por acidente, mas também não é reconhecido como "ValueError" se o desafio pedir isso — a
+  comparação é literal, documentada, sem mágica de `isinstance`).
+- **`python-exec.ts` ganhou UM campo novo, `errorClassName` no `RunResponse`** (não um `PythonOp`
+  novo) — `FUNCTION_WRAPPER`/`INSTANCE_WRAPPER` já capturavam a exceção inteira formatada
+  (`__error = type(e).__name__ + ": " + str(e)`) desde a P1; só faltava expor o NOME da classe
+  separado da mensagem formatada. Adicionei `__error_class = type(__e).__name__` ao lado de
+  `__error` nos dois wrappers, e `handleRequest` repassa `errorClassName: g.get('__error_class')`
+  nas três branches que já retornavam erro de execução (`function`/`instance`/`stdout` via
+  `FUNCTION_WRAPPER`).
+- **`run-python-tests.ts` ganhou `runRaisesCase`** — despachado por `tc.mode === 'raises'`, usa
+  `op: 'function'` por baixo (mesmo wrapper do function-call normal), só INVERTE a leitura do
+  resultado: `res.ok === true` (não lançou nada) vira reprovação; `res.errorClassName ===
+  tc.expected` vira aprovação; qualquer outra coisa (exceção errada, função não encontrada) vira
+  reprovação com mensagem mostrando o que aconteceu de fato.
+- **Reconhece exceções CUSTOMIZADAS do aluno**, não só as built-in do Python — como a comparação é
+  por nome de classe (via `type(e).__name__`, que funciona igual pra qualquer classe, built-in ou
+  definida pelo aluno com `class MinhaExcecao(Exception): ...`), um desafio pode pedir uma exceção
+  com nome de domínio (`SaldoInsuficiente`, `IdadeInvalida`) sem estar restrito à lista de exceções
+  nativas do Python.
+- **Validado fora do repo antes de integrar** (mesma disciplina do G2/G5/G6): simulei o wrapper
+  exato (com `__error_class` novo) contra Python 3.10 real — 5 cenários (lança a exceção esperada;
+  não lança nada, retorna valor normal; lança exceção CUSTOMIZADA definida no próprio código;
+  `ValueError` explícito com mensagem; função não encontrada não quebra, `error_class` fica `None`
+  com segurança) — todos corretos.
+- **JS ganhou fallback gracioso** (`apps/api/src/shared/utils/run-tests.ts`), mesmo padrão do G7
+  (`instance-call`) e G5 (`ast`) — reprova com mensagem clara em vez de quebrar. Nenhum desafio JS
+  usa `mode: 'raises'` hoje (tratamento de erro está fora do currículo JS também).
+- **Testes novos** em `run-python-tests.test.ts` (4 cenários via `runPythonTests`: lança a exceção
+  esperada; não lança nada; lança a exceção ERRADA; exceção customizada do aluno) — mesma ressalva
+  de sempre: não executados neste sandbox.
+
+**Escopo consciente — só function-call, não instance-call:** `mode: 'raises'` hoje só cobre uma
+função de topo (`resolveTargetFnPython`), não um MÉTODO de instância (`mode:'instance-call'`
+continua sem suporte a "espera lançar"). Combinar os dois (instanciar uma classe, chamar um
+método, esperar que ELE lance) é possível de estender depois — o `errorClassName` já está exposto
+no `RunResponse` também pro path `op:'instance'`, só falta um `runInstanceRaisesCase` ou parâmetro
+extra no `runInstanceCase`, se algum conteúdo futuro pedir POO + tratamento de erro juntos. Não
+implementado agora porque nenhuma trilha (nem hipotética) pede isso — currículo de POO (trilha 9)
+e o currículo de tratamento de erro nunca foram desenhados pra se cruzar.
+
+**Não fiz:** não criei conteúdo de trilha usando `try/except`/`mode:'raises'` — o gap de MOTOR está
+fechado, mas a decisão de currículo ("tratamento de erro fora do currículo por design") continua
+sendo uma decisão de PRODUTO separada, não revista nesta rodada. Se o Gabriel quiser trazer
+tratamento de erro pro currículo agora que o motor sustenta, é uma conversa de conteúdo nova.
+
+**Estado do motor Python depois de G7+G5+G6+G2+G3(completo)+G4: nenhum gap identificado em
+`docs/pesquisa-trilhas-python.md` §4 segue aberto.** Não há mais nenhum item no "horizonte" do
+roadmap — G2-G7 foram todos resolvidos (G1 já era pré-requisito da P1).
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -363,18 +431,19 @@ de evolução paralelas do mesmo motor.
 | **P3** | ~~AST estrutural pra Python~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G5**~~ | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
 | **P4** | ~~Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM)~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G6**~~ | P | Trilha 10 (capstone) e trilha 7 (`functools`) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
-| **Horizonte** (sem trilha bloqueada hoje) | ~~G2 (stdin simulado)~~ **RESOLVIDO**, ~~G3 completo (marcador explícito de tipo esperado)~~ **RESOLVIDO**, G4 (modo de teste pra `try/except`) — ver §1.4/§1.5 | ~~G2~~, ~~G3(completo)~~, G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+| **Horizonte** (sem trilha bloqueada hoje) | ~~G2 (stdin simulado)~~, ~~G3 completo (marcador explícito de tipo esperado)~~, ~~G4 (modo de teste pra `try/except`)~~ — **TODOS RESOLVIDOS, ver §1.4/§1.5/§1.6** | ~~G2~~, ~~G3(completo)~~, ~~G4~~ | cada um P–M | Melhoria de qualidade, não desbloqueio — entraram sem trilha esperando, a pedido do Gabriel |
 
-**G7, G5, G6, G2 e G3(completo) resolvidos fora de ordem (12/07/2026)** — ver §1.1-§1.5 acima.
-Nenhum estava na sequência estrita P1→P5 no momento (G7/G2/G3-completo nem tinham fase própria,
+**G7, G5, G6, G2, G3(completo) e G4 resolvidos fora de ordem (12/07/2026)** — ver §1.1-§1.6 acima.
+Nenhum estava na sequência estrita P1→P5 no momento (G7/G2/G3-completo/G4 nem tinham fase própria,
 eram horizonte; G5 era P3; G6 era P4), mas o Gabriel pediu pra fechar tudo que dava pra fechar
 antes do primeiro seed — G7 melhora a precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava
 a trilha 8 completa como desenhada ("sem loop"/"usa recursão" verificado de verdade, não só
 documentado), G6 fecha a allowlist de imports que a trilha 10 (e a 7, com `functools`) já
 dependiam sem bloqueio real, G2 destrava `input()` como recurso testável de verdade (não mais só
 mencionado), G3 completo dá a opção de EXIGIR tuple (ou outro tipo específico) quando algum
-desafio futuro quiser. **Motor sem nenhum gap pendente pras 10 trilhas já desenhadas — falta só
-rodar o primeiro seed.** Só G4 (try/except) segue no horizonte, sem nenhuma trilha esperando.
+desafio futuro quiser, G4 dá a opção de testar "deve lançar exceção X" quando o currículo de
+tratamento de erro for priorizado. **Motor sem NENHUM gap pendente — todos os itens G1-G7 do
+`docs/pesquisa-trilhas-python.md` §4 estão resolvidos.** Falta só rodar o primeiro seed.
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -383,9 +452,9 @@ puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
 
 ## 3. G2-G7: antes ou depois do primeiro seed
 
-Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 não
-bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já foram resolvidos
-(G5, G6, G7, G2 e G3-completo, fora de ordem, ver §1.1-§1.5).**
+Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 nunca
+bloquearam nenhuma das 10 trilhas — e agora todos os sete estão resolvidos (G5, G6, G7, G2,
+G3-completo e G4, fora de ordem, ver §1.1-§1.6).**
 
 | Gap | Bloqueia o quê | Quando entra |
 |---|---|---|
@@ -394,16 +463,16 @@ bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já
 | G6 (allowlist de módulos) | ~~Trilha 10 (capstone usa `math`/`random`/`string`) e trilha 7 (`functools`)~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.3 |
 | G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); **versão completa (`expectedType`) também resolvida** — ver §1.5 |
 | G2 (stdin) | ~~Nenhuma bloqueava pra nota — `input()` era só "sabia que existe" numa lição, não testável~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.4 |
-| G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
+| G4 (try/except) | ~~Nenhuma — tratamento de erro está fora do currículo por design~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.6 |
 | G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
 Consequência prática: depois da P1, **as 10 trilhas já podem ser semeadas e publicadas sem esperar
 mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os últimos gaps com trilha
-esperando pra nota, e ambos foram resolvidos. G2 e G3(completo) não bloqueavam nenhuma trilha (só
-eram recursos/precisões que nenhum desafio exigia), mas também foram resolvidos — `input()` é
-testável de verdade e um desafio pode exigir `tuple` (ou outro tipo) explicitamente, se algum
-conteúdo futuro quiser usar. **Só G4 (try/except) segue no horizonte, sem nenhuma trilha
-bloqueada.**
+esperando pra nota, e ambos foram resolvidos. G2, G3(completo) e G4 não bloqueavam nenhuma trilha
+(eram recursos/precisões que nenhum desafio exigia), mas também foram resolvidos — `input()` é
+testável de verdade, um desafio pode exigir `tuple` (ou outro tipo) explicitamente, e um desafio
+pode exigir que uma exceção específica seja lançada, se algum conteúdo futuro quiser usar. **Todos
+os gaps G1-G7 estão resolvidos — não sobra nenhum item de motor pendente.**
 
 ---
 

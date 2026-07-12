@@ -176,6 +176,65 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'raises (G4): lança a exceção esperada, passa',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def dividir(a, b):\n    return a / b',
+        [{ input: [10, 0], expected: 'ZeroDivisionError', description: 'dividir(10, 0) deve lançar ZeroDivisionError', mode: 'raises' }],
+        'dividir',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe('ZeroDivisionError')
+    },
+    20000,
+  )
+
+  it(
+    'raises (G4): não lança nada, reprova com mensagem clara',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def dividir(a, b):\n    return a / b',
+        [{ input: [10, 2], expected: 'ZeroDivisionError', description: 'dividir(10, 2) não deveria lançar nada', mode: 'raises' }],
+        'dividir',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/nenhuma exceção.*"ZeroDivisionError"/i)
+    },
+    20000,
+  )
+
+  it(
+    'raises (G4): lança a exceção ERRADA, reprova mostrando as duas',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def validar(idade):\n    if idade < 0:\n        raise ValueError("idade negativa")\n    return idade',
+        [{ input: [-5], expected: 'TypeError', description: 'validar(-5) lança ValueError, não TypeError', mode: 'raises' }],
+        'validar',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"ValueError".*"TypeError"/)
+    },
+    20000,
+  )
+
+  it(
+    'raises (G4): exceção customizada definida pelo aluno também é reconhecida pelo nome',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class SaldoInsuficiente(Exception):\n    pass\ndef sacar(saldo, valor):\n    if valor > saldo:\n        raise SaldoInsuficiente("sem saldo")\n    return saldo - valor',
+        [{ input: [100, 500], expected: 'SaldoInsuficiente', description: 'sacar(100, 500) deve lançar SaldoInsuficiente', mode: 'raises' }],
+        'sacar',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+    },
+    20000,
+  )
+
+  it(
     'function-call: exceção do aluno reprova com mensagem',
     async () => {
       const { results, allPassed } = await runPythonTests(

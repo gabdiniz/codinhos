@@ -23,11 +23,15 @@ export interface TestCase {
    * impressa com console.log. 'ast' verifica a ESTRUTURA do código (ver astRule).
    * 'instance-call' instancia uma classe e chama um MÉTODO nela, comparando o
    * retorno (ver className/constructorArgs/methodName) — G7,
-   * docs/motor-python-capacidades.md. Implementado hoje só no runner Python;
-   * o runner JS reprova com mensagem clara em vez de quebrar (mesmo padrão
-   * usado ali pro que ainda não tiver suporte).
+   * docs/motor-python-capacidades.md. 'raises' chama a função-alvo com
+   * `input` e espera que ela LANCE uma exceção — `expected` vira o NOME da
+   * classe da exceção esperada (ex.: `'ZeroDivisionError'`), comparado por
+   * nome exato (não segue hierarquia de subclasse) — G4,
+   * docs/motor-python-capacidades.md §1.6. Implementado hoje só no runner
+   * Python; o runner JS reprova com mensagem clara em vez de quebrar (mesmo
+   * padrão usado ali pro que ainda não tiver suporte).
    */
-  mode?: 'stdout' | 'ast' | 'instance-call'
+  mode?: 'stdout' | 'ast' | 'instance-call' | 'raises'
   /** Regra estrutural, usada quando mode === 'ast' (ex.: exigir recursão). */
   astRule?: AstRule
   /**

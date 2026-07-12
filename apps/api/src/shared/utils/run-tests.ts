@@ -83,6 +83,19 @@ async function runJavaScriptTests(
         actual: 'Verificação instance-call (instanciar classe + chamar método) ainda não suportada para JavaScript.',
         description: tc.description,
       })
+    } else if (tc.mode === 'raises') {
+      // ── Raises test (G4) ────────────────────────────────────────────────────
+      // Ainda não implementado para JavaScript (só Python, ver
+      // packages/runner-python/src/run-python-tests.ts) — reprova com
+      // mensagem clara em vez de quebrar, mesmo padrão usado pra instance-call
+      // acima. Nenhum desafio JS usa este modo hoje.
+      results.push({
+        passed: false,
+        input: tc.input,
+        expected: tc.expected,
+        actual: 'Verificação "deve lançar exceção" (mode: raises) ainda não suportada para JavaScript.',
+        description: tc.description,
+      })
     } else if (tc.mode === 'stdout') {
       // ── Console-output test ───────────────────────────────────────────────
       // Executa o código capturando console.log e compara a SAÍDA impressa.

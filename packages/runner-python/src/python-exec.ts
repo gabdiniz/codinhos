@@ -45,6 +45,16 @@ export interface RunResponse {
   /** Usados só quando op === 'ast'. */
   astPassed?: boolean
   astMessage?: string
+  /**
+   * G4 — nome da CLASSE da exceção Python levantada (`type(e).__name__`,
+   * ex.: `'ZeroDivisionError'`), presente sempre que `ok === false` por causa
+   * de uma exceção de verdade do código do aluno (não presente pra outros
+   * motivos de falha, como função não encontrada). `run-python-tests.ts` usa
+   * isso pra decidir `mode: 'raises'` — se a exceção era ESPERADA, o
+   * resultado vira `passed: true` mesmo com `res.ok === false` aqui (o
+   * "erro" de execução É o resultado correto do teste).
+   */
+  errorClassName?: string
 }
 
 /**
@@ -74,6 +84,7 @@ def __safe_json(v):
 __fn = globals().get(__target_fn_name__)
 if __fn is None or not callable(__fn):
     __error = "not_found"
+    __error_class = None
     __actual_json = "null"
     __actual_repr = ""
     __actual_type = ""
@@ -85,8 +96,10 @@ else:
         __actual_repr = repr(__result)
         __actual_type = type(__result).__name__
         __error = None
+        __error_class = None
     except Exception as __e:
-        __error = type(__e).__name__ + ": " + str(__e)
+        __error_class = type(__e).__name__
+        __error = __error_class + ": " + str(__e)
         __actual_json = "null"
         __actual_repr = ""
         __actual_type = ""
@@ -120,6 +133,7 @@ def __safe_json(v):
 __cls = globals().get(__class_name__)
 if __cls is None or not isinstance(__cls, type):
     __error = "class_not_found"
+    __error_class = None
     __actual_json = "null"
     __actual_repr = ""
     __actual_type = ""
@@ -130,6 +144,7 @@ else:
         __method = getattr(__instance, __method_name__, None)
         if __method is None or not callable(__method):
             __error = "method_not_found"
+            __error_class = None
             __actual_json = "null"
             __actual_repr = ""
             __actual_type = ""
@@ -140,8 +155,10 @@ else:
             __actual_repr = repr(__result)
             __actual_type = type(__result).__name__
             __error = None
+            __error_class = None
     except Exception as __e:
-        __error = type(__e).__name__ + ": " + str(__e)
+        __error_class = type(__e).__name__
+        __error = __error_class + ": " + str(__e)
         __actual_json = "null"
         __actual_repr = ""
         __actual_type = ""
@@ -445,7 +462,7 @@ export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunRe
           }
         }
         if (error) {
-          return { id: req.id, ok: false, errorMessage: `Erro: ${error}` }
+          return { id: req.id, ok: false, errorMessage: `Erro: ${error}`, errorClassName: g.get('__error_class') }
         }
       }
       return { id: req.id, ok: true, output: output.join('\n') }
@@ -477,7 +494,7 @@ export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunRe
         }
       }
       if (instanceError) {
-        return { id: req.id, ok: false, errorMessage: `Erro: ${instanceError}` }
+        return { id: req.id, ok: false, errorMessage: `Erro: ${instanceError}`, errorClassName: g.get('__error_class') }
       }
       return {
         id: req.id,
@@ -509,7 +526,7 @@ export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunRe
       }
     }
     if (error) {
-      return { id: req.id, ok: false, errorMessage: `Erro: ${error}` }
+      return { id: req.id, ok: false, errorMessage: `Erro: ${error}`, errorClassName: g.get('__error_class') }
     }
     return {
       id: req.id,

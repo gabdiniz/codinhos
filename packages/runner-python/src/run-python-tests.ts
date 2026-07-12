@@ -15,6 +15,9 @@
  * mais no `RunRequest`. `TestCase.expectedType` (G3 completo — exige um tipo
  * Python específico de volta, ex. `'tuple'`) é checado em cima do valor só em
  * function-call/instance-call (`checkExpectedType`), ver §1.5 do doc mestre.
+ * `mode: 'raises'` (G4 — espera que a função-alvo LANCE uma exceção, `expected`
+ * vira o nome da classe esperada) usa `op: 'function'` por baixo, só inverte
+ * a leitura do resultado (`runRaisesCase`), ver §1.6 do doc mestre.
  */
 import { applyMatcher, normalizeOutput, type TestCase, type TestResult } from '@codinhos/runner'
 import { resolveTargetClassPython, resolveTargetFnPython } from './extract.js'
@@ -48,6 +51,11 @@ export async function runPythonTests(
 
     if (tc.mode === 'instance-call') {
       results.push(await runInstanceCase(code, tc, pool))
+      continue
+    }
+
+    if (tc.mode === 'raises') {
+      results.push(await runRaisesCase(code, tc, targetFn, pool))
       continue
     }
 
@@ -176,6 +184,73 @@ async function runFunctionCase(
     actual,
     description: tc.description,
     ...(valuePassed && !typeCheck.ok ? { error: typeCheck.message, errorName: 'TypeError' } : {}),
+  }
+}
+
+/**
+ * G4 — `mode: 'raises'`: chama a função-alvo com `input` (mesma convenção de
+ * argumentos do function-call) e espera que ela LANCE uma exceção cuja
+ * CLASSE bate por NOME com `tc.expected` (ex.: `'ZeroDivisionError'`) — não
+ * segue hierarquia de subclasse, comparação simples e previsível pra um
+ * currículo de 11-14 anos. Usa `op: 'function'` por baixo (mesmo wrapper do
+ * function-call normal), só inverte a leitura: aqui, uma exceção é o
+ * resultado ESPERADO, não uma falha de infraestrutura.
+ *
+ * Três desfechos possíveis:
+ * 1. Não lançou nada (`res.ok === true`) — reprova, "esperava uma exceção".
+ * 2. Lançou a exceção certa (`res.errorClassName === tc.expected`) — passa.
+ * 3. Lançou outra coisa (exceção errada, função não encontrada, etc.) —
+ *    reprova, mostrando o que realmente aconteceu.
+ */
+async function runRaisesCase(
+  code: string,
+  tc: TestCase,
+  targetFn: string | null | undefined,
+  pool: PythonRunner,
+): Promise<TestResult> {
+  const fnName = resolveTargetFnPython(code, targetFn)
+  if (!fnName) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: 'Nenhuma função encontrada. Declare uma função com def.',
+      description: tc.description,
+    }
+  }
+
+  const expectedException = typeof tc.expected === 'string' ? tc.expected : String(tc.expected)
+  const args = Array.isArray(tc.input) ? tc.input : [tc.input]
+  const res = await pool.run({ code, op: 'function', targetFn: fnName, args, stdin: tc.stdin })
+
+  if (res.ok) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: `Nenhuma exceção foi lançada (esperava "${expectedException}").`,
+      description: tc.description,
+    }
+  }
+
+  if (res.errorClassName === expectedException) {
+    return {
+      passed: true,
+      input: tc.input,
+      expected: tc.expected,
+      actual: res.errorClassName,
+      description: tc.description,
+    }
+  }
+
+  return {
+    passed: false,
+    input: tc.input,
+    expected: tc.expected,
+    actual: res.errorClassName
+      ? `Lançou "${res.errorClassName}", mas o esperado era "${expectedException}".`
+      : (res.errorMessage ?? 'Erro desconhecido.'),
+    description: tc.description,
   }
 }
 
