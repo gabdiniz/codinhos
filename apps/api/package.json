@@ -20,7 +20,17 @@
     "db:seed:trilha": "tsx src/shared/db/seed-trilha-js.ts",
     "db:seed:recursao": "tsx src/shared/db/seed-trilha-recursao.ts",
     "db:seed:console": "tsx src/shared/db/seed-trilha-console.ts",
-    "db:seed:p5": "tsx src/shared/db/seed-trilha-p5.ts"
+    "db:seed:p5": "tsx src/shared/db/seed-trilha-p5.ts",
+    "db:seed:python-01": "tsx src/shared/db/seed-trilha-python-01.ts",
+    "db:seed:python-02": "tsx src/shared/db/seed-trilha-python-02.ts",
+    "db:seed:python-03": "tsx src/shared/db/seed-trilha-python-03.ts",
+    "db:seed:python-04": "tsx src/shared/db/seed-trilha-python-04.ts",
+    "db:seed:python-05": "tsx src/shared/db/seed-trilha-python-05.ts",
+    "db:seed:python-06": "tsx src/shared/db/seed-trilha-python-06.ts",
+    "db:seed:python-07": "tsx src/shared/db/seed-trilha-python-07.ts",
+    "db:seed:python-08": "tsx src/shared/db/seed-trilha-python-08.ts",
+    "db:seed:python-09": "tsx src/shared/db/seed-trilha-python-09.ts",
+    "db:seed:python-10": "tsx src/shared/db/seed-trilha-python-10.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
