@@ -184,7 +184,7 @@ export const challenges = pgTable('challenges', {
   // Modo de renderização do desafio. Null/'js' = normal (só saída/testes).
   // 'p5' = visual: o front mostra um preview do sketch p5.js num iframe sandbox;
   // a nota continua vindo dos testCases (regras AST) — o backend revalida.
-  renderMode: text('render_mode'),
+  renderMode: text('render_mode').$type<'js' | 'p5'>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [

@@ -8,11 +8,31 @@ import {
   resolveMaybeAsync,
   resolveTargetFn,
 } from '@codinhos/runner'
+import { getSharedPythonPool, runPythonTests } from '@codinhos/runner-python'
 import type { TestCase, TestResult } from '../db/schema.js'
 
 /**
  * Executa o código do aluno contra os test cases (revalidação de nota).
  *
+ * Dispatch por linguagem (P1, ver docs/motor-python-capacidades.md): Python
+ * roteia pro @codinhos/runner-python (Pyodide); o caminho JS abaixo
+ * (runJavaScriptTests) é o de sempre, intocado. `language` é opcional e
+ * default 'javascript' — retrocompatível com todo chamador/teste existente
+ * que não passa esse argumento.
+ */
+export async function runTests(
+  code: string,
+  testCases: TestCase[],
+  targetFn?: string | null,
+  language: 'javascript' | 'python' = 'javascript',
+): Promise<{ results: TestResult[]; allPassed: boolean }> {
+  if (language === 'python') {
+    return runPythonTests(code, testCases, targetFn, getSharedPythonPool())
+  }
+  return runJavaScriptTests(code, testCases, targetFn)
+}
+
+/**
  * A lógica pura (extração da função, comparação, matchers, globais curados)
  * vem de @codinhos/runner — a MESMA usada pelo Web Worker do front, para que
  * feedback e nota nunca divirjam. Aqui fica só a execução em node:vm.
@@ -22,7 +42,7 @@ import type { TestCase, TestResult } from '../db/schema.js'
  *  - input: null      → executa o código e verifica typeof de uma variável
  *                       (nome extraído da description: "varName deve ser ...")
  */
-export async function runTests(
+async function runJavaScriptTests(
   code: string,
   testCases: TestCase[],
   targetFn?: string | null,

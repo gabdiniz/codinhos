@@ -89,6 +89,8 @@ export const moduleDetailResponseSchema = z.object({
       title: z.string(),
       concept: z.string().nullable(),
       exampleCode: z.string().nullable(),
+      // Linguagem da trilha (P1 Python) — decide o runner no front (JS vs Pyodide).
+      language: z.enum(['javascript', 'python']),
     }),
     challenge: z
       .object({

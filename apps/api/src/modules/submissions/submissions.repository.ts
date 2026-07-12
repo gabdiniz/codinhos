@@ -3,6 +3,7 @@ import { db } from '../../shared/db/index.js'
 import {
   challenges,
   trailModules,
+  trails,
   classTrails,
   classes,
   classStudents,
@@ -27,6 +28,9 @@ type Executor = typeof db | any
 // ─── Desafio e turma ──────────────────────────────────────────────────────────
 
 export async function findChallengeForSubmission(challengeId: string) {
+  // Join até trails só pra saber a linguagem do desafio (dispatch JS/Python
+  // em runTests) — o acesso em si já foi validado por isChallengeInClass +
+  // findClassForSubmission (tenant) antes desta chamada, ver submissions.service.ts.
   const [row] = await db
     .select({
       id: challenges.id,
@@ -36,8 +40,11 @@ export async function findChallengeForSubmission(challengeId: string) {
       testCases: challenges.testCases,
       targetFn: challenges.targetFn,
       validationModeOverride: challenges.validationModeOverride,
+      language: trails.language,
     })
     .from(challenges)
+    .innerJoin(trailModules, eq(trailModules.id, challenges.moduleId))
+    .innerJoin(trails, eq(trails.id, trailModules.trailId))
     .where(eq(challenges.id, challengeId))
     .limit(1)
   return row ?? null

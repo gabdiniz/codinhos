@@ -188,6 +188,7 @@ export async function getModuleDetail(
         title: mod.title,
         concept: mod.concept,
         exampleCode: mod.exampleCode,
+        language: mod.language,
       },
       challenge: mod.challenge,
       progress: { status: moduleStatus, attempts },
