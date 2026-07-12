@@ -229,6 +229,78 @@ else:
         __message = "Regra de estrutura desconhecida."
 `
 
+// G6 — allowlist de módulos que um aluno pode `import`: curadoria explícita,
+// defesa em profundidade além do sandbox WASM (que já não dá acesso real a
+// filesystem/rede/processo — ver docs/motor-python-capacidades.md §1 "Por que
+// Pyodide nos dois lados"). Lista fechada, não um bloqueio de nomes perigosos:
+// só os módulos que o currículo de fato usa entram. `math`/`random`/`string`
+// (trilha 10) e `functools` (trilha 7, `functools.reduce` — achado ao revisar
+// o seed já escrito; não estava na lista original do doc mestre, que citava só
+// math/random/string). Estender esta lista é o único passo pra liberar um novo
+// módulo pra alguma trilha futura.
+const IMPORT_ALLOWLIST = ['math', 'random', 'string', 'functools']
+
+// Checagem ESTÁTICA (ast.parse, nunca executa `req.code`) — mesmo espírito do
+// G5 (`handleAstCheck`), mas roda para TODOS os ops que de fato executam
+// código (function/typecheck/stdout/instance), como um portão ANTES de
+// `pyodide.runPython(req.code, ...)`: um `import os` nem chega a rodar. Cobre
+// `import x`, `import x.y` (raiz `x`), `from x import y` e `import x as y`
+// (raiz do módulo, sem depender do alias) — e reprova `from . import x`
+// (import relativo) direto, já que não faz sentido em um script avulso do
+// aluno. NÃO cobre import dinâmico (`__import__('os')`, `importlib`) — esses
+// ficam por conta do isolamento do WASM em si (mesmo raciocínio de "defesa em
+// profundidade, não confiar só nisso" já registrado no doc mestre).
+const IMPORT_CHECK_WRAPPER = `
+import ast as __ic_ast
+
+__ic_allowed = set(__ic_allowed_csv.split(","))
+__ic_blocked = None
+
+try:
+    __ic_tree = __ic_ast.parse(__ic_code)
+except SyntaxError:
+    # erro de sintaxe é responsabilidade da execução normal logo depois (
+    # mensagem melhor, com o traceback de verdade) — esta checagem só cuida
+    # de import.
+    pass
+else:
+    for __ic_node in __ic_ast.walk(__ic_tree):
+        if __ic_blocked:
+            break
+        if isinstance(__ic_node, __ic_ast.Import):
+            for __ic_alias in __ic_node.names:
+                __ic_top = __ic_alias.name.split(".")[0]
+                if __ic_top not in __ic_allowed:
+                    __ic_blocked = __ic_top
+                    break
+        elif isinstance(__ic_node, __ic_ast.ImportFrom):
+            if __ic_node.level and __ic_node.level > 0:
+                __ic_blocked = "import relativo"
+            else:
+                __ic_top = (__ic_node.module or "").split(".")[0]
+                if __ic_top not in __ic_allowed:
+                    __ic_blocked = __ic_top
+`
+
+/**
+ * G6 — devolve o nome do módulo bloqueado (ou "import relativo"), ou `null`
+ * se não há nenhum import fora da allowlist. Usa um dict de globals PRÓPRIO
+ * (descartado no final), separado do `g` da execução real — mesma disciplina
+ * de isolamento do resto do arquivo, evita que variáveis internas desta
+ * checagem (`__ic_*`) apareçam no namespace que o código do aluno vai rodar.
+ */
+function checkImportAllowlist(pyodide: PyodideInterface, code: string): string | null {
+  const g = pyodide.globals.get('dict')()
+  try {
+    g.set('__ic_code', code)
+    g.set('__ic_allowed_csv', IMPORT_ALLOWLIST.join(','))
+    pyodide.runPython(IMPORT_CHECK_WRAPPER, { globals: g })
+    return g.get('__ic_blocked') ?? null
+  } finally {
+    g.destroy()
+  }
+}
+
 function formatPyError(err: unknown): string {
   if (err instanceof Error) {
     const lines = err.message.trim().split('\n')
@@ -269,6 +341,17 @@ function handleAstCheck(pyodide: PyodideInterface, req: RunRequest): RunResponse
 export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunResponse {
   if (req.op === 'ast') {
     return handleAstCheck(pyodide, req)
+  }
+
+  // G6 — portão de allowlist, antes de QUALQUER execução real do código do
+  // aluno (ver IMPORT_CHECK_WRAPPER acima).
+  const blockedModule = checkImportAllowlist(pyodide, req.code)
+  if (blockedModule) {
+    const detail =
+      blockedModule === 'import relativo'
+        ? 'Import relativo não é permitido nesta plataforma.'
+        : `O módulo "${blockedModule}" não é permitido nesta plataforma. Módulos liberados: ${IMPORT_ALLOWLIST.join(', ')}.`
+    return { id: req.id, ok: false, errorMessage: detail }
   }
 
   const output: string[] = []

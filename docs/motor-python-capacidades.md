@@ -197,6 +197,56 @@ JS usa heurística de texto sobre código "limpo" — ver `packages/runner/src/a
 **Não fiz:** não voltei a editar `seed-trilha-python-08.ts` pra usar `mode:'ast'` nos 12 desafios
 documentados com regra estrutural — mesma decisão do G7, só motor nesta rodada.
 
+### 1.3 G6 resolvido — allowlist de `import` (12/07/2026)
+
+Motivação: até aqui, qualquer `import` funcionava sem restrição — o comentário já deixado em
+`seed-trilha-python-10.ts` (trilha 10, capstone) registrava isso como pendência de hardening
+antes de abrir a plataforma pra fora. `math`/`random`/`string` (trilha 10) e `functools` (trilha
+7 — achado ao revisar o seed já escrito, não estava na lista original do §2 deste doc, que citava
+só math/random/string) precisam continuar liberados; o resto da stdlib (em especial
+`os`/`sys`/`subprocess`/`socket`) não faz parte do currículo por design e agora fica bloqueado de
+verdade, não só "fora do desenho".
+
+**Implementação, mesmo espírito do G5 (checagem estática, não confia em blocklist em tempo de
+execução):**
+
+- **Allowlist fechada** (`packages/runner-python/src/python-exec.ts`, `IMPORT_ALLOWLIST`):
+  `['math', 'random', 'string', 'functools']`. É uma lista positiva (só o que está nela passa),
+  não uma lista de nomes perigosos — mais simples de raciocinar sobre segurança ("o que é
+  permitido" é uma pergunta menor que "o que é perigoso") e mais fácil de auditar quando uma
+  trilha nova precisar de um módulo novo (um item a mais na lista).
+- **Checagem via `ast.parse`, nunca executa o código** (`IMPORT_CHECK_WRAPPER`) — roda como um
+  portão em `handleRequest`, ANTES de `pyodide.runPython(req.code, ...)`, pra TODOS os ops que de
+  fato executam código (function/typecheck/stdout/instance). Um `import os` nem chega a rodar.
+  Usa um dict de globals próprio (descartado depois), separado do namespace real do aluno — mesma
+  disciplina de isolamento do resto do arquivo.
+- Cobre `import x`, `import x.y` (checa a raiz `x`), `import x as y` (raiz, ignora o alias),
+  `from x import y` e reprova explicitamente `from . import x` (import relativo, mensagem própria
+  — não faz sentido em um script avulso de aluno). Detecta import dentro de função também (o
+  `ast.walk` percorre a árvore inteira, não só o nível de módulo), não só import no topo do
+  arquivo.
+- **Não cobre import dinâmico** (`__import__('os')`, `importlib.import_module(...)`) — ast
+  estático não pega chamada de função disfarçada de import. Fica por conta do isolamento do WASM
+  em si (mesmo raciocínio de "defesa em profundidade, não confiar só nisso" do §1: mesmo que
+  `__import__('os')` "funcionasse" sintaticamente, o Pyodide não dá acesso a filesystem/rede/
+  processo real de qualquer forma — não é um bypass de segurança, só um buraco na CURADORIA
+  pedagógica que fica registrado como limite conhecido, não resolvido agora).
+- **Validado fora do repo antes de integrar** (mesma disciplina do G5): rodei a lógica exata do
+  `IMPORT_CHECK_WRAPPER` contra Python 3.10 real no sandbox — 17 cenários (math/random/string/
+  functools liberados incluindo `import math as m`; `os`/`sys`/`subprocess`/`socket` bloqueados;
+  `import os.path` bloqueado pela raiz; `from os import path`/`from os import path as p`
+  bloqueados; `from . import x`/`from .foo import x` como import relativo; `import math, os`
+  bloqueado pelo `os`; import dentro de função também pego; código sem import nenhum passa) —
+  todos corretos.
+- **Testes novos** em `run-python-tests.test.ts` (8 cenários via `runPythonTests`, integração real
+  com Pyodide) — mesma ressalva de sempre: não executados neste sandbox, rodar
+  `pnpm --filter @codinhos/runner-python test` na máquina local pra confirmar.
+
+**Não fiz:** não voltei a editar `seed-trilha-python-10.ts` (nem `-07.ts`) pra remover os
+comentários que descreviam o G6 como pendência — ficam como registro histórico de quando foram
+escritos; o comportamento real agora é o descrito aqui. Também não toquei em nenhum outro conteúdo
+de trilha.
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -209,17 +259,17 @@ de evolução paralelas do mesmo motor.
 | **P1** | Runner Python (Pyodide front+back), 3 modos portados (function-call, type-check, stdout), comparação nativa em Python, timeout via terminate | **G1** (+ G3 quase de graça) | **G** | Trilhas 1-7 e 9 (nenhuma delas precisa de import, AST ou try/except) |
 | **P2** | Seed das trilhas 1-7 e 9 (conteúdo, não motor) | — | M (conteúdo) | Primeiro valor real entregue — 9 de 10 trilhas no ar |
 | **P3** | ~~AST estrutural pra Python~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G5**~~ | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
-| **P4** | Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM) | **G6** | P | Trilha 10 (capstone) |
+| **P4** | ~~Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM)~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G6**~~ | P | Trilha 10 (capstone) e trilha 7 (`functools`) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
 | **Horizonte** (sem trilha bloqueada hoje) | G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
 
-**G7 e G5 resolvidos fora de ordem (12/07/2026)** — ver §1.1 e §1.2 acima. Nenhum dos dois
-estava na sequência estrita P1→P5 no momento (G7 nem tinha fase própria, era horizonte; G5 era
-P3), mas o Gabriel pediu pra adiantar os dois antes do primeiro seed — G7 melhora a precisão de
-nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha 8 completa como desenhada ("sem
-loop"/"usa recursão" verificado de verdade, não só documentado). **Falta só G6 (P4) pra a trilha
-10 também poder ser semeada com a allowlist de imports implementada — hoje qualquer import
-funciona sem restrição.**
+**G7, G5 e G6 resolvidos fora de ordem (12/07/2026)** — ver §1.1, §1.2 e §1.3 acima. Nenhum dos
+três estava na sequência estrita P1→P5 no momento (G7 nem tinha fase própria, era horizonte; G5
+era P3; G6 era P4), mas o Gabriel pediu pra adiantar os três antes do primeiro seed — G7 melhora a
+precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha 8 completa como desenhada
+("sem loop"/"usa recursão" verificado de verdade, não só documentado), G6 fecha a allowlist de
+imports que a trilha 10 (e a 7, com `functools`) já dependiam sem bloqueio real. **Motor sem
+nenhum gap pendente pras 10 trilhas já desenhadas — falta só rodar o primeiro seed.**
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -228,24 +278,24 @@ puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
 
 ## 3. G2-G7: antes ou depois do primeiro seed
 
-Resposta curta: **só G1 bloqueou (já resolvido, P1). G6 ainda bloqueia especificamente a trilha
-10 — não o primeiro seed. G2, G3(completo), G4, G5 e G7 não bloqueiam nenhuma das 10 trilhas hoje
-(G5 e G7 porque já foram resolvidos fora de ordem, ver §1.1/§1.2).**
+Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 não
+bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já foram resolvidos
+(G5, G6 e G7, fora de ordem, ver §1.1/§1.2/§1.3).**
 
 | Gap | Bloqueia o quê | Quando entra |
 |---|---|---|
 | G1 | Tudo | P1 — obrigatório antes de qualquer seed |
 | G5 (AST) | ~~Trilha 8, como desenhada ("sem loop")~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.2 |
-| G6 (allowlist de módulos) | Trilha 10 (capstone usa `math`/`random`) | P4 — antes de seedar a trilha 10 especificamente |
+| G6 (allowlist de módulos) | ~~Trilha 10 (capstone usa `math`/`random`/`string`) e trilha 7 (`functools`)~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.3 |
 | G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
 | G2 (stdin) | Nenhuma — `input()` é só "sabia que existe" numa lição, não testável | Horizonte, sem trilha esperando |
 | G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
 | G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
-Consequência prática: depois da P1, **7 das 10 trilhas (1-7 e 9) já podem ser semeadas e
-publicadas sem esperar mais nada de motor.** Só a trilha 8 (Recursão) e a trilha 10 (capstone)
-esperam por uma fase extra cada — e são fases pequenas (P3 é M, P4 é P), não voltam a ser
-bloqueador do tamanho da P1.
+Consequência prática: depois da P1, **as 10 trilhas já podem ser semeadas e publicadas sem esperar
+mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os dois últimos gaps com trilha
+esperando, e ambos foram resolvidos nesta rodada. O que resta (G2/G3-completo/G4) é horizonte, sem
+nenhuma trilha bloqueada.
 
 ---
 

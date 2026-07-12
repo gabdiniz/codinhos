@@ -347,6 +347,128 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'import: módulo liberado (math) roda normalmente',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import math\ndef raiz(n):\n    return math.sqrt(n)',
+        [{ input: [16], expected: 4, description: 'raiz(16) deve ser 4' }],
+        'raiz',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(4)
+    },
+    20000,
+  )
+
+  it(
+    'import: functools (usado na trilha 7) está liberado',
+    async () => {
+      const { allPassed } = await runPythonTests(
+        'import functools\ndef soma_com_reduce(lista):\n    return functools.reduce(lambda acc, x: acc + x, lista, 0)',
+        [{ input: [[1, 2, 3, 4]], expected: 10, description: 'soma_com_reduce([1,2,3,4]) deve ser 10' }],
+        'soma_com_reduce',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+    },
+    20000,
+  )
+
+  it(
+    'import: módulo fora da allowlist (os) reprova com mensagem clara, sem executar',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import os\ndef f():\n    return os.getcwd()',
+        [{ input: [], expected: 1, description: 'f() não deveria nem rodar' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/módulo.*"os".*não é permitido/i)
+    },
+    20000,
+  )
+
+  it(
+    'import: from-import (from os import path) também é bloqueado',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'from os import path\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
+    'import: submódulo (import os.path) é bloqueado pela raiz (os)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import os.path\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
+    'import: sys, subprocess e socket (defesa em profundidade) reprovam',
+    async () => {
+      const modulos = ['sys', 'subprocess', 'socket']
+      for (const mod of modulos) {
+        const { results, allPassed } = await runPythonTests(
+          `import ${mod}\ndef f():\n    return 1`,
+          [{ input: [], expected: 1, description: 'f()' }],
+          'f',
+          pool,
+        )
+        expect(allPassed).toBe(false)
+        expect(String(results[0]?.actual)).toContain(`"${mod}"`)
+      }
+    },
+    20000,
+  )
+
+  it(
+    'import: import relativo (from . import x) reprova com mensagem própria',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'from . import alguma_coisa\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/import relativo/i)
+    },
+    20000,
+  )
+
+  it(
+    'import: import proibido dentro de função (não só no topo) também é pego',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f():\n    import os\n    return os.getcwd()',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
     'timeout: loop infinito reprova em vez de travar o teste',
     async () => {
       const { results, allPassed } = await runPythonTests(
