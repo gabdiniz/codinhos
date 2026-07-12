@@ -245,6 +245,108 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'ast: forbidLoops passa numa solução recursiva de verdade',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def fatorial(n):\n    if n <= 1:\n        return 1\n    return n * fatorial(n - 1)',
+        [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+        'fatorial',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toMatch(/nenhum laço usado/i)
+    },
+    20000,
+  )
+
+  it(
+    'ast: forbidLoops reprova com for, while E list comprehension (fecha o loophole)',
+    async () => {
+      const casos = [
+        'def f(n):\n    r = 1\n    for i in range(1, n+1):\n        r *= i\n    return r',
+        'def f(n):\n    r = 1\n    while n > 1:\n        r *= n\n        n -= 1\n    return r',
+        'def f(lista):\n    return sum([x for x in lista])',
+      ]
+      for (const code of casos) {
+        const { allPassed } = await runPythonTests(
+          code,
+          [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+          'f',
+          pool,
+        )
+        expect(allPassed).toBe(false)
+      }
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireRecursion passa quando a função chama a si mesma',
+    async () => {
+      const { allPassed } = await runPythonTests(
+        'def soma_ate(n):\n    if n <= 0:\n        return 0\n    return n + soma_ate(n - 1)',
+        [{ input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } }],
+        'soma_ate',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireRecursion reprova solução iterativa (mesmo resultado, sem recursão)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def soma_ate(n):\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total',
+        [{ input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } }],
+        'soma_ate',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/precisa chamar a si mesma/i)
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireMethod/forbidMethod distinguem .sort() de sorted()',
+    async () => {
+      const comMetodo = await runPythonTests(
+        'def f(lista):\n    lista.sort()\n    return lista',
+        [{ input: null, expected: null, description: 'usa .sort()', mode: 'ast', astRule: { kind: 'requireMethod', name: 'sort' } }],
+        'f',
+        pool,
+      )
+      expect(comMetodo.allPassed).toBe(true)
+
+      const semMetodo = await runPythonTests(
+        'def f(lista):\n    return sorted(lista)',
+        [{ input: null, expected: null, description: 'usa .sort()', mode: 'ast', astRule: { kind: 'requireMethod', name: 'sort' } }],
+        'f',
+        pool,
+      )
+      expect(semMetodo.allPassed).toBe(false)
+    },
+    20000,
+  )
+
+  it(
+    'ast: código com erro de sintaxe reprova sem quebrar o teste',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f(:\n    pass',
+        [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/erro de sintaxe/i)
+    },
+    20000,
+  )
+
+  it(
     'timeout: loop infinito reprova em vez de travar o teste',
     async () => {
       const { results, allPassed } = await runPythonTests(

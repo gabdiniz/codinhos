@@ -8,7 +8,7 @@
  */
 import type { PyodideInterface } from 'pyodide'
 
-export type PythonOp = 'function' | 'typecheck' | 'stdout' | 'instance'
+export type PythonOp = 'function' | 'typecheck' | 'stdout' | 'instance' | 'ast'
 
 export interface RunRequest {
   id: number
@@ -21,6 +21,9 @@ export interface RunRequest {
   className?: string | null
   constructorArgs?: unknown[] | null
   methodName?: string | null
+  /** Usados só quando op === 'ast' (G5 — verificação estrutural). Ver AstRuleKind em @codinhos/runner. */
+  astRuleKind?: string | null
+  astRuleName?: string | null
 }
 
 export interface RunResponse {
@@ -31,6 +34,9 @@ export interface RunResponse {
   actualType?: string
   output?: string
   errorMessage?: string
+  /** Usados só quando op === 'ast'. */
+  astPassed?: boolean
+  astMessage?: string
 }
 
 /**
@@ -133,6 +139,96 @@ else:
         __actual_type = ""
 `
 
+// G5 — verificação ESTRUTURAL, sem executar o código do aluno (só `ast.parse`,
+// nunca `runPython(__ast_code)`): mais seguro (zero risco de loop infinito
+// numa checagem que nem deveria rodar código) e mais simples que a heurística
+// de texto usada em JS (`packages/runner/src/ast.ts`), porque Python já tem
+// um parser de AST nativo — sem dependência nova.
+//
+// `forbidLoops` também conta comprehension (`ListComp`/`SetComp`/`DictComp`/
+// `GeneratorExp`) como laço — um jeito de "trapacear" que a heurística de
+// texto do JS não cobre (comprehension não usa a palavra `for` fora de um
+// contexto óbvio de texto... na verdade usa, mas aqui vale registrar que a
+// versão Python fecha esse buraco de propósito, com uma verificação real de
+// árvore em vez de regex).
+const AST_CHECK_WRAPPER = `
+import ast as __ast_module
+
+try:
+    __tree = __ast_module.parse(__ast_code)
+except SyntaxError as __e:
+    __passed = False
+    __message = "Erro de sintaxe no código: " + str(__e)
+else:
+    __LOOP_TYPES = (__ast_module.For, __ast_module.While, __ast_module.ListComp, __ast_module.SetComp, __ast_module.DictComp, __ast_module.GeneratorExp)
+
+    def __has_loop(node):
+        for __n in __ast_module.walk(node):
+            if isinstance(__n, __LOOP_TYPES):
+                return True
+        return False
+
+    def __find_funcdef(tree, name):
+        for __n in __ast_module.walk(tree):
+            if isinstance(__n, __ast_module.FunctionDef) and __n.name == name:
+                return __n
+        return None
+
+    def __calls_itself(funcdef, name):
+        for __n in __ast_module.walk(funcdef):
+            if isinstance(__n, __ast_module.Call) and isinstance(__n.func, __ast_module.Name) and __n.func.id == name:
+                return True
+        return False
+
+    def __uses_method(tree, name):
+        for __n in __ast_module.walk(tree):
+            if isinstance(__n, __ast_module.Call) and isinstance(__n.func, __ast_module.Attribute) and __n.func.attr == name:
+                return True
+        return False
+
+    def __uses_call(tree, name):
+        for __n in __ast_module.walk(tree):
+            if isinstance(__n, __ast_module.Call) and isinstance(__n.func, __ast_module.Name) and __n.func.id == name:
+                return True
+        return False
+
+    __kind = __ast_rule_kind
+    __name = __ast_rule_name
+
+    if __kind == "forbidLoops":
+        __has = __has_loop(__tree)
+        __passed = not __has
+        __message = "Este desafio pede para resolver SEM laços (for/while/comprehension)." if __has else "Nenhum laço usado."
+    elif __kind == "requireRecursion":
+        __funcdef = __find_funcdef(__tree, __ast_target_fn) if __ast_target_fn else None
+        if __funcdef is None:
+            __passed = False
+            __message = "Declare uma função para poder usar recursão." if not __ast_target_fn else ("Função \\"" + __ast_target_fn + "\\" não encontrada.")
+        else:
+            __calls = __calls_itself(__funcdef, __ast_target_fn)
+            __passed = __calls
+            __message = ("A função \\"" + __ast_target_fn + "\\" usa recursão (chama a si mesma).") if __calls else ("A função \\"" + __ast_target_fn + "\\" precisa chamar a si mesma (recursão).")
+    elif __kind == "requireMethod":
+        __has = __uses_method(__tree, __name)
+        __passed = __has
+        __message = ("Usa ." + __name + "() como pedido.") if __has else ("Você precisa usar ." + __name + "() neste desafio.")
+    elif __kind == "forbidMethod":
+        __has = __uses_method(__tree, __name)
+        __passed = not __has
+        __message = ("Não use ." + __name + "() neste desafio.") if __has else ("Não usou ." + __name + "().")
+    elif __kind == "requireCall":
+        __has = __uses_call(__tree, __name)
+        __passed = __has
+        __message = ("Usa " + __name + "() como pedido.") if __has else ("Você precisa usar " + __name + "() neste desafio.")
+    elif __kind == "forbidCall":
+        __has = __uses_call(__tree, __name)
+        __passed = not __has
+        __message = ("Não use " + __name + "() neste desafio.") if __has else ("Não usou " + __name + "().")
+    else:
+        __passed = False
+        __message = "Regra de estrutura desconhecida."
+`
+
 function formatPyError(err: unknown): string {
   if (err instanceof Error) {
     const lines = err.message.trim().split('\n')
@@ -141,8 +237,40 @@ function formatPyError(err: unknown): string {
   return String(err)
 }
 
+/**
+ * G5 — checagem estrutural pura: NUNCA executa `req.code` como Python (só
+ * `ast.parse`), por isso tem seu próprio caminho, sem passar pelo
+ * `pyodide.runPython(req.code, ...)` do `handleRequest` normal (que roda
+ * TODOS os outros ops). Isso também significa que um `while True` no código
+ * do aluno não trava esta checagem — nem chega a rodar.
+ */
+function handleAstCheck(pyodide: PyodideInterface, req: RunRequest): RunResponse {
+  const g = pyodide.globals.get('dict')()
+  try {
+    g.set('__ast_code', req.code)
+    g.set('__ast_rule_kind', req.astRuleKind ?? '')
+    g.set('__ast_rule_name', req.astRuleName ?? '')
+    g.set('__ast_target_fn', req.targetFn ?? '')
+    pyodide.runPython(AST_CHECK_WRAPPER, { globals: g })
+    return {
+      id: req.id,
+      ok: true,
+      astPassed: g.get('__passed'),
+      astMessage: g.get('__message'),
+    }
+  } catch (err) {
+    return { id: req.id, ok: false, errorMessage: `Erro: ${formatPyError(err)}` }
+  } finally {
+    g.destroy()
+  }
+}
+
 /** Executa uma RunRequest contra uma instância Pyodide já carregada (quente). */
 export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunResponse {
+  if (req.op === 'ast') {
+    return handleAstCheck(pyodide, req)
+  }
+
   const output: string[] = []
   pyodide.setStdout({ batched: (s) => output.push(s) })
   pyodide.setStderr({ batched: () => {} })
