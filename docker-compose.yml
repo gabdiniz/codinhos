@@ -26,6 +26,12 @@ x-node-modules: &node-modules
   - deps_ui:/workspace/packages/ui/node_modules
   - deps_types:/workspace/packages/types/node_modules
   - deps_config:/workspace/packages/config/node_modules
+  # runner-python tem dependência de runtime de verdade (pyodide) — ao
+  # contrário do packages/runner original, que só reexporta relativo e por
+  # isso nunca precisou de volume próprio (ver docker-dev-novo-pacote-volumes
+  # na memória do projeto). Sem este volume, o bind-mount do host sobrepõe
+  # node_modules/pyodide vazio e a api quebra com ERR_MODULE_NOT_FOUND.
+  - deps_runner_python:/workspace/packages/runner-python/node_modules
 
 services:
   db:
@@ -134,3 +140,4 @@ volumes:
   deps_ui:
   deps_types:
   deps_config:
+  deps_runner_python:

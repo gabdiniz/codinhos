@@ -1,0 +1,43 @@
+{
+  "name": "@codinhos/runner-python",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./python-exec": {
+      "types": "./src/python-exec.ts",
+      "default": "./dist/python-exec.js"
+    },
+    "./run-python-tests": {
+      "types": "./src/run-python-tests.ts",
+      "default": "./dist/run-python-tests.js"
+    },
+    "./extract": {
+      "types": "./src/extract.ts",
+      "default": "./dist/extract.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc",
+    "typecheck": "tsc --noEmit",
+    "pretest": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@codinhos/runner": "workspace:*",
+    "pyodide": "^314.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

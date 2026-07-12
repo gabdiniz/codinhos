@@ -1,0 +1,179 @@
+# Motor de aprendizado — Python: decisão de runtime e roadmap
+
+Continuação de `docs/pesquisa-trilhas-python.md` §1-4 (estado do motor pra Python, modos de
+teste, tabela de gaps G1-G7). Este documento fecha a parte que aquele deixou em aberto por ser
+"decisão de produto/infra, não de conteúdo": **qual runtime roda Python** e **em que ordem** o
+motor evolui até sustentar as 10 trilhas já desenhadas. Molde: `docs/motor-desafios-capacidades.md`
+(como o motor JS foi faseado D1→D5).
+
+> Verificado no código atual em 11/07/2026: `apps/api/src/shared/utils/run-tests.ts`,
+> `apps/app/src/workers/sandbox.worker.ts`, `apps/api/src/shared/db/schema.ts` (`languageEnum`
+> já aceita `'python'`, é só metadado), `docker-compose.yml`/`docker-compose.prod.yml`
+> (deploy: um VPS único via Caddy + compose, sem Kubernetes/Firecracker/gVisor), `apps/api/package.json`
+> (nenhuma dependência de execução Python ou isolamento de processo ainda).
+
+---
+
+## 1. Decisão: G1 (runtime de Python)
+
+**Direção escolhida: Pyodide (CPython real compilado para WASM), rodando nos DOIS lados —
+front (Web Worker, como já é hoje) E backend (dentro de um `worker_thread` do Node, não no
+event loop principal).** Não runtime real em subprocesso isolado.
+
+### Por que não subprocesso isolado
+
+É a opção "mais fiel", mas o custo real não é trocar uma lib — é **infraestrutura nova**. Hoje
+o deploy de produção é um VPS único (`docker-compose.prod.yml`: Caddy + api + app + web + db,
+tudo na mesma rede interna, sem orquestração). Um subprocesso Python sem sandboxing forte
+(cgroups + seccomp + rootfs somente-leitura + sem rede + usuário sem privilégio) tem uma
+superfície de escape maior que o `node:vm` atual — e mesmo com esse endurecimento, o processo
+Python continua no **mesmo container/kernel** que atende os outros tenants: um escape compromete
+a API inteira, não só a execução de código. Isolamento de verdade (gVisor, Firecracker, um
+container por execução) é viável, mas é uma peça de infra que o time não opera hoje e que não
+se justifica no estágio atual do produto (B2B, carga de escola, não escala de internet aberta).
+
+### Por que Pyodide nos dois lados
+
+- **Mesma lógica que já existe para JS**: front dá feedback num Web Worker isolado, **backend
+  revalida** (regra que não muda) — só troca o motor de JS pra CPython-em-WASM, sem inventar um
+  modelo novo de confiança.
+- **WASM já é a sandbox**: sem acesso a filesystem real, sem rede, sem processo do SO por
+  construção. Isso não substitui curadoria (G6 continua necessário — ver §3), mas o chão de
+  risco já é mais baixo que subprocesso nativo, com zero infra nova (mesmo container da API).
+- **Fidelidade real**: Pyodide é CPython de verdade (não uma reimplementação tipo Skulpt/Brython)
+  — sintaxe, erros e biblioteca padrão são o Python de verdade que um aluno encontraria fora do
+  Codinhos. Resolve a preocupação de "fidelidade" sem precisar de subprocesso.
+- **G3 (tupla vs. lista): decisão de implementação revista durante a P1.** A ideia original era
+  comparar `actual == expected` inteiramente dentro do Python. Na prática, isso obrigaria a
+  reimplementar os 4 matchers (`equal`/`approx`/`contains`/`regex`) em Python — duplicação sem
+  ganho real, já que nenhuma das 10 trilhas exige testar "é tupla, não lista" pra nota. Escolha
+  mais simples e mais barata: o worker devolve `actual` **serializado por `json.dumps`** (tupla
+  vira array, igual today em JS) e a comparação reusa os matchers de `@codinhos/runner` **tal
+  como já existem**, sem código novo. Só de bônus, o worker também devolve `repr(actual)` (preserva
+  `(1, 2)` vs `[1, 2]` na *exibição*, útil pra gestor debugar um desafio) e `type(actual).__name__`
+  — sem afetar a nota. G3 "de verdade" (grading que EXIGE tupla) continua no horizonte, sem
+  trilha esperando.
+
+### Custos reais a não subestimar (para dimensionar a P1)
+
+- **Bundle no front**: Pyodide core + stdlib pesa alguns MB (comprimido). Mesmo cuidado que o
+  p5.js embarcado no D5 — empacotar local, não CDN, e confirmar que o Vite consegue levar isso
+  pro Web Worker (mesmo tipo de atrito de build que `packages/runner` deu no D1).
+  Repos/apps/app/... — os autores dos módulos de p5 já resolveram um caso parecido de asset WASM/binário embarcado ali, vale reaproveitar a técnica.
+- **Instância quente no backend, não uma por request**: carregar o interpretador WASM do zero a
+  cada submissão é lento demais. Precisa de uma instância Pyodide viva no processo da API,
+  **recriando o namespace de globals a cada execução** (Pyodide permite rodar com um dicionário
+  de globals novo por chamada, sem recarregar o runtime inteiro) — se isso vazar estado entre
+  execuções de alunos diferentes é bug de segurança, não só de correção. É o item de maior risco
+  de implementação da P1.
+- **Timeout não é de graça como no `node:vm`**: `vm.runInContext(..., {timeout})` interrompe
+  synchronous JS nativamente; WASM não tem esse mecanismo pronto. Um loop infinito em Python só
+  para matando o `worker_thread` inteiro (`.terminate()`) e recriando a instância — mais caro que
+  interromper um contexto (perde o estado quente), mas é o único jeito confiável. Front já tem
+  esse padrão (mata o Worker). Precisa existir explicitamente no backend também.
+- **Concorrência**: um processo Node é single-thread pro JS; várias submissões Python
+  simultâneas competem pelo mesmo `worker_thread` (ou precisam de um pool pequeno). Para a carga
+  de uma escola por vez isso é folga suficiente; registrar como limite conhecido, não resolver
+  agora.
+
+Nenhum desses pontos muda a decisão — são os itens que vão para as tarefas da P1, igual o D1 de
+JS teve "atrito de build do Worker" como a parte mais chata mesmo sendo esforço "P" no headline.
+
+### P1 — backend validado por spike (11/07/2026)
+
+Antes de mexer no `run-tests.ts`/schema/UI, os pontos de risco acima foram testados isoladamente
+(script fora do repo, `loadPyodide` real, `node:worker_threads` real — não é estimativa):
+
+- **Load frio: ~4s** (medido 3,9-4,2s neste hardware). **Execução em worker já quente: ~7-10ms.**
+  Confirma que precisa de pool de workers vivos — um worker por submissão é inviável.
+- **Isolamento de namespace confirmado**: rodando com um `dict()` novo por execução
+  (`pyodide.globals.get('dict')()` passado como `globals` de `runPython`), uma variável de uma
+  execução **não aparece** na próxima (`NameError`, como deveria). Sem isso, vaza.
+- **Timeout confirmado**: `while True: pass` bloqueia a thread inteira (WASM síncrono não é
+  interrompível de dentro) — só `worker.terminate()` de fora recupera. Depois disso, a PRÓXIMA
+  submissão naquele slot paga o load frio (~4s) de novo enquanto um substituto sobe — por isso o
+  pool precisa de mais de 1 worker (um travando não trava a fila inteira).
+- **Comparação por JSON funciona bem**: `json.dumps`/`json.loads` faz o round-trip
+  Python→JS→matchers-existentes sem problema pra número/string/bool/None/lista/dict — inclusive
+  **dict com chave em ordem diferente já compara certo** (o `deepEqual` de `@codinhos/runner` já
+  ordena chaves, D1 do motor JS) sem precisar de nada novo do lado Python.
+
+**`packages/runner-python` criado** com essa base: `pool.ts` (pool de `worker_thread`, replace-on-timeout),
+`python-exec.ts` (lógica pura de execução — mesma API `PyodideInterface` em Node e, no futuro,
+browser), `python-worker.ts` (entry do worker_thread), `extract.ts` (equivalente Python do
+`extractFunctionName`), `run-python-tests.ts` (dispatch dos 3 modos — function-call/type-check/stdout
+— reusando `applyMatcher`/`normalizeOutput` de `@codinhos/runner`, zero lógica de comparação
+duplicada). Os 9 cenários centrais (soma, targetFn implícito, tupla-vs-lista, exceção, type-check,
+stdout limpando antes de chamar a função-alvo, isolamento entre execuções, timeout, recuperação
+pós-timeout) foram validados batendo a lógica real contra Pyodide de verdade fora do repo (Node
+com type-stripping, já que o sandbox não builda o workspace — ver nota abaixo). **Ainda não
+verificado:** `tsc --noEmit` real do pacote (o sandbox não tem `pnpm`/`tsc` funcionais neste
+projeto — precisa rodar na máquina local) e o comportamento em produção (Node 20 do Dockerfile,
+não o Node 22 do spike — não deve ter diferença, mas não foi testado).
+
+**Gap corrigido nesta sessão:** o `ready` de cada slot agora tem timeout próprio (20s, bem mais
+folgado que o de execução) — se o Pyodide falhar ao carregar (bug de deploy/empacotamento), o
+slot é descartado e substituído em vez de travar `run()` pra sempre. Validado por spike incluindo
+o detalhe de unhandled rejection (um slot que rejeita `ready` enquanto ocioso no pool precisa de
+um `.catch()` "grudado" nele desde a criação, senão o Node reporta erro não tratado mesmo que uma
+chamada futura fosse tratar — achado ao testar o caminho de erro de propósito).
+
+---
+
+## 2. Roadmap faseado (molde D1→D5)
+
+Numeração própria (**P1→P5**) para não colidir com a numeração D1-D5 do motor JS — são trilhas
+de evolução paralelas do mesmo motor.
+
+| Fase | O que entra | Gaps fechados | Esforço | Destrava |
+|---|---|---|---|---|
+| **P1** | Runner Python (Pyodide front+back), 3 modos portados (function-call, type-check, stdout), comparação nativa em Python, timeout via terminate | **G1** (+ G3 quase de graça) | **G** | Trilhas 1-7 e 9 (nenhuma delas precisa de import, AST ou try/except) |
+| **P2** | Seed das trilhas 1-7 e 9 (conteúdo, não motor) | — | M (conteúdo) | Primeiro valor real entregue — 9 de 10 trilhas no ar |
+| **P3** | AST estrutural pra Python (`ast` nativo — mais barato que a versão heurística de JS) | **G5** | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
+| **P4** | Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM) | **G6** | P | Trilha 10 (capstone) |
+| **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
+| **Horizonte** (sem trilha bloqueada hoje) | G7 (modo `instance-call` pra POO), G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4, G7 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+
+**Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
+puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
+
+---
+
+## 3. G2-G7: antes ou depois do primeiro seed
+
+Resposta curta: **só G1 bloqueia. G5 e G6 bloqueiam trilhas específicas (8 e 10, respectivamente)
+— não o primeiro seed. G2, G3(completo), G4 e G7 não bloqueiam nenhuma das 10 trilhas hoje.**
+
+| Gap | Bloqueia o quê | Quando entra |
+|---|---|---|
+| G1 | Tudo | P1 — obrigatório antes de qualquer seed |
+| G5 (AST) | Trilha 8, como desenhada ("sem loop") | P3 — antes de seedar a trilha 8 especificamente; trilhas 1-7/9 não esperam por isso |
+| G6 (allowlist de módulos) | Trilha 10 (capstone usa `math`/`random`) | P4 — antes de seedar a trilha 10 especificamente |
+| G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
+| G2 (stdin) | Nenhuma — `input()` é só "sabia que existe" numa lição, não testável | Horizonte, sem trilha esperando |
+| G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
+| G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | Horizonte — melhoraria a trilha 9, não a destrava |
+
+Consequência prática: depois da P1, **7 das 10 trilhas (1-7 e 9) já podem ser semeadas e
+publicadas sem esperar mais nada de motor.** Só a trilha 8 (Recursão) e a trilha 10 (capstone)
+esperam por uma fase extra cada — e são fases pequenas (P3 é M, P4 é P), não voltam a ser
+bloqueador do tamanho da P1.
+
+---
+
+## 4. Cuidados transversais
+
+- **Backend revalida a nota** continua valendo — em Python isso significa que a instância
+  Pyodide do backend não é "confiar no que o front mandou", é reexecutar de verdade.
+- **Isolamento de namespace entre execuções é o item de maior risco da P1** — testar
+  explicitamente que globals de uma submissão não vazam pra próxima (equivalente ao teste
+  diferencial que já existe pro motor JS, mas aqui também precisa de um teste de "vazamento de
+  estado" rodando duas submissões em sequência na mesma instância quente).
+- **Verificação de desafios** (mesma disciplina de `docs/pesquisa-trilhas-python.md` §7): replicar
+  o runner Python fora do banco e rodar a solução de referência de cada desafio contra os
+  `testCases` antes de semear — vale ainda mais aqui, por ser runtime novo.
+- **Auditoria "nada usado antes de ensinado"** dos 10 docs de trilha (item já planejado) deve
+  rodar **depois** da P1 estar de pé, contra o runner real — não só contra o texto do desenho.
+- Este documento não decide nomes de arquivo/branch da implementação — isso fica pra quando a
+  P1 virar um plano de sprint (mesmo formato do §7 de `docs/motor-desafios-capacidades.md`, "D1
+  detalhada").
