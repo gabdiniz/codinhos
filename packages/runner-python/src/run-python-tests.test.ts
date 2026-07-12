@@ -134,6 +134,341 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'instance-call: método simples usa atributo do __init__',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Retangulo:\n    def __init__(self, largura, altura):\n        self.largura = largura\n        self.altura = altura\n    def area(self):\n        return self.largura * self.altura',
+        [
+          {
+            input: [],
+            expected: 12,
+            description: 'area() de um retângulo 4x3',
+            mode: 'instance-call',
+            constructorArgs: [4, 3],
+            methodName: 'area',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(12)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: className explícito + método que muda e lê o estado',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Contador:\n    def __init__(self):\n        self.valor = 0\n    def incrementar(self):\n        self.valor += 1\n        return self.valor',
+        [
+          {
+            input: [],
+            expected: 1,
+            description: 'primeiro incrementar() deve retornar 1',
+            mode: 'instance-call',
+            className: 'Contador',
+            constructorArgs: [],
+            methodName: 'incrementar',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(1)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: método com argumento próprio (além do construtor)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class ContaBancaria:\n    def __init__(self, saldo):\n        self.saldo = saldo\n    def depositar(self, valor):\n        self.saldo += valor\n        return self.saldo',
+        [
+          {
+            input: [50],
+            expected: 150,
+            description: 'depositar(50) numa conta com saldo 100',
+            mode: 'instance-call',
+            constructorArgs: [100],
+            methodName: 'depositar',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(150)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: classe inexistente reprova com mensagem clara',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def nao_e_uma_classe():\n    pass',
+        [{ input: [], expected: 1, description: 'não há classe aqui', mode: 'instance-call', methodName: 'algo' }],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/nenhuma classe encontrada/i)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: método inexistente na classe reprova com mensagem clara',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Vazia:\n    def __init__(self):\n        pass',
+        [
+          {
+            input: [],
+            expected: 1,
+            description: 'método que não existe',
+            mode: 'instance-call',
+            methodName: 'metodo_que_nao_existe',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/método.*não encontrado/i)
+    },
+    20000,
+  )
+
+  it(
+    'ast: forbidLoops passa numa solução recursiva de verdade',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def fatorial(n):\n    if n <= 1:\n        return 1\n    return n * fatorial(n - 1)',
+        [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+        'fatorial',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toMatch(/nenhum laço usado/i)
+    },
+    20000,
+  )
+
+  it(
+    'ast: forbidLoops reprova com for, while E list comprehension (fecha o loophole)',
+    async () => {
+      const casos = [
+        'def f(n):\n    r = 1\n    for i in range(1, n+1):\n        r *= i\n    return r',
+        'def f(n):\n    r = 1\n    while n > 1:\n        r *= n\n        n -= 1\n    return r',
+        'def f(lista):\n    return sum([x for x in lista])',
+      ]
+      for (const code of casos) {
+        const { allPassed } = await runPythonTests(
+          code,
+          [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+          'f',
+          pool,
+        )
+        expect(allPassed).toBe(false)
+      }
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireRecursion passa quando a função chama a si mesma',
+    async () => {
+      const { allPassed } = await runPythonTests(
+        'def soma_ate(n):\n    if n <= 0:\n        return 0\n    return n + soma_ate(n - 1)',
+        [{ input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } }],
+        'soma_ate',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireRecursion reprova solução iterativa (mesmo resultado, sem recursão)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def soma_ate(n):\n    total = 0\n    for i in range(1, n + 1):\n        total += i\n    return total',
+        [{ input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } }],
+        'soma_ate',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/precisa chamar a si mesma/i)
+    },
+    20000,
+  )
+
+  it(
+    'ast: requireMethod/forbidMethod distinguem .sort() de sorted()',
+    async () => {
+      const comMetodo = await runPythonTests(
+        'def f(lista):\n    lista.sort()\n    return lista',
+        [{ input: null, expected: null, description: 'usa .sort()', mode: 'ast', astRule: { kind: 'requireMethod', name: 'sort' } }],
+        'f',
+        pool,
+      )
+      expect(comMetodo.allPassed).toBe(true)
+
+      const semMetodo = await runPythonTests(
+        'def f(lista):\n    return sorted(lista)',
+        [{ input: null, expected: null, description: 'usa .sort()', mode: 'ast', astRule: { kind: 'requireMethod', name: 'sort' } }],
+        'f',
+        pool,
+      )
+      expect(semMetodo.allPassed).toBe(false)
+    },
+    20000,
+  )
+
+  it(
+    'ast: código com erro de sintaxe reprova sem quebrar o teste',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f(:\n    pass',
+        [{ input: null, expected: null, description: 'sem laços', mode: 'ast', astRule: { kind: 'forbidLoops' } }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/erro de sintaxe/i)
+    },
+    20000,
+  )
+
+  it(
+    'import: módulo liberado (math) roda normalmente',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import math\ndef raiz(n):\n    return math.sqrt(n)',
+        [{ input: [16], expected: 4, description: 'raiz(16) deve ser 4' }],
+        'raiz',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(4)
+    },
+    20000,
+  )
+
+  it(
+    'import: functools (usado na trilha 7) está liberado',
+    async () => {
+      const { allPassed } = await runPythonTests(
+        'import functools\ndef soma_com_reduce(lista):\n    return functools.reduce(lambda acc, x: acc + x, lista, 0)',
+        [{ input: [[1, 2, 3, 4]], expected: 10, description: 'soma_com_reduce([1,2,3,4]) deve ser 10' }],
+        'soma_com_reduce',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+    },
+    20000,
+  )
+
+  it(
+    'import: módulo fora da allowlist (os) reprova com mensagem clara, sem executar',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import os\ndef f():\n    return os.getcwd()',
+        [{ input: [], expected: 1, description: 'f() não deveria nem rodar' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/módulo.*"os".*não é permitido/i)
+    },
+    20000,
+  )
+
+  it(
+    'import: from-import (from os import path) também é bloqueado',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'from os import path\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
+    'import: submódulo (import os.path) é bloqueado pela raiz (os)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'import os.path\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
+    'import: sys, subprocess e socket (defesa em profundidade) reprovam',
+    async () => {
+      const modulos = ['sys', 'subprocess', 'socket']
+      for (const mod of modulos) {
+        const { results, allPassed } = await runPythonTests(
+          `import ${mod}\ndef f():\n    return 1`,
+          [{ input: [], expected: 1, description: 'f()' }],
+          'f',
+          pool,
+        )
+        expect(allPassed).toBe(false)
+        expect(String(results[0]?.actual)).toContain(`"${mod}"`)
+      }
+    },
+    20000,
+  )
+
+  it(
+    'import: import relativo (from . import x) reprova com mensagem própria',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'from . import alguma_coisa\ndef f():\n    return 1',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/import relativo/i)
+    },
+    20000,
+  )
+
+  it(
+    'import: import proibido dentro de função (não só no topo) também é pego',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def f():\n    import os\n    return os.getcwd()',
+        [{ input: [], expected: 1, description: 'f()' }],
+        'f',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/"os"/)
+    },
+    20000,
+  )
+
+  it(
     'timeout: loop infinito reprova em vez de travar o teste',
     async () => {
       const { results, allPassed } = await runPythonTests(

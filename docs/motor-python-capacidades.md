@@ -118,6 +118,135 @@ o detalhe de unhandled rejection (um slot que rejeita `ready` enquanto ocioso no
 um `.catch()` "grudado" nele desde a criação, senão o Node reporta erro não tratado mesmo que uma
 chamada futura fosse tratar — achado ao testar o caminho de erro de propósito).
 
+### 1.1 G7 resolvido — `mode: 'instance-call'` (12/07/2026)
+
+Motivação: a trilha 9 (POO) inteira usava `mode:'stdout'` porque o motor só sabia "chamar a
+primeira função declarada" — uma `class` não é uma função. Isso funciona, mas é mais fraco que
+comparar o RETORNO de um método (fica sujeito a erro de formatação de `print`/`__str__`
+contaminar a nota de algo que não é sobre formatação).
+
+**O que foi adicionado**, mesmo padrão dos outros modos (function-call/type-check/stdout):
+
+- `TestCase` (`packages/runner/src/types.ts`, tipo compartilhado JS/Python) ganhou
+  `mode: 'instance-call'` + campos `className?`, `constructorArgs?`, `methodName?`. `input`
+  continua sendo os argumentos do MÉTODO chamado (mesma convenção de array/valor único do
+  function-call); `constructorArgs` são os argumentos do `__init__`.
+- **Python** (`packages/runner-python`): `extract.ts` ganhou `extractClassName`/
+  `resolveTargetClassPython` (equivalente a `resolveTargetFnPython`, primeira `class` na coluna 0
+  se `className` não for informado). `python-exec.ts` ganhou o `PythonOp` `'instance'` e o script
+  `INSTANCE_WRAPPER` (instancia a classe com `constructorArgs`, chama `methodName` com os args do
+  método, serializa o retorno com o mesmo `__safe_json`/`json.dumps` do function-call — G3
+  continua valendo, tupla vira array). `run-python-tests.ts` ganhou `runInstanceCase`, despachado
+  quando `tc.mode === 'instance-call'`.
+- **JavaScript** (`apps/api/src/shared/utils/run-tests.ts`): como o tipo é compartilhado, um
+  desafio JS com `mode:'instance-call'` não pode simplesmente ser ignorado — ganhou um branch que
+  reprova com mensagem clara ("ainda não suportado para JavaScript"). **Só Python implementa de
+  verdade por enquanto** (JS não tem gap equivalente a G7 registrado — POO em JS não faz parte do
+  currículo atual).
+- **Front** (`apps/app/src/workers/sandbox.worker.ts`): nenhuma mudança necessária — o adaptador
+  `PythonRunner` do Web Worker já repassa o `RunRequest` inteiro pra `handleRequest` sem filtrar
+  campos, então os novos campos passam de graça.
+- **Erros tratados**: classe não encontrada, método não encontrado na instância, e qualquer
+  exceção do `__init__`/método (nome da exceção + mensagem, igual function-call).
+- **Testes novos** em `run-python-tests.test.ts` (5 cenários: método simples usando atributo do
+  construtor, `className` explícito + estado mutado entre leitura, método com argumento próprio,
+  classe inexistente, método inexistente) — **não executados neste sandbox** (mesma limitação já
+  documentada: sem Pyodide real aqui). Rodar `pnpm --filter @codinhos/runner-python test` na
+  máquina local pra confirmar, mesmo fluxo do resto da P1.
+
+**Não fiz nesta rodada:** não voltei a editar `seed-trilha-python-09.ts` pra usar o modo novo —
+o Gabriel pediu só o motor, não re-tocar no conteúdo já escrito. A trilha 9 continua 100%
+`stdout` como está; migrar os 8 desafios pra `instance-call` (mais preciso) é trabalho de
+conteúdo futuro, não bloqueado por nada agora.
+
+### 1.2 G5 resolvido — `mode: 'ast'` para Python (12/07/2026)
+
+Motivação: a trilha 8 (Recursão) documentava `requireRecursion`/`forbidLoops` como regra
+estrutural desejada em TODOS os 12 desafios com regra, mas rodava só `function-call` puro — sem
+provar que a solução não "trapaceou" com `for`/`while` escondido.
+
+**Implementação, mais simples que a versão JS por design** (Python tem parser de AST nativo, o
+JS usa heurística de texto sobre código "limpo" — ver `packages/runner/src/ast.ts`):
+
+- **Não executa o código do aluno.** `mode:'ast'` só faz `ast.parse(code)` — um `while True` no
+  código nem chega a rodar. Caminho próprio em `handleAstCheck` (`python-exec.ts`), separado do
+  `handleRequest` normal (que sempre executa `req.code` primeiro para os outros modos).
+- Implementa os 6 `AstRuleKind` já existentes no tipo compartilhado (nenhum tipo novo):
+  `forbidLoops`, `requireRecursion`, `requireMethod`, `forbidMethod`, `requireCall`, `forbidCall`
+  — via `ast.walk()` percorrendo a árvore de verdade (`ast.For`/`ast.While`/`ast.Call`/
+  `ast.FunctionDef`/etc.), não regex.
+- **Fecha um loophole que a heurística de JS não cobre:** `forbidLoops` também conta list/set/dict
+  comprehension e generator expression como laço (`ast.ListComp`/`SetComp`/`DictComp`/
+  `GeneratorExp`) — sem isso, `sum([x for x in lista])` "trapacearia" um desafio de recursão sem
+  usar a palavra `for` fora de uma comprehension. Decisão registrada no código
+  (`python-exec.ts`), não pedida pelo desenho original da trilha 8, mas necessária pra a regra
+  cumprir o que promete.
+- `extract.ts` reaproveitado (`resolveTargetFnPython`, já existia) — `requireRecursion` busca a
+  `FunctionDef` pelo nome resolvido e verifica se o próprio corpo dela contém uma `Call` pro seu
+  próprio nome.
+- **Validado fora do repo antes de integrar**: rodei a lógica EXATA do `AST_CHECK_WRAPPER`
+  (copiada, não simplificada) contra Python 3.10 real no sandbox — 15 cenários (forbidLoops
+  passa numa recursão de verdade / reprova com for / reprova com while / reprova com
+  comprehension; requireRecursion passa/reprova/função não encontrada/nenhum alvo;
+  requireMethod/forbidMethod distinguindo `.sort()` de `sorted()`; requireCall/forbidCall; erro de
+  sintaxe) — todos corretos. Isso é análise estática, não depende de Pyodide/WASM pra validar a
+  LÓGICA (só a integração com `pyodide.runPython`/globals precisa do teste real na máquina local).
+- **Testes novos** em `run-python-tests.test.ts` (6 cenários via `runPythonTests`, integração
+  real com Pyodide) — mesma ressalva de sempre: não executados neste sandbox.
+
+**Não fiz:** não voltei a editar `seed-trilha-python-08.ts` pra usar `mode:'ast'` nos 12 desafios
+documentados com regra estrutural — mesma decisão do G7, só motor nesta rodada.
+
+### 1.3 G6 resolvido — allowlist de `import` (12/07/2026)
+
+Motivação: até aqui, qualquer `import` funcionava sem restrição — o comentário já deixado em
+`seed-trilha-python-10.ts` (trilha 10, capstone) registrava isso como pendência de hardening
+antes de abrir a plataforma pra fora. `math`/`random`/`string` (trilha 10) e `functools` (trilha
+7 — achado ao revisar o seed já escrito, não estava na lista original do §2 deste doc, que citava
+só math/random/string) precisam continuar liberados; o resto da stdlib (em especial
+`os`/`sys`/`subprocess`/`socket`) não faz parte do currículo por design e agora fica bloqueado de
+verdade, não só "fora do desenho".
+
+**Implementação, mesmo espírito do G5 (checagem estática, não confia em blocklist em tempo de
+execução):**
+
+- **Allowlist fechada** (`packages/runner-python/src/python-exec.ts`, `IMPORT_ALLOWLIST`):
+  `['math', 'random', 'string', 'functools']`. É uma lista positiva (só o que está nela passa),
+  não uma lista de nomes perigosos — mais simples de raciocinar sobre segurança ("o que é
+  permitido" é uma pergunta menor que "o que é perigoso") e mais fácil de auditar quando uma
+  trilha nova precisar de um módulo novo (um item a mais na lista).
+- **Checagem via `ast.parse`, nunca executa o código** (`IMPORT_CHECK_WRAPPER`) — roda como um
+  portão em `handleRequest`, ANTES de `pyodide.runPython(req.code, ...)`, pra TODOS os ops que de
+  fato executam código (function/typecheck/stdout/instance). Um `import os` nem chega a rodar.
+  Usa um dict de globals próprio (descartado depois), separado do namespace real do aluno — mesma
+  disciplina de isolamento do resto do arquivo.
+- Cobre `import x`, `import x.y` (checa a raiz `x`), `import x as y` (raiz, ignora o alias),
+  `from x import y` e reprova explicitamente `from . import x` (import relativo, mensagem própria
+  — não faz sentido em um script avulso de aluno). Detecta import dentro de função também (o
+  `ast.walk` percorre a árvore inteira, não só o nível de módulo), não só import no topo do
+  arquivo.
+- **Não cobre import dinâmico** (`__import__('os')`, `importlib.import_module(...)`) — ast
+  estático não pega chamada de função disfarçada de import. Fica por conta do isolamento do WASM
+  em si (mesmo raciocínio de "defesa em profundidade, não confiar só nisso" do §1: mesmo que
+  `__import__('os')` "funcionasse" sintaticamente, o Pyodide não dá acesso a filesystem/rede/
+  processo real de qualquer forma — não é um bypass de segurança, só um buraco na CURADORIA
+  pedagógica que fica registrado como limite conhecido, não resolvido agora).
+- **Validado fora do repo antes de integrar** (mesma disciplina do G5): rodei a lógica exata do
+  `IMPORT_CHECK_WRAPPER` contra Python 3.10 real no sandbox — 17 cenários (math/random/string/
+  functools liberados incluindo `import math as m`; `os`/`sys`/`subprocess`/`socket` bloqueados;
+  `import os.path` bloqueado pela raiz; `from os import path`/`from os import path as p`
+  bloqueados; `from . import x`/`from .foo import x` como import relativo; `import math, os`
+  bloqueado pelo `os`; import dentro de função também pego; código sem import nenhum passa) —
+  todos corretos.
+- **Testes novos** em `run-python-tests.test.ts` (8 cenários via `runPythonTests`, integração real
+  com Pyodide) — mesma ressalva de sempre: não executados neste sandbox, rodar
+  `pnpm --filter @codinhos/runner-python test` na máquina local pra confirmar.
+
+**Não fiz:** não voltei a editar `seed-trilha-python-10.ts` (nem `-07.ts`) pra remover os
+comentários que descreviam o G6 como pendência — ficam como registro histórico de quando foram
+escritos; o comportamento real agora é o descrito aqui. Também não toquei em nenhum outro conteúdo
+de trilha.
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -129,10 +258,18 @@ de evolução paralelas do mesmo motor.
 |---|---|---|---|---|
 | **P1** | Runner Python (Pyodide front+back), 3 modos portados (function-call, type-check, stdout), comparação nativa em Python, timeout via terminate | **G1** (+ G3 quase de graça) | **G** | Trilhas 1-7 e 9 (nenhuma delas precisa de import, AST ou try/except) |
 | **P2** | Seed das trilhas 1-7 e 9 (conteúdo, não motor) | — | M (conteúdo) | Primeiro valor real entregue — 9 de 10 trilhas no ar |
-| **P3** | AST estrutural pra Python (`ast` nativo — mais barato que a versão heurística de JS) | **G5** | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
-| **P4** | Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM) | **G6** | P | Trilha 10 (capstone) |
+| **P3** | ~~AST estrutural pra Python~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G5**~~ | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
+| **P4** | ~~Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM)~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G6**~~ | P | Trilha 10 (capstone) e trilha 7 (`functools`) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
-| **Horizonte** (sem trilha bloqueada hoje) | G7 (modo `instance-call` pra POO), G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4, G7 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+| **Horizonte** (sem trilha bloqueada hoje) | G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+
+**G7, G5 e G6 resolvidos fora de ordem (12/07/2026)** — ver §1.1, §1.2 e §1.3 acima. Nenhum dos
+três estava na sequência estrita P1→P5 no momento (G7 nem tinha fase própria, era horizonte; G5
+era P3; G6 era P4), mas o Gabriel pediu pra adiantar os três antes do primeiro seed — G7 melhora a
+precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha 8 completa como desenhada
+("sem loop"/"usa recursão" verificado de verdade, não só documentado), G6 fecha a allowlist de
+imports que a trilha 10 (e a 7, com `functools`) já dependiam sem bloqueio real. **Motor sem
+nenhum gap pendente pras 10 trilhas já desenhadas — falta só rodar o primeiro seed.**
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -141,23 +278,24 @@ puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
 
 ## 3. G2-G7: antes ou depois do primeiro seed
 
-Resposta curta: **só G1 bloqueia. G5 e G6 bloqueiam trilhas específicas (8 e 10, respectivamente)
-— não o primeiro seed. G2, G3(completo), G4 e G7 não bloqueiam nenhuma das 10 trilhas hoje.**
+Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 não
+bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já foram resolvidos
+(G5, G6 e G7, fora de ordem, ver §1.1/§1.2/§1.3).**
 
 | Gap | Bloqueia o quê | Quando entra |
 |---|---|---|
 | G1 | Tudo | P1 — obrigatório antes de qualquer seed |
-| G5 (AST) | Trilha 8, como desenhada ("sem loop") | P3 — antes de seedar a trilha 8 especificamente; trilhas 1-7/9 não esperam por isso |
-| G6 (allowlist de módulos) | Trilha 10 (capstone usa `math`/`random`) | P4 — antes de seedar a trilha 10 especificamente |
+| G5 (AST) | ~~Trilha 8, como desenhada ("sem loop")~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.2 |
+| G6 (allowlist de módulos) | ~~Trilha 10 (capstone usa `math`/`random`/`string`) e trilha 7 (`functools`)~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.3 |
 | G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
 | G2 (stdin) | Nenhuma — `input()` é só "sabia que existe" numa lição, não testável | Horizonte, sem trilha esperando |
 | G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
-| G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | Horizonte — melhoraria a trilha 9, não a destrava |
+| G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
-Consequência prática: depois da P1, **7 das 10 trilhas (1-7 e 9) já podem ser semeadas e
-publicadas sem esperar mais nada de motor.** Só a trilha 8 (Recursão) e a trilha 10 (capstone)
-esperam por uma fase extra cada — e são fases pequenas (P3 é M, P4 é P), não voltam a ser
-bloqueador do tamanho da P1.
+Consequência prática: depois da P1, **as 10 trilhas já podem ser semeadas e publicadas sem esperar
+mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os dois últimos gaps com trilha
+esperando, e ambos foram resolvidos nesta rodada. O que resta (G2/G3-completo/G4) é horizonte, sem
+nenhuma trilha bloqueada.
 
 ---
 
