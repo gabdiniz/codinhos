@@ -24,8 +24,8 @@ export interface TestCase {
    * 'instance-call' instancia uma classe e chama um MÉTODO nela, comparando o
    * retorno (ver className/constructorArgs/methodName) — G7,
    * docs/motor-python-capacidades.md. Implementado hoje só no runner Python;
-   * o runner JS reprova com mensagem clara em vez de quebrar, mesmo padrão
-   * que o Python usa pra 'ast' (ainda não suportado lá).
+   * o runner JS reprova com mensagem clara em vez de quebrar (mesmo padrão
+   * usado ali pro que ainda não tiver suporte).
    */
   mode?: 'stdout' | 'ast' | 'instance-call'
   /** Regra estrutural, usada quando mode === 'ast' (ex.: exigir recursão). */
