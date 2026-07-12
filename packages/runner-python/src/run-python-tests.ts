@@ -6,9 +6,9 @@
  * comparação, igual ao motor JS já garante entre front/back).
  *
  * Escopo (ver docs/motor-python-capacidades.md): function-call, type-check
- * (input null), stdout e instance-call (G7 — instancia uma classe e chama um
- * método nela, comparando o RETORNO do método). O modo `ast` ainda não tem
- * implementação Python (G5) e reprova com mensagem clara em vez de quebrar.
+ * (input null), stdout, instance-call (G7 — instancia uma classe e chama um
+ * método nela, comparando o RETORNO do método) e ast (G5 — verificação
+ * estrutural via `ast.parse` real do Python, nunca executa o código do aluno).
  */
 import { applyMatcher, normalizeOutput, type TestCase, type TestResult } from '@codinhos/runner'
 import { resolveTargetClassPython, resolveTargetFnPython } from './extract.js'
@@ -31,13 +31,7 @@ export async function runPythonTests(
 
   for (const tc of testCases) {
     if (tc.mode === 'ast') {
-      results.push({
-        passed: false,
-        input: tc.input,
-        expected: tc.expected,
-        actual: 'Verificação estrutural (ast) ainda não suportada para Python.',
-        description: tc.description,
-      })
+      results.push(await runAstCase(code, tc, targetFn, pool))
       continue
     }
 
@@ -171,6 +165,48 @@ async function runFunctionCase(
     input: tc.input,
     expected: tc.expected,
     actual,
+    description: tc.description,
+  }
+}
+
+/**
+ * G5 — verificação estrutural (recursão/laços/método/chamada). NUNCA executa
+ * `code`, só `ast.parse` do lado do worker (ver `handleAstCheck` em
+ * python-exec.ts) — por isso não passa pelo `op: 'function'`/`'stdout'`
+ * normal. `targetFn` é resolvido aqui (mesma convenção de runFunctionCase)
+ * pra `requireRecursion` conseguir achar a função certa mesmo quando o
+ * desafio não passa um alvo explícito.
+ */
+async function runAstCase(
+  code: string,
+  tc: TestCase,
+  targetFn: string | null | undefined,
+  pool: PythonRunner,
+): Promise<TestResult> {
+  const fnName = resolveTargetFnPython(code, targetFn)
+  const res = await pool.run({
+    code,
+    op: 'ast',
+    astRuleKind: tc.astRule?.kind ?? null,
+    astRuleName: tc.astRule?.name ?? null,
+    targetFn: fnName,
+  })
+
+  if (!res.ok) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: res.errorMessage ?? 'Erro desconhecido.',
+      description: tc.description,
+    }
+  }
+
+  return {
+    passed: res.astPassed ?? false,
+    input: tc.input,
+    expected: tc.expected,
+    actual: res.astMessage ?? '',
     description: tc.description,
   }
 }
