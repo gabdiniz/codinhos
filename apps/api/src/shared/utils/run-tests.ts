@@ -70,6 +70,19 @@ async function runJavaScriptTests(
         actual: message,
         description: tc.description,
       })
+    } else if (tc.mode === 'instance-call') {
+      // ── Instance-call test (G7) ─────────────────────────────────────────────
+      // Ainda não implementado para JavaScript (só Python, ver
+      // packages/runner-python/src/run-python-tests.ts) — reprova com
+      // mensagem clara em vez de quebrar, mesmo padrão que o Python usa hoje
+      // para `mode: 'ast'` (não suportado lá).
+      results.push({
+        passed: false,
+        input: tc.input,
+        expected: tc.expected,
+        actual: 'Verificação instance-call (instanciar classe + chamar método) ainda não suportada para JavaScript.',
+        description: tc.description,
+      })
     } else if (tc.mode === 'stdout') {
       // ── Console-output test ───────────────────────────────────────────────
       // Executa o código capturando console.log e compara a SAÍDA impressa.

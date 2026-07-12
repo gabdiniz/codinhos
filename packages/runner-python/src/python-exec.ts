@@ -8,7 +8,7 @@
  */
 import type { PyodideInterface } from 'pyodide'
 
-export type PythonOp = 'function' | 'typecheck' | 'stdout'
+export type PythonOp = 'function' | 'typecheck' | 'stdout' | 'instance'
 
 export interface RunRequest {
   id: number
@@ -17,6 +17,10 @@ export interface RunRequest {
   targetFn?: string | null
   args?: unknown[] | null
   varName?: string
+  /** Usados só quando op === 'instance' (G7 — instanciar classe + chamar método). */
+  className?: string | null
+  constructorArgs?: unknown[] | null
+  methodName?: string | null
 }
 
 export interface RunResponse {
@@ -83,6 +87,52 @@ else:
     __error = "not_found"
 `
 
+// G7 — instancia __class_name__ com __ctor_args_json, chama __method_name__
+// nela com __method_args_json, compara o RETORNO do método (não print). Erros
+// possíveis, sinalizados via __error pra handleRequest traduzir em mensagem:
+// "class_not_found" (nome não existe ou não é uma classe), "method_not_found"
+// (existe a classe, mas não o método pedido — cobre erro de digitação no
+// enunciado e classe incompleta do aluno), ou o nome da exceção Python (ex.:
+// erro dentro do __init__ ou do método).
+const INSTANCE_WRAPPER = `
+import json as __json
+
+def __safe_json(v):
+    try:
+        return __json.dumps(v)
+    except TypeError:
+        return __json.dumps(repr(v))
+
+__cls = globals().get(__class_name__)
+if __cls is None or not isinstance(__cls, type):
+    __error = "class_not_found"
+    __actual_json = "null"
+    __actual_repr = ""
+    __actual_type = ""
+else:
+    try:
+        __ctor_args = __json.loads(__ctor_args_json)
+        __instance = __cls(*__ctor_args)
+        __method = getattr(__instance, __method_name__, None)
+        if __method is None or not callable(__method):
+            __error = "method_not_found"
+            __actual_json = "null"
+            __actual_repr = ""
+            __actual_type = ""
+        else:
+            __method_args = __json.loads(__method_args_json)
+            __result = __method(*__method_args)
+            __actual_json = __safe_json(__result)
+            __actual_repr = repr(__result)
+            __actual_type = type(__result).__name__
+            __error = None
+    except Exception as __e:
+        __error = type(__e).__name__ + ": " + str(__e)
+        __actual_json = "null"
+        __actual_repr = ""
+        __actual_type = ""
+`
+
 function formatPyError(err: unknown): string {
   if (err instanceof Error) {
     const lines = err.message.trim().split('\n')
@@ -144,6 +194,43 @@ export function handleRequest(pyodide: PyodideInterface, req: RunRequest): RunRe
         }
       }
       return { id: req.id, ok: true, output: output.join('\n') }
+    }
+
+    if (req.op === 'instance') {
+      const className = req.className
+      if (!className) {
+        return {
+          id: req.id,
+          ok: false,
+          errorMessage: 'Nenhuma classe encontrada. Declare uma classe com class.',
+        }
+      }
+      g.set('__class_name__', className)
+      g.set('__ctor_args_json', JSON.stringify(req.constructorArgs ?? []))
+      g.set('__method_name__', req.methodName ?? '')
+      g.set('__method_args_json', JSON.stringify(req.args ?? []))
+      pyodide.runPython(INSTANCE_WRAPPER, { globals: g })
+      const instanceError = g.get('__error')
+      if (instanceError === 'class_not_found') {
+        return { id: req.id, ok: false, errorMessage: `Classe "${className}" não encontrada.` }
+      }
+      if (instanceError === 'method_not_found') {
+        return {
+          id: req.id,
+          ok: false,
+          errorMessage: `Método "${req.methodName}" não encontrado na classe "${className}".`,
+        }
+      }
+      if (instanceError) {
+        return { id: req.id, ok: false, errorMessage: `Erro: ${instanceError}` }
+      }
+      return {
+        id: req.id,
+        ok: true,
+        actualJson: g.get('__actual_json'),
+        actualRepr: g.get('__actual_repr'),
+        actualType: g.get('__actual_type'),
+      }
     }
 
     // op === 'function'

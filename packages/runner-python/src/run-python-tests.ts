@@ -5,13 +5,13 @@
  * lógica de matcher/normalização de @codinhos/runner (fonte única de
  * comparação, igual ao motor JS já garante entre front/back).
  *
- * Escopo da P1 (ver docs/motor-python-capacidades.md): 3 modos —
- * function-call, type-check (input null) e stdout. O modo `ast` ainda não
- * tem implementação Python (G5, fase P3) e reprova com mensagem clara em vez
- * de quebrar.
+ * Escopo (ver docs/motor-python-capacidades.md): function-call, type-check
+ * (input null), stdout e instance-call (G7 — instancia uma classe e chama um
+ * método nela, comparando o RETORNO do método). O modo `ast` ainda não tem
+ * implementação Python (G5) e reprova com mensagem clara em vez de quebrar.
  */
 import { applyMatcher, normalizeOutput, type TestCase, type TestResult } from '@codinhos/runner'
-import { resolveTargetFnPython } from './extract.js'
+import { resolveTargetClassPython, resolveTargetFnPython } from './extract.js'
 import type { PythonRunner } from './python-exec.js'
 
 /**
@@ -43,6 +43,11 @@ export async function runPythonTests(
 
     if (tc.mode === 'stdout') {
       results.push(await runStdoutCase(code, tc, targetFn, pool))
+      continue
+    }
+
+    if (tc.mode === 'instance-call') {
+      results.push(await runInstanceCase(code, tc, pool))
       continue
     }
 
@@ -160,6 +165,66 @@ async function runFunctionCase(
   // applyMatcher (mesma comparação usada em JS). actualRepr/actualType (não
   // usados aqui) ficam disponíveis em `res` pra quem quiser exibir com mais
   // fidelidade (ex.: distinguir tuple de list na UI) sem afetar a nota.
+  const actual = res.actualJson ? JSON.parse(res.actualJson) : null
+  return {
+    passed: applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance),
+    input: tc.input,
+    expected: tc.expected,
+    actual,
+    description: tc.description,
+  }
+}
+
+/**
+ * G7 — instancia a classe (className do desafio, ou a primeira `class` do
+ * código) com `constructorArgs`, chama `methodName` nela com `input` (os
+ * argumentos do MÉTODO — mesma convenção de array/valor único do
+ * function-call), e compara o RETORNO do método. Diferente da trilha 9 atual
+ * (100% stdout, print), isso permite testar o VALOR de volta de um método,
+ * sem depender do aluno imprimir nada.
+ */
+async function runInstanceCase(code: string, tc: TestCase, pool: PythonRunner): Promise<TestResult> {
+  const className = resolveTargetClassPython(code, tc.className)
+  if (!className) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: 'Nenhuma classe encontrada. Declare uma classe com class.',
+      description: tc.description,
+    }
+  }
+
+  if (!tc.methodName) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: 'Nenhum método especificado no desafio (methodName ausente).',
+      description: tc.description,
+    }
+  }
+
+  const methodArgs = Array.isArray(tc.input) ? tc.input : [tc.input]
+  const res = await pool.run({
+    code,
+    op: 'instance',
+    className,
+    constructorArgs: tc.constructorArgs ?? [],
+    methodName: tc.methodName,
+    args: methodArgs,
+  })
+
+  if (!res.ok) {
+    return {
+      passed: false,
+      input: tc.input,
+      expected: tc.expected,
+      actual: res.errorMessage ?? 'Erro desconhecido.',
+      description: tc.description,
+    }
+  }
+
   const actual = res.actualJson ? JSON.parse(res.actualJson) : null
   return {
     passed: applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance),

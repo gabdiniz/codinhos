@@ -118,6 +118,46 @@ o detalhe de unhandled rejection (um slot que rejeita `ready` enquanto ocioso no
 um `.catch()` "grudado" nele desde a criação, senão o Node reporta erro não tratado mesmo que uma
 chamada futura fosse tratar — achado ao testar o caminho de erro de propósito).
 
+### 1.1 G7 resolvido — `mode: 'instance-call'` (12/07/2026)
+
+Motivação: a trilha 9 (POO) inteira usava `mode:'stdout'` porque o motor só sabia "chamar a
+primeira função declarada" — uma `class` não é uma função. Isso funciona, mas é mais fraco que
+comparar o RETORNO de um método (fica sujeito a erro de formatação de `print`/`__str__`
+contaminar a nota de algo que não é sobre formatação).
+
+**O que foi adicionado**, mesmo padrão dos outros modos (function-call/type-check/stdout):
+
+- `TestCase` (`packages/runner/src/types.ts`, tipo compartilhado JS/Python) ganhou
+  `mode: 'instance-call'` + campos `className?`, `constructorArgs?`, `methodName?`. `input`
+  continua sendo os argumentos do MÉTODO chamado (mesma convenção de array/valor único do
+  function-call); `constructorArgs` são os argumentos do `__init__`.
+- **Python** (`packages/runner-python`): `extract.ts` ganhou `extractClassName`/
+  `resolveTargetClassPython` (equivalente a `resolveTargetFnPython`, primeira `class` na coluna 0
+  se `className` não for informado). `python-exec.ts` ganhou o `PythonOp` `'instance'` e o script
+  `INSTANCE_WRAPPER` (instancia a classe com `constructorArgs`, chama `methodName` com os args do
+  método, serializa o retorno com o mesmo `__safe_json`/`json.dumps` do function-call — G3
+  continua valendo, tupla vira array). `run-python-tests.ts` ganhou `runInstanceCase`, despachado
+  quando `tc.mode === 'instance-call'`.
+- **JavaScript** (`apps/api/src/shared/utils/run-tests.ts`): como o tipo é compartilhado, um
+  desafio JS com `mode:'instance-call'` não pode simplesmente ser ignorado — ganhou um branch que
+  reprova com mensagem clara ("ainda não suportado para JavaScript"), mesmo padrão que o Python já
+  usa pra `mode:'ast'` (G5, não implementado lá). **Só Python implementa de verdade por enquanto.**
+- **Front** (`apps/app/src/workers/sandbox.worker.ts`): nenhuma mudança necessária — o adaptador
+  `PythonRunner` do Web Worker já repassa o `RunRequest` inteiro pra `handleRequest` sem filtrar
+  campos, então os novos campos passam de graça.
+- **Erros tratados**: classe não encontrada, método não encontrado na instância, e qualquer
+  exceção do `__init__`/método (nome da exceção + mensagem, igual function-call).
+- **Testes novos** em `run-python-tests.test.ts` (5 cenários: método simples usando atributo do
+  construtor, `className` explícito + estado mutado entre leitura, método com argumento próprio,
+  classe inexistente, método inexistente) — **não executados neste sandbox** (mesma limitação já
+  documentada: sem Pyodide real aqui). Rodar `pnpm --filter @codinhos/runner-python test` na
+  máquina local pra confirmar, mesmo fluxo do resto da P1.
+
+**Não fiz nesta rodada:** não voltei a editar `seed-trilha-python-09.ts` pra usar o modo novo —
+o Gabriel pediu só o motor, não re-tocar no conteúdo já escrito. A trilha 9 continua 100%
+`stdout` como está; migrar os 8 desafios pra `instance-call` (mais preciso) é trabalho de
+conteúdo futuro, não bloqueado por nada agora.
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -132,7 +172,11 @@ de evolução paralelas do mesmo motor.
 | **P3** | AST estrutural pra Python (`ast` nativo — mais barato que a versão heurística de JS) | **G5** | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
 | **P4** | Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM) | **G6** | P | Trilha 10 (capstone) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
-| **Horizonte** (sem trilha bloqueada hoje) | G7 (modo `instance-call` pra POO), G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4, G7 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+| **Horizonte** (sem trilha bloqueada hoje) | G2 (stdin simulado), G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | G2, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+
+**G7 resolvido fora de ordem (12/07/2026)** — ver §1.1 abaixo. Não estava na sequência P1→P5
+porque nenhuma trilha dependia dele pra publicar, mas o Gabriel pediu pra adiantar antes do
+primeiro seed (melhora a precisão de nota da trilha 9, que hoje só teria `stdout`).
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -152,7 +196,7 @@ Resposta curta: **só G1 bloqueia. G5 e G6 bloqueiam trilhas específicas (8 e 1
 | G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
 | G2 (stdin) | Nenhuma — `input()` é só "sabia que existe" numa lição, não testável | Horizonte, sem trilha esperando |
 | G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
-| G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | Horizonte — melhoraria a trilha 9, não a destrava |
+| G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
 Consequência prática: depois da P1, **7 das 10 trilhas (1-7 e 9) já podem ser semeadas e
 publicadas sem esperar mais nada de motor.** Só a trilha 8 (Recursão) e a trilha 10 (capstone)

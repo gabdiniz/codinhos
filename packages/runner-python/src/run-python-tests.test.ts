@@ -134,6 +134,117 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'instance-call: método simples usa atributo do __init__',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Retangulo:\n    def __init__(self, largura, altura):\n        self.largura = largura\n        self.altura = altura\n    def area(self):\n        return self.largura * self.altura',
+        [
+          {
+            input: [],
+            expected: 12,
+            description: 'area() de um retângulo 4x3',
+            mode: 'instance-call',
+            constructorArgs: [4, 3],
+            methodName: 'area',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(12)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: className explícito + método que muda e lê o estado',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Contador:\n    def __init__(self):\n        self.valor = 0\n    def incrementar(self):\n        self.valor += 1\n        return self.valor',
+        [
+          {
+            input: [],
+            expected: 1,
+            description: 'primeiro incrementar() deve retornar 1',
+            mode: 'instance-call',
+            className: 'Contador',
+            constructorArgs: [],
+            methodName: 'incrementar',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(1)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: método com argumento próprio (além do construtor)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class ContaBancaria:\n    def __init__(self, saldo):\n        self.saldo = saldo\n    def depositar(self, valor):\n        self.saldo += valor\n        return self.saldo',
+        [
+          {
+            input: [50],
+            expected: 150,
+            description: 'depositar(50) numa conta com saldo 100',
+            mode: 'instance-call',
+            constructorArgs: [100],
+            methodName: 'depositar',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.actual).toBe(150)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: classe inexistente reprova com mensagem clara',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def nao_e_uma_classe():\n    pass',
+        [{ input: [], expected: 1, description: 'não há classe aqui', mode: 'instance-call', methodName: 'algo' }],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/nenhuma classe encontrada/i)
+    },
+    20000,
+  )
+
+  it(
+    'instance-call: método inexistente na classe reprova com mensagem clara',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Vazia:\n    def __init__(self):\n        pass',
+        [
+          {
+            input: [],
+            expected: 1,
+            description: 'método que não existe',
+            mode: 'instance-call',
+            methodName: 'metodo_que_nao_existe',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(String(results[0]?.actual)).toMatch(/método.*não encontrado/i)
+    },
+    20000,
+  )
+
+  it(
     'timeout: loop infinito reprova em vez de travar o teste',
     async () => {
       const { results, allPassed } = await runPythonTests(

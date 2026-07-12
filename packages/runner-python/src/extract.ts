@@ -20,3 +20,24 @@ export function resolveTargetFnPython(code: string, targetFn?: string | null): s
   if (targetFn && targetFn.trim()) return targetFn.trim()
   return extractDefName(code)
 }
+
+/**
+ * Extrai o nome da PRIMEIRA classe declarada no código do aluno (G7 —
+ * mode: 'instance-call'). Mesma lógica de `extractDefName`: só pega `class`
+ * na COLUNA 0 (uma classe aninhada não conta). `class Nome:` e
+ * `class Nome(Base):` batem os dois — o que vem depois do nome (herança ou
+ * `:`) não importa aqui.
+ */
+export function extractClassName(code: string): string | null {
+  const match = code.match(/^class\s+([a-zA-Z_]\w*)/m)
+  return match ? match[1] : null
+}
+
+/**
+ * Resolve qual classe deve ser instanciada nos testes.
+ * className (do desafio) tem prioridade; cai para a primeira `class` de topo.
+ */
+export function resolveTargetClassPython(code: string, className?: string | null): string | null {
+  if (className && className.trim()) return className.trim()
+  return extractClassName(code)
+}
