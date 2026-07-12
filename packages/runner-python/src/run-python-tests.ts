@@ -12,7 +12,9 @@
  * `TestCase.stdin` (G2 — fila de respostas simuladas pra `input()`) é
  * repassado direto pro worker em todo op que executa código de verdade
  * (function/typecheck/stdout/instance) — não muda o dispatch, só um campo a
- * mais no `RunRequest`.
+ * mais no `RunRequest`. `TestCase.expectedType` (G3 completo — exige um tipo
+ * Python específico de volta, ex. `'tuple'`) é checado em cima do valor só em
+ * function-call/instance-call (`checkExpectedType`), ver §1.5 do doc mestre.
  */
 import { applyMatcher, normalizeOutput, type TestCase, type TestResult } from '@codinhos/runner'
 import { resolveTargetClassPython, resolveTargetFnPython } from './extract.js'
@@ -160,16 +162,41 @@ async function runFunctionCase(
   }
 
   // actualJson vem de json.dumps no lado Python — round-trip seguro pro
-  // applyMatcher (mesma comparação usada em JS). actualRepr/actualType (não
-  // usados aqui) ficam disponíveis em `res` pra quem quiser exibir com mais
-  // fidelidade (ex.: distinguir tuple de list na UI) sem afetar a nota.
+  // applyMatcher (mesma comparação usada em JS). actualRepr (não usado aqui)
+  // fica disponível em `res` pra quem quiser exibir com mais fidelidade
+  // (ex.: distinguir tuple de list na UI) sem afetar a nota. `actualType` é
+  // usado abaixo pra G3 completo (`expectedType`).
   const actual = res.actualJson ? JSON.parse(res.actualJson) : null
+  const valuePassed = applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance)
+  const typeCheck = checkExpectedType(tc.expectedType, res.actualType)
   return {
-    passed: applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance),
+    passed: valuePassed && typeCheck.ok,
     input: tc.input,
     expected: tc.expected,
     actual,
     description: tc.description,
+    ...(valuePassed && !typeCheck.ok ? { error: typeCheck.message, errorName: 'TypeError' } : {}),
+  }
+}
+
+/**
+ * G3 completo — confere o TIPO Python de verdade do retorno (`res.actualType`,
+ * já vem de `type(result).__name__` no worker), em cima da comparação de
+ * valor normal. Sem `tc.expectedType`, sempre passa (comportamento clássico,
+ * retrocompatível). Só marca `error`/`errorName` quando o VALOR já bateu mas
+ * o tipo não — se o valor também está errado, a mensagem de "esperado vs.
+ * recebido" já é suficiente, não precisa de nota extra sobre tipo.
+ */
+function checkExpectedType(expectedType: string | undefined, actualType: string | undefined): { ok: boolean; message?: string } {
+  if (!expectedType) {
+    return { ok: true }
+  }
+  if (actualType === expectedType) {
+    return { ok: true }
+  }
+  return {
+    ok: false,
+    message: `O valor está certo, mas o TIPO retornado precisa ser "${expectedType}" — veio "${actualType ?? 'desconhecido'}".`,
   }
 }
 
@@ -267,11 +294,14 @@ async function runInstanceCase(code: string, tc: TestCase, pool: PythonRunner): 
   }
 
   const actual = res.actualJson ? JSON.parse(res.actualJson) : null
+  const valuePassed = applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance)
+  const typeCheck = checkExpectedType(tc.expectedType, res.actualType)
   return {
-    passed: applyMatcher(actual, tc.expected, tc.matcher, tc.tolerance),
+    passed: valuePassed && typeCheck.ok,
     input: tc.input,
     expected: tc.expected,
     actual,
     description: tc.description,
+    ...(valuePassed && !typeCheck.ok ? { error: typeCheck.message, errorName: 'TypeError' } : {}),
   }
 }

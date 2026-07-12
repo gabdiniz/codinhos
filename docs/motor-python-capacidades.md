@@ -294,6 +294,61 @@ teste). Agora que o motor suporta, isso é uma melhoria de conteúdo opcional pr
 não urgente (nenhum aluno é prejudicado por `input()` continuar não-testado na trilha 1 — só deixa
 de aproveitar uma capacidade nova).
 
+### 1.5 G3 completo resolvido — `expectedType` (12/07/2026)
+
+Motivação: a P1 já resolvia G3 "de graça" — `json.dumps`/`json.loads` faz o round-trip
+Python→JS→matchers-existentes sem duplicar os 4 matchers em Python, mas isso significa que
+`(1, 2)` (tuple) e `[1, 2]` (list) comparam como IGUAIS pro `applyMatcher` (JSON não distingue os
+dois). Pra maioria dos desafios isso é o comportamento CERTO (o aluno não devia ser reprovado por
+usar list onde uma tuple funcionaria igual) — mas nenhum mecanismo existia pra um desafio que
+QUISESSE exigir tuple de propósito (ex.: ensinar por que uma função retorna coordenadas como tuple
+"imutável" e não list). G3 completo fecha essa lacuna, como opção — não muda o comportamento
+padrão de nenhum desafio existente.
+
+**Implementação — campo novo no `TestCase`, checagem só na camada de comparação (TS), zero mudança
+no lado Python:**
+
+- `TestCase.expectedType?: string` (`packages/runner/src/types.ts`) — nome do tipo Python exigido
+  (`'tuple'`, `'list'`, `'dict'`, `'set'`, `'str'`, `'int'`, `'float'`, `'bool'`, `'NoneType'`,
+  confirmado contra `type(x).__name__` real do CPython). Ausente = comportamento clássico
+  (só valor importa, retrocompatível — nenhum `testCase` existente muda de resultado).
+- **Não precisou de nenhuma mudança em `python-exec.ts`** — `FUNCTION_WRAPPER`/`INSTANCE_WRAPPER`
+  já calculavam `type(__result).__name__` desde a P1 (campo `actualType` do `RunResponse`, usado
+  até agora só como metadado pra UI, nunca pra decidir a nota). G3 completo só passou a LER esse
+  campo que já existia: `run-python-tests.ts` ganhou `checkExpectedType(expectedType, actualType)`,
+  usado em `runFunctionCase`/`runInstanceCase` — as duas únicas ops com um valor de retorno real
+  (`type-check` já É uma checagem de tipo por natureza; `stdout` não tem valor de retorno, só
+  texto impresso; `ast` nunca executa código, não tem `actualType`).
+- **Nota final = valor E tipo, mas a mensagem só aparece quando faz sentido:** `passed = valuePassed
+  && typeOk`. Quando o VALOR já está errado, não adiciono nenhuma nota extra sobre tipo (a
+  mensagem de "esperado vs. recebido" já basta, uma nota de tipo ali só confundiria). Só quando o
+  valor bate mas o tipo não, preencho `TestResult.error`/`errorName` (campos que já existiam no
+  tipo compartilhado, mas nunca eram usados pelo runner Python) com uma mensagem específica:
+  `O valor está certo, mas o TIPO retornado precisa ser "X" — veio "Y".`
+- **Limite conhecido, achado revisando o consumo desses campos no front:** `error`/`errorName` só
+  chegam ao aluno no fluxo de "Executar" (Web Worker local, feedback instantâneo,
+  `apps/app/src/pages/student/ChallengePage.tsx`) — `apps/api/src/modules/submissions/submissions.schema.ts`
+  (`testResultSchema`) NÃO inclui esses dois campos, então numa submissão "Enviar solução"
+  (persistida, revalidada no backend) a mensagem específica de tipo se perde: o aluno só vê
+  `passed: false`, sem a explicação. Isso não é uma regressão desta mudança — `error`/`errorName`
+  já existiam no tipo compartilhado sem NENHUM runner (JS ou Python) preenchê-los antes de agora, e
+  o schema de submissão nunca os expôs. Registrado aqui como pendência de UX pra uma sessão futura
+  (adicionar os dois campos em `testResultSchema` e no componente de exibição de submissão), fora
+  do escopo desta rodada (só motor).
+- **Sem execução Python nova pra validar** — diferente do G2/G5/G6, esta mudança é pura lógica TS
+  em cima de um campo (`actualType`) que a P1 já validava com Pyodide real. Confirmei a função
+  `checkExpectedType` isoladamente (4 combinações: sem `expectedType`; tipo bate; tipo não bate;
+  `actualType` ausente) fora do Pyodide, já que não há Python novo envolvido.
+- **Testes novos** em `run-python-tests.test.ts` (5 cenários via `runPythonTests`: tuple de
+  verdade passa; list com valor certo mas tipo errado reprova com mensagem; sem `expectedType`
+  continua aceitando list, retrocompatível; valor E tipo errados não duplicam a mensagem;
+  funciona também em `instance-call`) — mesma ressalva de sempre: não executados neste sandbox.
+
+**Não fiz:** não apliquei `expectedType` em nenhum `testCase` das 10 trilhas já semeadas — nenhuma
+delas foi desenhada esperando essa exigência (a trilha 5, que mais fala de tupla vs. lista,
+foi desenhada justamente para não depender disso, ver `docs/pesquisa-trilhas-python.md`). É um
+recurso disponível pra conteúdo futuro, não uma correção de algo que estava quebrado.
+
 ---
 
 ## 2. Roadmap faseado (molde D1→D5)
@@ -308,17 +363,18 @@ de evolução paralelas do mesmo motor.
 | **P3** | ~~AST estrutural pra Python~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G5**~~ | M | Trilha 8 (Recursão) como desenhada, com "sem loop"/"usa recursão" de verdade |
 | **P4** | ~~Allowlist de módulos (`math`/`random`/`string`; bloqueio explícito de `os`/`sys`/`subprocess`/`socket` como defesa em profundidade, não só confiar no sandbox WASM)~~ **RESOLVIDO fora de ordem, ver abaixo** | ~~**G6**~~ | P | Trilha 10 (capstone) e trilha 7 (`functools`) |
 | **P5** | Seed das trilhas 8 e 10 (conteúdo) | — | P (conteúdo) | Fecha as 10 trilhas |
-| **Horizonte** (sem trilha bloqueada hoje) | ~~G2 (stdin simulado)~~ **RESOLVIDO fora de ordem, ver abaixo**, G4 (modo de teste pra `try/except`), G3 completo (marcador explícito de tipo esperado, se algum desafio futuro precisar) | ~~G2~~, G3(completo), G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
+| **Horizonte** (sem trilha bloqueada hoje) | ~~G2 (stdin simulado)~~ **RESOLVIDO**, ~~G3 completo (marcador explícito de tipo esperado)~~ **RESOLVIDO**, G4 (modo de teste pra `try/except`) — ver §1.4/§1.5 | ~~G2~~, ~~G3(completo)~~, G4 | cada um P–M | Melhoria de qualidade, não desbloqueio — entram quando houver motivo de conteúdo, igual async/AST/p5 ficaram estacionados no motor JS até serem priorizados |
 
-**G7, G5, G6 e G2 resolvidos fora de ordem (12/07/2026)** — ver §1.1, §1.2, §1.3 e §1.4 acima.
-Nenhum estava na sequência estrita P1→P5 no momento (G7 e G2 nem tinham fase própria, eram
-horizonte; G5 era P3; G6 era P4), mas o Gabriel pediu pra fechar tudo que dava pra fechar antes do
-primeiro seed — G7 melhora a precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava a trilha
-8 completa como desenhada ("sem loop"/"usa recursão" verificado de verdade, não só documentado),
-G6 fecha a allowlist de imports que a trilha 10 (e a 7, com `functools`) já dependiam sem bloqueio
-real, G2 destrava `input()` como recurso testável de verdade (não mais só mencionado). **Motor sem
-nenhum gap pendente pras 10 trilhas já desenhadas — falta só rodar o primeiro seed.** Só G3
-(completo) e G4 continuam no horizonte, sem nenhuma trilha esperando por eles.
+**G7, G5, G6, G2 e G3(completo) resolvidos fora de ordem (12/07/2026)** — ver §1.1-§1.5 acima.
+Nenhum estava na sequência estrita P1→P5 no momento (G7/G2/G3-completo nem tinham fase própria,
+eram horizonte; G5 era P3; G6 era P4), mas o Gabriel pediu pra fechar tudo que dava pra fechar
+antes do primeiro seed — G7 melhora a precisão de nota da trilha 9 (hoje só `stdout`), G5 destrava
+a trilha 8 completa como desenhada ("sem loop"/"usa recursão" verificado de verdade, não só
+documentado), G6 fecha a allowlist de imports que a trilha 10 (e a 7, com `functools`) já
+dependiam sem bloqueio real, G2 destrava `input()` como recurso testável de verdade (não mais só
+mencionado), G3 completo dá a opção de EXIGIR tuple (ou outro tipo específico) quando algum
+desafio futuro quiser. **Motor sem nenhum gap pendente pras 10 trilhas já desenhadas — falta só
+rodar o primeiro seed.** Só G4 (try/except) segue no horizonte, sem nenhuma trilha esperando.
 
 **Sequência:** P1 → P2 → P3 → P4 → P5; horizonte fica parado até ter motivo de conteúdo pra
 puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
@@ -329,24 +385,25 @@ puxar um item específico (mesmo padrão do "5. Horizonte maior" do motor JS).
 
 Resposta curta: **só G1 bloqueou (já resolvido, P1). G2, G3(completo), G4, G5, G6 e G7 não
 bloqueiam nenhuma das 10 trilhas hoje — todos os gaps com trilha esperando já foram resolvidos
-(G5, G6, G7 e G2, fora de ordem, ver §1.1/§1.2/§1.3/§1.4).**
+(G5, G6, G7, G2 e G3-completo, fora de ordem, ver §1.1-§1.5).**
 
 | Gap | Bloqueia o quê | Quando entra |
 |---|---|---|
 | G1 | Tudo | P1 — obrigatório antes de qualquer seed |
 | G5 (AST) | ~~Trilha 8, como desenhada ("sem loop")~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.2 |
 | G6 (allowlist de módulos) | ~~Trilha 10 (capstone usa `math`/`random`/`string`) e trilha 7 (`functools`)~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.3 |
-| G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); versão completa (marcador explícito) fica no horizonte, sem pressa |
+| G3 (tupla vs. lista) | Nenhuma trilha depende disso pra nota | Resolvido em boa parte de graça na P1 (comparação nativa em Python); **versão completa (`expectedType`) também resolvida** — ver §1.5 |
 | G2 (stdin) | ~~Nenhuma bloqueava pra nota — `input()` era só "sabia que existe" numa lição, não testável~~ | **Resolvido em 12/07/2026, fora de ordem** — ver §1.4 |
 | G4 (try/except) | Nenhuma — tratamento de erro está fora do currículo por design | Horizonte, sem trilha esperando |
 | G7 (instance-call) | Nenhuma — trilha 9 contorna com `stdout` por desenho | **Resolvido em 12/07/2026, fora de ordem** — ver §1.1 |
 
 Consequência prática: depois da P1, **as 10 trilhas já podem ser semeadas e publicadas sem esperar
 mais nada de motor** — G5 (trilha 8) e G6 (trilhas 7 e 10) foram os últimos gaps com trilha
-esperando pra nota, e ambos foram resolvidos. G2 não bloqueava nenhuma trilha (só era um recurso
-mencionado sem poder ser testado), mas também foi resolvido — `input()` agora é testável de
-verdade, se algum conteúdo futuro quiser usar. Só G3(completo)/G4 seguem no horizonte, sem nenhuma
-trilha bloqueada.
+esperando pra nota, e ambos foram resolvidos. G2 e G3(completo) não bloqueavam nenhuma trilha (só
+eram recursos/precisões que nenhum desafio exigia), mas também foram resolvidos — `input()` é
+testável de verdade e um desafio pode exigir `tuple` (ou outro tipo) explicitamente, se algum
+conteúdo futuro quiser usar. **Só G4 (try/except) segue no horizonte, sem nenhuma trilha
+bloqueada.**
 
 ---
 

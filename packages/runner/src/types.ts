@@ -51,6 +51,20 @@ export interface TestCase {
    * vazio = nenhuma resposta disponível, qualquer `input()` reprova.
    */
   stdin?: string[]
+  /**
+   * G3 completo (docs/motor-python-capacidades.md §1.5) — EXIGE que o valor
+   * retornado seja de um tipo Python específico (`'tuple'`, `'list'`,
+   * `'dict'`, `'set'`, `'str'`, `'int'`, `'float'`, `'bool'`, `'NoneType'`),
+   * em cima da comparação de valor normal. Sem isso, `(1, 2)` e `[1, 2]`
+   * comparam como iguais (round-trip via JSON não preserva o tipo — ver G3
+   * "de graça" no doc mestre); com `expectedType: 'tuple'`, uma solução que
+   * devolve `[1, 2]` reprova mesmo com o valor certo. Só faz sentido em
+   * function-call/instance-call (que têm um valor de retorno real);
+   * type-check já É uma checagem de tipo por natureza, não usa este campo;
+   * stdout não tem valor de retorno pra checar. Implementado hoje só no
+   * runner Python. Ausente = comportamento clássico (só valor importa).
+   */
+  expectedType?: string
 }
 
 export interface TestResult {

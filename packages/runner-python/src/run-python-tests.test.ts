@@ -70,6 +70,112 @@ describe('runPythonTests', () => {
   )
 
   it(
+    'expectedType (G3 completo): tuple de verdade passa quando exigido',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def par(a, b):\n    return (a, b)',
+        [{ input: [1, 2], expected: [1, 2], expectedType: 'tuple', description: 'par(1, 2) deve devolver uma tuple' }],
+        'par',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.error).toBeUndefined()
+    },
+    20000,
+  )
+
+  it(
+    'expectedType (G3 completo): valor certo mas tipo errado (list em vez de tuple) reprova com mensagem',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def par(a, b):\n    return [a, b]',
+        [{ input: [1, 2], expected: [1, 2], expectedType: 'tuple', description: 'par(1, 2) deve devolver uma tuple' }],
+        'par',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(results[0]?.error).toMatch(/tipo.*"tuple".*"list"/i)
+      expect(results[0]?.errorName).toBe('TypeError')
+      // o valor em si (JSON round-trip) continua exposto, só a nota que reprova
+      expect(results[0]?.actual).toEqual([1, 2])
+    },
+    20000,
+  )
+
+  it(
+    'expectedType (G3 completo): sem o campo, list é aceita normalmente (retrocompatível)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def par(a, b):\n    return [a, b]',
+        [{ input: [1, 2], expected: [1, 2], description: 'par(1, 2) deve ser [1, 2]' }],
+        'par',
+        pool,
+      )
+      expect(allPassed).toBe(true)
+      expect(results[0]?.error).toBeUndefined()
+    },
+    20000,
+  )
+
+  it(
+    'expectedType (G3 completo): valor E tipo errados reprovam sem a nota extra de tipo (mensagem de valor já basta)',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'def par(a, b):\n    return [a, b]',
+        [{ input: [1, 2], expected: [9, 9], expectedType: 'tuple', description: 'par(1, 2) não deveria ser [9, 9]' }],
+        'par',
+        pool,
+      )
+      expect(allPassed).toBe(false)
+      expect(results[0]?.error).toBeUndefined() // valor já errado, sem nota de tipo redundante
+    },
+    20000,
+  )
+
+  it(
+    'expectedType (G3 completo): funciona também em instance-call',
+    async () => {
+      const { results, allPassed } = await runPythonTests(
+        'class Ponto:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def coords_tupla(self):\n        return (self.x, self.y)\n    def coords_lista(self):\n        return [self.x, self.y]',
+        [
+          {
+            input: [],
+            expected: [3, 4],
+            expectedType: 'tuple',
+            description: 'coords_tupla() deve devolver uma tuple',
+            mode: 'instance-call',
+            constructorArgs: [3, 4],
+            methodName: 'coords_tupla',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(allPassed).toBe(true)
+
+      const comLista = await runPythonTests(
+        'class Ponto:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n    def coords_lista(self):\n        return [self.x, self.y]',
+        [
+          {
+            input: [],
+            expected: [3, 4],
+            expectedType: 'tuple',
+            description: 'coords_lista() não é tuple',
+            mode: 'instance-call',
+            constructorArgs: [3, 4],
+            methodName: 'coords_lista',
+          },
+        ],
+        null,
+        pool,
+      )
+      expect(comLista.allPassed).toBe(false)
+      expect(comLista.results[0]?.error).toMatch(/tipo/i)
+    },
+    20000,
+  )
+
+  it(
     'function-call: exceção do aluno reprova com mensagem',
     async () => {
       const { results, allPassed } = await runPythonTests(
