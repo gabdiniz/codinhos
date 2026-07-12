@@ -7,15 +7,11 @@
  *
  * Idempotente e atualizável, mesmo padrão do seed-trilha-js.ts.
  *
- * IMPORTANTE (G5 do doc mestre, ainda não implementado): o desenho original
- * previa `requireRecursion`/`forbidLoops` (mode: 'ast') pra PROVAR que a
- * solução não usa `for`/`while` escondido — mas o runner Python ainda não
- * implementa verificação estrutural (só function-call/type-check/stdout, ver
- * packages/runner-python/src/run-python-tests.ts). Todos os 12 desafios com
- * regra estrutural aqui usam `function-call` puro por enquanto — funcionam e
- * ensinam recursão de verdade (todas as soluções de referência são recursivas
- * e foram verificadas rodando), só sem o reforço de "reprovar quem trapaceou
- * com loop". Ver nota na P3 do roadmap (docs/motor-python-capacidades.md).
+ * G5 (verificação estrutural, mode: 'ast') fechado em 12/07/2026: os 11
+ * desafios de recursão ganharam `requireRecursion` + `forbidLoops` (e R.7
+ * também `forbidCall` pra bloquear `max()`), além dos testCases de
+ * função já existentes — agora reprova de verdade quem resolve com
+ * `for`/`while` escondido em vez de recursão. Ver docs/motor-python-capacidades.md.
  */
 
 import 'dotenv/config'
@@ -53,9 +49,13 @@ type Modulo = {
     input: unknown
     expected: unknown
     description: string
-    mode?: 'stdout'
+    mode?: 'stdout' | 'ast'
     matcher?: 'equal' | 'approx' | 'contains' | 'regex'
     tolerance?: number
+    astRule?: {
+      kind: 'requireRecursion' | 'forbidLoops' | 'requireMethod' | 'forbidMethod' | 'requireCall' | 'forbidCall'
+      name?: string
+    }
   }[]
 }
 
@@ -100,6 +100,8 @@ const trilhaModules: Modulo[] = [
       { input: [3], expected: [3, 2, 1], description: 'n=3' },
       { input: [1], expected: [1], description: 'n=1' },
       { input: [0], expected: [], description: 'n=0' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -129,6 +131,8 @@ const trilhaModules: Modulo[] = [
       { input: [5], expected: 15, description: 'n=5' },
       { input: [1], expected: 1, description: 'n=1' },
       { input: [0], expected: 0, description: 'n=0' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -146,6 +150,8 @@ const trilhaModules: Modulo[] = [
       { input: [5], expected: 120, description: 'n=5' },
       { input: [0], expected: 1, description: 'n=0' },
       { input: [1], expected: 1, description: 'n=1' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -163,6 +169,8 @@ const trilhaModules: Modulo[] = [
       { input: [2, 3], expected: 8, description: '2^3' },
       { input: [5, 0], expected: 1, description: '5^0' },
       { input: [3, 2], expected: 9, description: '3^2' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -180,6 +188,8 @@ const trilhaModules: Modulo[] = [
       { input: [123], expected: 6, description: '1+2+3' },
       { input: [9], expected: 9, description: 'um dígito só' },
       { input: [4567], expected: 22, description: '4+5+6+7' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -198,6 +208,8 @@ const trilhaModules: Modulo[] = [
       { input: ['python'], expected: false, description: '"python"' },
       { input: ['a'], expected: true, description: '1 letra' },
       { input: [''], expected: true, description: 'vazia' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -227,6 +239,9 @@ const trilhaModules: Modulo[] = [
       { input: [[3, 7, 2, 9, 4]], expected: 9, description: '5 valores' },
       { input: [[5]], expected: 5, description: '1 valor' },
       { input: [[1, 2]], expected: 2, description: '2 valores' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
+      { input: null, expected: null, description: 'sem max()', mode: 'ast', astRule: { kind: 'forbidCall', name: 'max' } },
     ],
   },
   {
@@ -244,6 +259,8 @@ const trilhaModules: Modulo[] = [
       { input: ['python'], expected: 'nohtyp', description: '"python"' },
       { input: ['a'], expected: 'a', description: '1 letra' },
       { input: [''], expected: '', description: 'vazia' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -261,6 +278,8 @@ const trilhaModules: Modulo[] = [
       { input: [12, 8], expected: 4, description: 'mdc(12,8)' },
       { input: [17, 5], expected: 1, description: 'mdc(17,5) (coprimos)' },
       { input: [100, 25], expected: 25, description: 'mdc(100,25)' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -278,6 +297,8 @@ const trilhaModules: Modulo[] = [
       { input: [[1, 3, 5, 7, 9, 11], 7], expected: true, description: 'encontra 7' },
       { input: [[1, 3, 5, 7, 9, 11], 4], expected: false, description: '4 não está na lista' },
       { input: [[2, 4, 6, 8], 2], expected: true, description: 'encontra o primeiro' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
   {
@@ -308,6 +329,8 @@ const trilhaModules: Modulo[] = [
       { input: [3], expected: 7, description: 'n=3' },
       { input: [1], expected: 1, description: 'n=1' },
       { input: [4], expected: 15, description: 'n=4' },
+      { input: null, expected: null, description: 'usa recursão', mode: 'ast', astRule: { kind: 'requireRecursion' } },
+      { input: null, expected: null, description: 'sem laços (for/while)', mode: 'ast', astRule: { kind: 'forbidLoops' } },
     ],
   },
 ]
