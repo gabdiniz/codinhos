@@ -97,7 +97,7 @@ export async function getOwnedTrailDetail(trailId: string, tenantId: string) {
     baseXp: number
     order: number
     targetFn: string | null
-    renderMode: string | null
+    renderMode: 'js' | 'p5' | null
   }[] = []
   if (moduleIds.length > 0) {
     challengeRows = await db

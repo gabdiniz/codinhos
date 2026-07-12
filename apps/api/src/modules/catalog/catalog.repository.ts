@@ -102,7 +102,7 @@ export async function findTrailWithModules(trailId: string) {
     order: number
     baseXp: number
     targetFn: string | null
-    renderMode: string | null
+    renderMode: 'js' | 'p5' | null
   }[] = []
 
   if (moduleIds.length > 0) {
