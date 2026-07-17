@@ -1,6 +1,6 @@
 'use client'
 
-import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { CodiMascot } from './CodiMascot'
 import styles from './CodiWidget.module.css'
 
@@ -21,7 +21,13 @@ const SUGGESTIONS = [
   'É seguro pra crianças?',
 ]
 
-type Msg = { role: 'user' | 'assistant'; content: string }
+type Msg = { id: string; role: 'user' | 'assistant'; content: string }
+
+let msgSeq = 0
+function uid(role: string) {
+  msgSeq += 1
+  return `${role}-${Date.now()}-${msgSeq}`
+}
 
 // ─── Renderização leve de texto ───────────────────────────────────────────────
 // O Codi é instruído a responder em texto corrido, mas caso escape algum
@@ -68,13 +74,85 @@ function RichText({ text }: { text: string }) {
   )
 }
 
+// ─── Efeito de digitação (apenas visual) ──────────────────────────────────────
+// A resposta chega inteira do servidor; aqui a revelamos palavra a palavra para
+// simular o Codi "escrevendo em tempo real". Respeita prefers-reduced-motion.
+
+const TYPE_INTERVAL_MS = 50
+
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!mq) return
+    setReduced(mq.matches)
+    const onChange = () => setReduced(mq.matches)
+    mq.addEventListener?.('change', onChange)
+    return () => mq.removeEventListener?.('change', onChange)
+  }, [])
+  return reduced
+}
+
+function TypedBubble({
+  content,
+  animate,
+  onProgress,
+  onDone,
+}: {
+  content: string
+  animate: boolean
+  onProgress?: () => void
+  onDone?: () => void
+}) {
+  // Tokeniza mantendo os espaços, para reconstruir o texto exatamente
+  const tokens = useMemo(() => content.split(/(\s+)/), [content])
+  const [count, setCount] = useState(animate ? 0 : tokens.length)
+
+  useEffect(() => {
+    if (!animate) {
+      setCount(tokens.length)
+      return
+    }
+    setCount(0)
+    let c = 0
+    const id = window.setInterval(() => {
+      c += 1
+      setCount(c)
+      onProgress?.()
+      if (c >= tokens.length) {
+        window.clearInterval(id)
+        onDone?.()
+      }
+    }, TYPE_INTERVAL_MS)
+    return () => window.clearInterval(id)
+    // onProgress/onDone são estáveis o suficiente; não queremos reiniciar a animação
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animate, tokens])
+
+  const done = count >= tokens.length
+  const shown = done ? content : tokens.slice(0, count).join('')
+
+  return (
+    <div className={`${styles.bubbleBot} ${done ? '' : styles.botTyping}`}>
+      <RichText text={shown} />
+    </div>
+  )
+}
+
 export function CodiWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // id da resposta recém-chegada que deve ser "digitada" (só ela anima)
+  const [freshId, setFreshId] = useState<string | null>(null)
   const bodyRef = useRef<HTMLDivElement | null>(null)
+  const reducedMotion = useReducedMotion()
+
+  const scrollToBottom = () => {
+    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight })
+  }
 
   // Rola para a última mensagem
   // biome-ignore lint/correctness/useExhaustiveDependencies: rola a cada nova msg/loading
@@ -87,8 +165,8 @@ export function CodiWidget() {
     if (!question || loading) return
 
     setError(null)
-    const history = messages.slice(-8)
-    setMessages((m) => [...m, { role: 'user', content: question }])
+    const history = messages.slice(-8).map((m) => ({ role: m.role, content: m.content }))
+    setMessages((m) => [...m, { id: uid('user'), role: 'user', content: question }])
     setInput('')
     setLoading(true)
 
@@ -109,7 +187,9 @@ export function CodiWidget() {
       const answer = json?.data?.answer?.trim()
       if (!answer) throw new Error('resposta vazia')
 
-      setMessages((m) => [...m, { role: 'assistant', content: answer }])
+      const id = uid('assistant')
+      setMessages((m) => [...m, { id, role: 'assistant', content: answer }])
+      if (!reducedMotion) setFreshId(id)
     } catch {
       setError('Não consegui responder agora. Tente de novo ou fale com a gente pelo formulário.')
     } finally {
@@ -151,14 +231,21 @@ export function CodiWidget() {
               <p>Oi! Eu sou o Codi 👋 Pode perguntar o que quiser sobre o Codinhos.</p>
             </div>
 
-            {messages.map((m, i) => (
-              <div
-                key={`${m.role}-${i}`}
-                className={m.role === 'user' ? styles.bubbleUser : styles.bubbleBot}
-              >
-                {m.role === 'assistant' ? <RichText text={m.content} /> : <p>{m.content}</p>}
-              </div>
-            ))}
+            {messages.map((m) =>
+              m.role === 'assistant' ? (
+                <TypedBubble
+                  key={m.id}
+                  content={m.content}
+                  animate={m.id === freshId}
+                  onProgress={scrollToBottom}
+                  onDone={() => setFreshId(null)}
+                />
+              ) : (
+                <div key={m.id} className={styles.bubbleUser}>
+                  <p>{m.content}</p>
+                </div>
+              ),
+            )}
 
             {loading && (
               <div className={styles.bubbleBot}>
