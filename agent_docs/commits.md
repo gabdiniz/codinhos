@@ -51,10 +51,9 @@ feat(app): implementar ranking de turma na tela de gamificação
 
 ```
 main          → produção, protegida — nunca commitar direto
-develop       → integração — base para PRs
 feat/<nome>   → nova feature         ex: feat/sandbox-autocomplete
 fix/<nome>    → correção de bug      ex: fix/session-expiry
 chore/<nome>  → manutenção           ex: chore/update-drizzle
 ```
 
-Sempre criar branch a partir de `develop`. PRs apontam para `develop`. Merge de `develop` para `main` apenas em releases.
+Sempre criar branch a partir de `main`. PRs apontam para `main`.

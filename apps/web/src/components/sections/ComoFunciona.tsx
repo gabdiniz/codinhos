@@ -11,12 +11,12 @@ const STEPS = [
   {
     n: '02',
     title: 'O gestor configura',
-    text: 'A partir de um catálogo pronto, o gestor monta as trilhas, cria as turmas e define como cada aluno avança — sem precisar criar conteúdo do zero.',
+    text: 'A partir de um catálogo pronto, o gestor monta as trilhas, cria as turmas e define como cada aluno avança — e ainda pode gerar desafios sob medida com apoio de IA, sem criar conteúdo do zero.',
   },
   {
     n: '03',
     title: 'O aluno aprende praticando',
-    text: 'O aluno resolve desafios escrevendo código no navegador, com feedback na hora, ganhando XP e conquistas — e o Codi por perto quando trava.',
+    text: 'O aluno resolve desafios escrevendo código no navegador, com feedback na hora, ganhando XP, conquistas e itens para o avatar — e o Codi por perto quando trava.',
   },
 ]
 

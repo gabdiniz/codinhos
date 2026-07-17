@@ -7,6 +7,7 @@ const TOPICS = [
   { label: 'Variáveis e tipos', hint: 'guardando informação' },
   { label: 'Funções', hint: 'reaproveitar código' },
   { label: 'Arrays e listas', hint: 'coleções de dados' },
+  { label: 'Desafios visuais', hint: 'programar desenhos e animações' },
   { label: 'Mini-projetos', hint: 'um jogo, uma calculadora' },
 ]
 
@@ -24,10 +25,10 @@ export function Trilha() {
       eyebrow="A trilha"
       title={
         <>
-          Programação de verdade, em <span className={styles.grad}>JavaScript</span>
+          Programação de verdade, em <span className={styles.grad}>JavaScript e Python</span>
         </>
       }
-      lead="Uma das linguagens mais usadas no mundo, ensinada do zero e de forma gradual — sempre praticando."
+      lead="Duas das linguagens mais usadas no mundo, ensinadas do zero e de forma gradual — sempre praticando."
     >
       <div className={styles.layout}>
         <Reveal className={styles.col}>
@@ -44,6 +45,11 @@ export function Trilha() {
           <p className={styles.note}>
             A avaliação olha se o código <strong>funciona</strong> — então cada desafio aceita mais
             de uma solução válida. Não existe resposta decorada.
+          </p>
+          <p className={styles.note}>
+            Acolhedor para quem nunca programou: <strong>autocomplete</strong> que sugere só o que o
+            aluno já aprendeu, <strong>erros em linguagem amigável</strong> e um{' '}
+            <strong>modo de blocos</strong> para montar a lógica antes de digitar.
           </p>
         </Reveal>
 
