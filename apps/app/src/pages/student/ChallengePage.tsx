@@ -227,6 +227,64 @@ function renderMessageContent(content: string) {
   })
 }
 
+// ─── Efeito de digitação (apenas visual) ────────────────────────────────────
+// A resposta do Codi chega inteira; revelamos palavra a palavra para simular a
+// escrita em tempo real. Respeita prefers-reduced-motion.
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+const TYPE_INTERVAL_MS = 50
+
+function TypedMessage({
+  content,
+  animate,
+  onProgress,
+  onDone,
+}: {
+  content: string
+  animate: boolean
+  onProgress?: () => void
+  onDone?: () => void
+}) {
+  // Tokeniza mantendo os espaços, para reconstruir o texto exatamente
+  const tokens = useMemo(() => content.split(/(\s+)/), [content])
+  const [count, setCount] = useState(animate ? 0 : tokens.length)
+
+  useEffect(() => {
+    if (!animate) {
+      setCount(tokens.length)
+      return
+    }
+    setCount(0)
+    let c = 0
+    const id = window.setInterval(() => {
+      c += 1
+      setCount(c)
+      onProgress?.()
+      if (c >= tokens.length) {
+        window.clearInterval(id)
+        onDone?.()
+      }
+    }, TYPE_INTERVAL_MS)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animate, tokens])
+
+  const done = count >= tokens.length
+  const shown = done ? content : tokens.slice(0, count).join('')
+
+  return (
+    <div className={`${styles.codiMsgContent} ${done ? '' : styles.codiMsgTyping}`}>
+      {renderMessageContent(shown)}
+    </div>
+  )
+}
+
 interface SubmitBadge {
   id: string; slug: string; name: string; iconUrl: string | null
 }
@@ -252,11 +310,11 @@ function buildEditorTheme() {
   const s = getComputedStyle(document.documentElement)
   const get = (v: string, fallback: string) => s.getPropertyValue(v).trim() || fallback
 
-  const primary  = get('--color-primary',       '#6366f1')
-  const editorBg = get('--color-editor-bg',     '#12121a')
-  const gutter   = get('--color-editor-gutter', '#1e1e2d')
-  const border   = get('--color-border',        '#2e2e3f')
-  const muted    = get('--color-text-muted',    '#9490b5')
+  const primary = get('--color-primary', '#6366f1')
+  const editorBg = get('--color-editor-bg', '#12121a')
+  const gutter = get('--color-editor-gutter', '#1e1e2d')
+  const border = get('--color-border', '#2e2e3f')
+  const muted = get('--color-text-muted', '#9490b5')
   const surfaceRaised = get('--color-surface-raised', '#22222f')
 
   return EditorView.theme(
@@ -641,6 +699,7 @@ function CodiDrawer({
   const [usedToday, setUsedToday] = useState(0)
   const [pendingFailedTest, setPendingFailedTest] = useState<FailedTestContext | null>(null)
   const [hintsUsed, setHintsUsed] = useState(0)
+  const [freshId, setFreshId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Sincroniza com a conversa carregada pelo ChallengePage
@@ -697,10 +756,12 @@ function CodiDrawer({
           message: text,
           history: messages.map((m) => ({ role: m.role, content: m.content })),
         })
+        const assistantId = `codi-${Date.now()}`
         setMessages((prev) => [
           ...prev,
-          { id: `codi-${Date.now()}`, role: 'assistant', content: res.data.reply, createdAt: new Date().toISOString() },
+          { id: assistantId, role: 'assistant', content: res.data.reply, createdAt: new Date().toISOString() },
         ])
+        if (!prefersReducedMotion()) setFreshId(assistantId)
         setUsedToday(res.data.messagesUsedToday)
         setDailyLimit(res.data.dailyLimit)
       } else {
@@ -717,6 +778,7 @@ function CodiDrawer({
           ...(opts?.intent ? { intent: opts.intent, ...(opts.hintLevel ? { hintLevel: opts.hintLevel } : {}) } : {}),
         })
         setMessages((prev) => [...prev, res.data.message])
+        if (!prefersReducedMotion()) setFreshId(res.data.message.id)
         setUsedToday(res.data.messagesUsedToday)
         setDailyLimit(res.data.dailyLimit)
         // Contexto consumido — não deve vazar pra próxima mensagem livre
@@ -773,7 +835,16 @@ function CodiDrawer({
         )}
         {messages.map((m) => (
           <div key={m.id} className={`${styles.codiMsg} ${m.role === 'user' ? styles.codiMsgUser : styles.codiMsgCodi}`}>
-            <div className={styles.codiMsgContent}>{renderMessageContent(m.content)}</div>
+            {m.role === 'assistant' ? (
+              <TypedMessage
+                content={m.content}
+                animate={m.id === freshId}
+                onProgress={() => bottomRef.current?.scrollIntoView({ block: 'end' })}
+                onDone={() => setFreshId(null)}
+              />
+            ) : (
+              <div className={styles.codiMsgContent}>{renderMessageContent(m.content)}</div>
+            )}
           </div>
         ))}
         {sending && (
@@ -1240,122 +1311,122 @@ export default function ChallengePage() {
           {challenge ? (
             <>
 
-          {/* Editor */}
-          <div className={styles.editorWrapper}>
-            <div className={styles.editorHeader}>
-              <span className={styles.editorFilename}>solution.js</span>
-              <div className={styles.editorDots}>
-                <span /><span /><span />
+              {/* Editor */}
+              <div className={styles.editorWrapper}>
+                <div className={styles.editorHeader}>
+                  <span className={styles.editorFilename}>solution.js</span>
+                  <div className={styles.editorDots}>
+                    <span /><span /><span />
+                  </div>
+                </div>
+                <div className={styles.editorBody}>
+                  {moduleData?.visualBlocksEnabled ? (
+                    <BlocklyEditor
+                      key={`blocks-${challenge?.id ?? mod.id}-${resetNonce}`}
+                      onChange={(v) => { codeRef.current = v }}
+                    />
+                  ) : (
+                    <CodeEditor
+                      key={`${challenge?.id ?? mod.id}-${resetNonce}`}
+                      initialValue={starterCode}
+                      onChange={(v) => { codeRef.current = v }}
+                      vocabulary={moduleData?.availableVocabulary ?? []}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-            <div className={styles.editorBody}>
-              {moduleData?.visualBlocksEnabled ? (
-                <BlocklyEditor
-                  key={`blocks-${challenge?.id ?? mod.id}-${resetNonce}`}
-                  onChange={(v) => { codeRef.current = v }}
+
+              {/* Botões de ação */}
+              <div className={styles.actionBar}>
+                {(hasTests || isP5) && (
+                  <button
+                    className={styles.runBtn}
+                    onClick={() => {
+                      if (isP5) setPreviewCode(codeRef.current)
+                      handleRun()
+                    }}
+                    disabled={runState === 'running'}
+                    aria-busy={runState === 'running'}
+                  >
+                    <IconPlay />
+                    {runState === 'running' ? 'Executando...' : isP5 ? 'Rodar desenho' : 'Executar'}
+                  </button>
+                )}
+
+                {challenge && (
+                  <button
+                    className={styles.submitBtn}
+                    onClick={handleSubmit}
+                    disabled={submitState === 'submitting'}
+                    aria-busy={submitState === 'submitting'}
+                  >
+                    {submitState === 'submitting' ? 'Enviando...' : '✓ Enviar solução'}
+                  </button>
+                )}
+
+                {challenge && (
+                  <button
+                    className={styles.resetBtn}
+                    type="button"
+                    onClick={() => {
+                      codeRef.current = starterCode
+                      setResetNonce((n) => n + 1)
+                    }}
+                    title="Volta o código ao ponto inicial do desafio"
+                  >
+                    ↺ Resetar código
+                  </button>
+                )}
+              </div>
+
+              {/* Resultado da submissão */}
+              {submitResult && <SubmitResultPanel result={submitResult} />}
+              {submitResult?.submission.status === 'passed' && (
+                <div className={styles.nextActions}>
+                  {challenge && (
+                    <button
+                      type="button"
+                      className={styles.btnReview}
+                      onClick={() => {
+                        setCodiOpen(true)
+                        autoMsgSeq.current += 1
+                        setAutoMsg({ text: 'Acertei! Pode dar um review no meu código?', nonce: autoMsgSeq.current, intent: 'review' })
+                      }}
+                    >
+                      ✨ Pedir review ao Codi
+                    </button>
+                  )}
+                  {moduleData?.nextModuleId ? (
+                    <Link
+                      to={`/${slug}/learn/${trailId}/module/${moduleData.nextModuleId}`}
+                      className={styles.btnNext}
+                    >
+                      Próximo desafio →
+                    </Link>
+                  ) : (
+                    <Link to={`/${slug}/learn/${trailId}`} className={styles.btnNext}>
+                      🎉 Você concluiu a trilha!
+                    </Link>
+                  )}
+                  <Link to={`/${slug}/learn/${trailId}`} className={styles.btnBackTrail}>
+                    Voltar à trilha
+                  </Link>
+                </div>
+              )}
+              {submitError && <p className={styles.submitError}>{submitError}</p>}
+
+              {/* Prévia visual (p5.js) */}
+              {isP5 && previewCode !== null && <P5Preview code={previewCode} />}
+
+              {/* Resultados dos testes */}
+              {testResults && runState === 'done' && (
+                <TestResultsPanel
+                  results={testResults}
+                  testCases={moduleData?.challenge?.testCases ?? undefined}
+                  onAskCodi={handleAskCodi}
+                  aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
                 />
-              ) : (
-                <CodeEditor
-                  key={`${challenge?.id ?? mod.id}-${resetNonce}`}
-                  initialValue={starterCode}
-                  onChange={(v) => { codeRef.current = v }}
-                  vocabulary={moduleData?.availableVocabulary ?? []}
-                />
               )}
-            </div>
-          </div>
-
-          {/* Botões de ação */}
-          <div className={styles.actionBar}>
-            {(hasTests || isP5) && (
-              <button
-                className={styles.runBtn}
-                onClick={() => {
-                  if (isP5) setPreviewCode(codeRef.current)
-                  handleRun()
-                }}
-                disabled={runState === 'running'}
-                aria-busy={runState === 'running'}
-              >
-                <IconPlay />
-                {runState === 'running' ? 'Executando...' : isP5 ? 'Rodar desenho' : 'Executar'}
-              </button>
-            )}
-
-            {challenge && (
-              <button
-                className={styles.submitBtn}
-                onClick={handleSubmit}
-                disabled={submitState === 'submitting'}
-                aria-busy={submitState === 'submitting'}
-              >
-                {submitState === 'submitting' ? 'Enviando...' : '✓ Enviar solução'}
-              </button>
-            )}
-
-            {challenge && (
-              <button
-                className={styles.resetBtn}
-                type="button"
-                onClick={() => {
-                  codeRef.current = starterCode
-                  setResetNonce((n) => n + 1)
-                }}
-                title="Volta o código ao ponto inicial do desafio"
-              >
-                ↺ Resetar código
-              </button>
-            )}
-          </div>
-
-          {/* Resultado da submissão */}
-          {submitResult && <SubmitResultPanel result={submitResult} />}
-          {submitResult?.submission.status === 'passed' && (
-            <div className={styles.nextActions}>
-              {challenge && (
-                <button
-                  type="button"
-                  className={styles.btnReview}
-                  onClick={() => {
-                    setCodiOpen(true)
-                    autoMsgSeq.current += 1
-                    setAutoMsg({ text: 'Acertei! Pode dar um review no meu código?', nonce: autoMsgSeq.current, intent: 'review' })
-                  }}
-                >
-                  ✨ Pedir review ao Codi
-                </button>
-              )}
-              {moduleData?.nextModuleId ? (
-                <Link
-                  to={`/${slug}/learn/${trailId}/module/${moduleData.nextModuleId}`}
-                  className={styles.btnNext}
-                >
-                  Próximo desafio →
-                </Link>
-              ) : (
-                <Link to={`/${slug}/learn/${trailId}`} className={styles.btnNext}>
-                  🎉 Você concluiu a trilha!
-                </Link>
-              )}
-              <Link to={`/${slug}/learn/${trailId}`} className={styles.btnBackTrail}>
-                Voltar à trilha
-              </Link>
-            </div>
-          )}
-          {submitError && <p className={styles.submitError}>{submitError}</p>}
-
-          {/* Prévia visual (p5.js) */}
-          {isP5 && previewCode !== null && <P5Preview code={previewCode} />}
-
-          {/* Resultados dos testes */}
-          {testResults && runState === 'done' && (
-            <TestResultsPanel
-              results={testResults}
-              testCases={moduleData?.challenge?.testCases ?? undefined}
-              onAskCodi={handleAskCodi}
-              aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
-            />
-          )}
             </>
           ) : (
             <div className={styles.lessonPanel}>

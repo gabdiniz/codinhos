@@ -1081,3 +1081,27 @@
   margin-left: auto;
 }
 .resetBtn:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+
+/* Cursor de "digitação em tempo real" no fim da resposta do Codi sendo revelada */
+.codiMsgTyping :is(p, li):last-child::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: codi-caret 1s steps(1) infinite;
+}
+
+@keyframes codi-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codiMsgTyping :is(p, li):last-child::after {
+    display: none;
+  }
+}

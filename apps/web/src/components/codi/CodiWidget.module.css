@@ -187,6 +187,30 @@
   white-space: pre-wrap;
 }
 
+/* Cursor de "digitação em tempo real" no fim da resposta sendo revelada */
+.botTyping :is(p, li):last-child::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--color-primary);
+  animation: codi-caret 1s steps(1) infinite;
+}
+
+@keyframes codi-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botTyping :is(p, li):last-child::after {
+    display: none;
+  }
+}
+
 /* Indicador de digitação */
 .typing {
   display: inline-flex;
