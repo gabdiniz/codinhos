@@ -340,3 +340,18 @@
     font-size: 1.25rem;
   }
 }
+
+/* Link para o estúdio de personalização do avatar */
+.editAvatarBtn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+.editAvatarBtn:hover {
+  text-decoration: underline;
+}

@@ -1,6 +1,7 @@
 import { and, count, eq, ilike, isNull, ne, or } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import { users, passwordResetTokens, sessions } from '../../shared/db/schema.js'
+import type { AvatarConfig } from '@codinhos/types'
 
 // ─── Leitura ──────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ type UserCoreRow = {
   email: string
   role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   avatarUrl: string | null
+  avatarConfig: AvatarConfig | null
   birthDate: string | null
   isActive: boolean
   createdAt: Date
@@ -28,6 +30,7 @@ export async function findUserById(id: string, tenantId: string): Promise<UserCo
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      avatarConfig: users.avatarConfig,
       birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,
@@ -48,6 +51,7 @@ export async function findUserByIdOnly(id: string): Promise<UserCoreRow | null> 
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      avatarConfig: users.avatarConfig,
       birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,
@@ -162,6 +166,7 @@ export async function updateUser(id: string, tenantId: string, input: UpdateUser
       email: users.email,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      avatarConfig: users.avatarConfig,
       birthDate: users.birthDate,
       isActive: users.isActive,
       createdAt: users.createdAt,

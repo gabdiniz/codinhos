@@ -1,6 +1,7 @@
 import { and, eq, gt, lt, isNull } from 'drizzle-orm'
 import { db } from '../../shared/db/index.js'
 import { tenants, users, sessions, passwordResetTokens } from '../../shared/db/schema.js'
+import type { AvatarConfig } from '@codinhos/types'
 
 // ─── Tenant ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export async function findUserById(id: string): Promise<{
   name: string
   role: 'super_admin' | 'manager' | 'professor' | 'student' | 'guardian'
   avatarUrl: string | null
+  avatarConfig: AvatarConfig | null
   isActive: boolean
   tenantId: string
 } | null> {
@@ -83,6 +85,7 @@ export async function findUserById(id: string): Promise<{
       name: users.name,
       role: users.role,
       avatarUrl: users.avatarUrl,
+      avatarConfig: users.avatarConfig,
       isActive: users.isActive,
       tenantId: users.tenantId,
     })

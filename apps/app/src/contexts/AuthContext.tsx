@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { api, ApiError } from '../lib/api.ts'
+import type { AvatarConfig } from '@codinhos/types'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ export interface CurrentUser {
   email: string
   role: UserRole
   avatarUrl: string | null
+  avatarConfig: AvatarConfig | null
   isActive: boolean
 }
 

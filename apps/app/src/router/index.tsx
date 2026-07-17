@@ -19,6 +19,7 @@ const StudentDashboardPage = lazy(() => import('../pages/student/DashboardPage.t
 const LearnPage = lazy(() => import('../pages/student/LearnPage.tsx'))
 const ChallengePage = lazy(() => import('../pages/student/ChallengePage.tsx'))
 const ProfilePage = lazy(() => import('../pages/student/ProfilePage.tsx'))
+const AvatarStudioPage = lazy(() => import('../pages/student/AvatarStudioPage.tsx'))
 const RankingPage = lazy(() => import('../pages/student/RankingPage.tsx'))
 const WeeklyChallengePage = lazy(() => import('../pages/student/WeeklyChallengePage.tsx'))
 const PortfolioPage = lazy(() => import('../pages/student/PortfolioPage.tsx'))
@@ -131,6 +132,10 @@ export const router = createBrowserRouter([
           {
             path: 'profile',
             element: <Page component={ProfilePage} />,
+          },
+          {
+            path: 'avatar',
+            element: <Page component={AvatarStudioPage} />,
           },
           {
             path: 'ranking',

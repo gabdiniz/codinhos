@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { avatarConfigSchema } from '../avatar/avatar.schema.js'
 
 // ─── URL params ───────────────────────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ export const meUserSchema = z.object({
   name: z.string(),
   role: roleEnum,
   avatarUrl: z.string().nullable(),
+  avatarConfig: avatarConfigSchema.nullable(),
   tenantId: z.string().uuid(),
 })
 

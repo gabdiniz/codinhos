@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
+import type { AvatarConfig } from '@codinhos/types'
+import { Avatar } from '../../components/Avatar/Avatar.tsx'
 import { useAuth } from '../../contexts/AuthContext.tsx'
 import { useClass } from '../../contexts/ClassContext.tsx'
 import StudentProfileDrawer from '../../components/StudentProfileDrawer/StudentProfileDrawer.tsx'
@@ -10,7 +12,7 @@ import styles from './RankingPage.module.css'
 
 interface RankingEntry {
   position: number
-  student: { id: string; name: string; avatarUrl: string | null }
+  student: { id: string; name: string; avatarUrl: string | null; avatarConfig: AvatarConfig | null }
   totalXp: number
   level: number
 }
@@ -33,15 +35,6 @@ function IconStar() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function initials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-}
 
 const MEDAL: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
@@ -177,10 +170,7 @@ export default function RankingPage() {
                   </span>
 
                   <div className={styles.avatarWrap}>
-                    {entry.student.avatarUrl
-                      ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.avatarImg} />
-                      : <div className={styles.avatar}>{initials(entry.student.name)}</div>
-                    }
+                    <Avatar name={entry.student.name} config={entry.student.avatarConfig ?? null} size={36} />
                   </div>
 
                   <span className={styles.studentName}>
@@ -218,10 +208,7 @@ export default function RankingPage() {
               </span>
 
               <div className={styles.avatarWrap}>
-                {myEntry.student.avatarUrl
-                  ? <img src={myEntry.student.avatarUrl} alt={myEntry.student.name} className={styles.avatarImg} />
-                  : <div className={styles.avatar}>{initials(myEntry.student.name)}</div>
-                }
+                <Avatar name={myEntry.student.name} config={myEntry.student.avatarConfig ?? null} size={36} />
               </div>
 
               <span className={styles.studentName}>
@@ -290,12 +277,12 @@ function PodiumSlot({
       }
     >
       <span className={styles.podiumMedal}>{medal}</span>
-      <div className={styles.podiumAvatar}>
-        {entry.student.avatarUrl
-          ? <img src={entry.student.avatarUrl} alt={entry.student.name} className={styles.podiumAvatarImg} />
-          : <span className={styles.podiumInitials}>{initials(entry.student.name)}</span>
-        }
-      </div>
+      <Avatar
+        name={entry.student.name}
+        config={entry.student.avatarConfig ?? null}
+        size={entry.position === 1 ? 64 : 52}
+        className={styles.podiumAvatar}
+      />
       <span className={styles.podiumName}>{entry.student.name.split(' ')[0]}</span>
       <span className={styles.podiumXp}>
         <IconStar />
