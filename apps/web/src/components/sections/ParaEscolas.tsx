@@ -17,6 +17,11 @@ const FEATURES: Feature[] = [
     text: 'Monte trilhas escolhendo módulos de qualidade — ou crie percursos sob medida para a sua escola.',
   },
   {
+    icon: <IconSparkles />,
+    title: 'Geração de desafios com IA',
+    text: 'Descreva o tema e receba um rascunho de desafio pronto para revisar — com a solução já testada automaticamente antes de chegar até você.',
+  },
+  {
     icon: <IconFlow />,
     title: 'Progressão configurável',
     text: 'Escolha por turma: livre, sequencial ou liberada manualmente pelo educador.',
@@ -35,6 +40,11 @@ const FEATURES: Feature[] = [
     icon: <IconChart />,
     title: 'Relatórios de progresso',
     text: 'Acompanhe quem completou o quê, por aluno e por turma, e identifique quem precisa de apoio.',
+  },
+  {
+    icon: <IconShield />,
+    title: 'Integridade acadêmica',
+    text: 'Receba um alerta quando duas entregas do mesmo desafio ficam muito parecidas, ajudando a identificar possíveis cópias.',
   },
   {
     icon: <IconUsers />,
@@ -115,6 +125,15 @@ function IconCatalog() {
   )
 }
 
+function IconSparkles() {
+  return (
+    <svg {...svgProps()}>
+      <path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
+      <path d="M18 15l.7 1.8L20.5 17.5l-1.8.7L18 20l-.7-1.8L15.5 17.5l1.8-.7z" />
+    </svg>
+  )
+}
+
 function IconFlow() {
   return (
     <svg {...svgProps()}>
@@ -170,6 +189,15 @@ function IconImport() {
       <path d="M12 3v11" />
       <path d="M8 11l4 4 4-4" />
       <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </svg>
+  )
+}
+
+function IconShield() {
+  return (
+    <svg {...svgProps()}>
+      <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />
+      <path d="M9 12l2 2 4-4" />
     </svg>
   )
 }

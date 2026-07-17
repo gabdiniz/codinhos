@@ -8,7 +8,7 @@ export function Hero() {
       <div className={styles.inner}>
         <div className={styles.copy}>
           <span className={`${styles.tag} ${styles.reveal}`}>
-            Programação para escolas · 11–14 anos
+            Programação para escolas · JavaScript e Python · 11–14 anos
           </span>
 
           <h1 className={`${styles.title} ${styles.reveal}`}>
@@ -16,8 +16,9 @@ export function Hero() {
           </h1>
 
           <p className={`${styles.subtitle} ${styles.reveal}`}>
-            JavaScript na prática, com desafios no navegador, gamificação e o Codi, um tutor de IA
-            que ajuda sem entregar a resposta. Tudo dentro do ambiente da sua escola.
+            JavaScript e Python na prática, com desafios no navegador — até programar desenhos e
+            animações. Gamificação e o Codi, um tutor de IA que dá dicas, explica os erros e sugere
+            como melhorar, sem entregar a resposta. Tudo dentro do ambiente da sua escola.
           </p>
 
           <div className={`${styles.actions} ${styles.reveal}`}>

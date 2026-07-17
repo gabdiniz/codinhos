@@ -23,6 +23,11 @@ const PILLARS = [
     title: 'Sequência diária',
     text: 'A missão do dia mantém o hábito. Praticar todo dia vira streak, e streak vira constância.',
   },
+  {
+    emoji: '🎨',
+    title: 'Avatar que evolui',
+    text: 'Cada aluno monta seu avatar num estúdio próprio. Penteados, acessórios e fundos especiais desbloqueiam conforme ele sobe de nível — recompensa visível, sem pedir foto da criança.',
+  },
 ]
 
 export function Gamificacao() {

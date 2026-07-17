@@ -10,8 +10,8 @@ const ITEMS = [
     a: 'Para crianças e adolescentes de 11 a 14 anos. Todo o conteúdo, a linguagem e os desafios são pensados para essa faixa.',
   },
   {
-    q: 'Que linguagem o aluno aprende?',
-    a: 'JavaScript, uma das linguagens mais usadas no mundo e uma excelente porta de entrada para programar.',
+    q: 'Que linguagens o aluno aprende?',
+    a: 'JavaScript e Python — duas das linguagens mais usadas no mundo e excelentes portas de entrada para programar. Além do código de texto, há desafios visuais em que o aluno programa desenhos e animações.',
   },
   {
     q: 'Precisa instalar alguma coisa?',
@@ -23,7 +23,7 @@ const ITEMS = [
   },
   {
     q: 'Quem monta o conteúdo das aulas?',
-    a: 'O conteúdo vem de um catálogo pronto e de qualidade, mantido pela equipe do Codinhos. O gestor só seleciona e ordena os módulos.',
+    a: 'O conteúdo vem de um catálogo pronto e de qualidade, mantido pela equipe do Codinhos. O gestor só seleciona e ordena os módulos — e, quando quer algo sob medida, pode gerar novos desafios com apoio de IA e revisá-los antes de publicar.',
   },
   {
     q: 'É seguro para crianças?',
