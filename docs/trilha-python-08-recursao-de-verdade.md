@@ -10,14 +10,15 @@ código, depois provar com regra estrutural que proíbe loop), adaptada à sinta
 **Objetivo da trilha:** o aluno sai entendendo recursão de verdade — não só "resolver com
 `return f(...)` dentro de `f`", mas **provar** que resolveu sem recorrer a `for`/`while`.
 
-**Pré-requisito de motor — o mais dependente de gap desta rodada:** a verificação estrutural
-("exige recursão", "proíbe loop") depende de G5 (`docs/pesquisa-trilhas-python.md` §4): motor
-JS resolve isso com heurística de texto (`mode:'ast'`); para Python, o caminho correto é usar o
-módulo `ast` **nativo** da própria linguagem (mais robusto que a heurística JS, mas é
-implementação nova, só possível no lado que executa Python de verdade). **Até essa peça
-existir, todo módulo desta trilha continua funcionando em `function-call` puro** — só sem a
-garantia de que a solução do aluno não "trapaceou" com `for`/`while`. A tabela abaixo já marca
-onde a regra estrutural entra assim que existir.
+**Pré-requisito de motor — resolvido.** A verificação estrutural ("exige recursão", "proíbe
+loop") dependia de G5 (`docs/pesquisa-trilhas-python.md` §4), via módulo `ast` **nativo** do
+Python (mais robusto que a heurística de texto do motor JS). G5 foi implementado em 12/07/2026
+(`docs/motor-python-capacidades.md` §1.2) e, na validação end-to-end de 16/07/2026 (mesmo doc,
+§1.7), um gap de wiring foi encontrado e corrigido (o dispatch de testes nunca chamava a checagem
+de AST de verdade) e `seed-trilha-python-08.ts` foi atualizado: os 11 desafios de recursão desta
+tabela ganharam `astRule` (`requireRecursion` + `forbidLoops`, mais `forbidCall('max')` no R.7).
+Confirmado num teste manual real: solução iterativa (`for`/`while`) reprova, solução recursiva de
+verdade passa.
 
 ## Módulos
 
@@ -40,12 +41,13 @@ onde a regra estrutural entra assim que existir.
 | 15 | lição | Quando recursão custa caro | limite de profundidade de chamada, `RecursionError`, por que nem todo problema deve ser recursivo (contraste com o estilo funcional/comprehension da trilha 7 para o mesmo tipo de problema) | 7 (trilha inteira) | — |
 | 16 | R.11 | [Bônus] Torres de Hanói | `requireRecursion` + `forbidLoops` | — (problema genuinamente novo) | function-call |
 
-**Nota de verificação futura:** quando G5 existir, a auditoria roda a solução de referência
-(recursiva) e uma solução "errada de propósito" (com `for`/`while`) contra a regra estrutural
-de cada um dos 12 desafios com regra — mesma técnica usada e documentada para
-`js-recursao-de-verdade` (0 falso-positivo/negativo lá). Até lá, a trilha já é publicável e
-funcional só com `function-call` — a regra estrutural é um reforço de rigor pedagógico, não um
-bloqueio de conteúdo.
+**Nota de verificação:** a auditoria completa (solução de referência recursiva vs. solução
+"errada de propósito" com `for`/`while`, contra a regra estrutural de cada um dos 11 desafios com
+regra — mesma técnica documentada para `js-recursao-de-verdade`) ainda não rodou desafio a
+desafio; o que foi confirmado na validação de 16/07/2026 foi o caminho de ponta a ponta (regra
+rejeita/aceita corretamente) em pelo menos um desafio real via navegador. Rodar a auditoria
+completa nos 11 continua como item de qualidade, não bloqueio — o motor já suporta e um caso já
+foi confirmado funcionando de verdade.
 
 **Vocabulário acumulado ao final:** + recursão, caso base, caso recursivo, pilha de chamadas,
 `RecursionError`.

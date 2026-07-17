@@ -33,7 +33,7 @@ Login inicial do seed: `admin@codinhos.com.br` / `Admin123!codinhos`
 docker compose up --build      # rebuild da imagem (após mudar dependências)
 docker compose logs -f web     # logs de um serviço
 docker compose down            # parar
-docker compose down -v         # parar e apagar volumes (banco + node_modules)
+docker compose down -v         # ⚠️ parar e APAGAR volumes (banco + node_modules) — perde os dados
 docker compose run --rm migrate  # rodar migrations/seed manualmente
 ```
 
@@ -72,16 +72,46 @@ backups, CI/CD e rollback — está em **[`deploy.md`](deploy.md)**.
 
 - `Dockerfile.dev` — imagem única de dev compartilhada por api/app/web; instala
   o node_modules do workspace (Linux) e o comando concreto vem do compose.
-- Os **node_modules ficam em volumes nomeados** por pacote, para o bind-mount do
-  código (com node_modules do host) não os apagar. Por isso, ao mudar
-  dependências, rode `docker compose up --build` (e, se necessário,
-  `docker compose down -v` para recriar os volumes).
+- Os **node_modules ficam em volumes nomeados** por pacote (`deps_root`,
+  `deps_app`, `deps_api`, ...), para o bind-mount do código (com node_modules do
+  host) não os apagar. Um volume nomeado só é populado a partir da imagem quando
+  está **vazio** — então um `pnpm install` no host **não chega** ao container.
+  Ao adicionar uma dependência nova, siga o passo a passo em
+  **[Adicionar uma dependência nova](#adicionar-uma-depend%C3%AAncia-nova)**.
 - Portas dos apps são publicadas no host; o navegador fala com a API em
   `localhost:3333`. Entre containers, a API acessa o banco pelo host `db`.
 
+## Adicionar uma dependência nova
+
+Como os `deps_*` só repopulam quando estão vazios, um `pnpm install` no host
+não basta. Depois de adicionar a dependência no `package.json` e rodar
+`pnpm install` no host (isso atualiza o `pnpm-lock.yaml`):
+
+```bash
+docker compose down                              # ⚠️ NUNCA use -v (apagaria o banco)
+docker compose build                             # reinstala deps na imagem (lê o lockfile novo)
+docker volume rm codinhos_deps_root codinhos_deps_<pkg>
+docker compose up -d                             # os volumes vazios repopulam da imagem
+```
+
+- `codinhos_deps_root` = store do pnpm (sempre remover, pois é onde os pacotes
+  ficam de fato); `codinhos_deps_<pkg>` = symlinks do pacote que ganhou a
+  dependência. Ex.: dep nova no `apps/app` → `codinhos_deps_app`.
+- O prefixo `codinhos_` vem do `name:` do compose. Veja os nomes com
+  `docker volume ls`.
+- Se ainda não aparecer, remova todos os `deps_*` (menos `codinhos_db`) e suba
+  de novo. **Nunca** recorra a `docker compose down -v` — ele apaga o banco.
+
 ## Solução de problemas
 
-- **Mudei uma dependência e não aparece:** `docker compose down -v && docker compose up --build`.
+- **Adicionei uma dependência e não aparece (ex.: Vite: `Failed to resolve import`):**
+  o volume `deps_*` do pacote ainda tem o node_modules antigo. Siga
+  [Adicionar uma dependência nova](#adicionar-uma-depend%C3%AAncia-nova).
+- **`pnpm db:migrate` no host falha com `senha ... falhou para postgres` (28P01):**
+  você está rodando no host, que pode cair em **outro Postgres na 5432**
+  (instalação local), não no do Docker. Em dev as migrations são aplicadas pelo
+  container one-shot `migrate` no `up`. Para rodar à mão sem depender do host:
+  `docker compose run --rm migrate`.
 - **Hot-reload não dispara:** o polling já está ligado (`DOCKER=true` no Vite,
   `WATCHPACK_POLLING=true` no Next). Confirme que está editando os arquivos do
   host montados no container.

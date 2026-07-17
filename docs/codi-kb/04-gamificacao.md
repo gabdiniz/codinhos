@@ -1,6 +1,6 @@
 ---
 titulo: Gamificação
-tema: gamificacao, xp, niveis, badges, ranking, streak
+tema: gamificacao, xp, niveis, badges, ranking, streak, avatar
 publico: gestores, responsáveis, alunos
 ---
 
@@ -18,6 +18,10 @@ A gamificação é um dos pilares do Codinhos. Ela existe para manter o aluno **
 
 - **Por marco:** completar a primeira trilha, resolver um desafio sem dicas, manter dias seguidos de prática.
 - **Especiais e raras:** criam senso de conquista e dão aquele "quero conseguir também".
+
+## Recompensas visuais
+
+Subir de nível não rende só números: **desbloqueia itens de personalização do avatar** do aluno — novos penteados, acessórios e fundos especiais que só aparecem quando ele avança. É um incentivo concreto e visual para continuar praticando, e deixa o progresso visível de um jeito que a criança curte mostrar.
 
 ## Competição saudável
 

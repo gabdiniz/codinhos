@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { avatarConfigSchema } from '../avatar/avatar.schema.js'
 
 // ─── Params ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,7 @@ export const studentProfileResponseSchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     avatarUrl: z.string().nullable(),
+    avatarConfig: avatarConfigSchema.nullable(),
     age: z.number().nullable(),
     className: z.string().nullable(),
     // Ranking/gamificação — visível para gestor e para aluno

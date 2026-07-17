@@ -37,6 +37,7 @@ export type TenantTheme = Record<string, string>
 // os referenciam via $type<...>().
 export type { Matcher, TestCase, TestResult } from '@codinhos/runner'
 import type { TestCase, TestResult } from '@codinhos/runner' 
+import type { AvatarConfig } from '@codinhos/types'
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull(),
   name: varchar('name', { length: 255 }).notNull(),
   avatarUrl: varchar('avatar_url', { length: 500 }),
+  avatarConfig: jsonb('avatar_config').$type<AvatarConfig>(),
   birthDate: date('birth_date'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext.tsx'
 import { ClassProvider } from '../contexts/ClassContext.tsx'
 import { api } from '../lib/api.ts'
 import { NotificationBell } from '../components/NotificationBell/NotificationBell.tsx'
+import { Avatar } from '../components/Avatar/Avatar.tsx'
 import styles from './StudentShell.module.css'
 
 // ─── Ícones (inline SVG — sem dependência externa) ────────────────────────────
@@ -65,23 +66,6 @@ function IconLogout() {
   )
 }
 
-// ─── Avatar com iniciais ──────────────────────────────────────────────────────
-
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-
-  return (
-    <div className={styles.avatar} aria-hidden="true">
-      {initials}
-    </div>
-  )
-}
-
 // ─── StudentShell ─────────────────────────────────────────────────────────────
 
 export function StudentShell() {
@@ -138,7 +122,7 @@ export function StudentShell() {
 
         {/* Área do usuário */}
         <div className={styles.userArea}>
-          {user && <Avatar name={user.name} />}
+          {user && <Avatar name={user.name} config={user.avatarConfig} size={32} />}
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user?.name}</span>
             <span className={styles.userRole}>Aluno</span>

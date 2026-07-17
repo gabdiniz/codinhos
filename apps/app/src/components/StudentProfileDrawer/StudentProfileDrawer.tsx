@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from '../../lib/api.ts'
+import type { AvatarConfig } from '@codinhos/types'
+import { Avatar } from '../Avatar/Avatar.tsx'
 import styles from './StudentProfileDrawer.module.css'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -15,6 +17,7 @@ interface StudentProfileData {
   id: string
   name: string
   avatarUrl: string | null
+  avatarConfig: AvatarConfig | null
   age: number | null
   className: string | null
   totalXp: number
@@ -93,15 +96,6 @@ function xpProgress(totalXp: number, level: number) {
   return { earned, needed, pct: Math.min(100, Math.round((earned / needed) * 100)) }
 }
 
-function initials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-}
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
@@ -164,10 +158,7 @@ export default function StudentProfileDrawer({
               {/* ── Hero ── */}
               <section className={styles.hero}>
                 <div className={styles.avatarWrap}>
-                  {profile.avatarUrl
-                    ? <img src={profile.avatarUrl} alt={profile.name} className={styles.avatarImg} />
-                    : <div className={styles.avatar}>{initials(profile.name)}</div>
-                  }
+                  <Avatar name={profile.name} config={profile.avatarConfig ?? null} size={72} />
                   <div className={styles.levelBadge}>
                     <span className={styles.levelBadgeLabel}>Nível</span>
                     <span className={styles.levelBadgeValue}>{profile.level}</span>

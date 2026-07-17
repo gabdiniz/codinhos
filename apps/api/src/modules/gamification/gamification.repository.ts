@@ -73,6 +73,7 @@ export async function listClassRanking(classId: string, tenantId: string) {
       studentId: classStudents.studentId,
       name: users.name,
       avatarUrl: users.avatarUrl,
+      avatarConfig: users.avatarConfig,
       totalXp: sql<number>`coalesce(${studentStats.totalXp}, 0)`,
       level: sql<number>`coalesce(${studentStats.level}, 1)`,
     })

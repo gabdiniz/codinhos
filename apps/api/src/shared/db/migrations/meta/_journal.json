@@ -78,6 +78,13 @@
       "when": 1782872841641,
       "tag": "0010_render_mode_challenges",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1783000000000,
+      "tag": "0011_avatar_config_users",
+      "breakpoints": true
     }
   ]
 }

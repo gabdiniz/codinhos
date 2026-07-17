@@ -1,6 +1,6 @@
 ---
 titulo: A experiência do aluno
-tema: aluno, sandbox, tutor, jornada, portfolio, certificados
+tema: aluno, sandbox, tutor, jornada, portfolio, certificados, avatar
 publico: gestores, responsáveis, alunos
 ---
 
@@ -31,6 +31,10 @@ Alguns apoios deixam essa experiência mais acolhedora para quem está começand
 ## O Codi, tutor de IA
 
 O Codi é o assistente que acompanha o aluno. O princípio é pedagógico: **ele não entrega a resposta pronta**. Em vez disso, dá **dicas em níveis** — revela um pouco de cada vez, no ritmo do aluno — e ajuda a pensar. Quando um desafio falha, o aluno pode pedir ao Codi para explicar o que deu errado, e o Codi guia o raciocínio sem resolver por ele. E depois de **acertar**, o aluno ainda pode pedir um comentário de **como deixar o código melhor** — um empurrãozinho para evoluir, não só para passar. Errar faz parte do aprendizado, e o aluno decide quando quer ajuda.
+
+## Avatar personalizado
+
+Cada aluno tem um **avatar** que representa ele na plataforma — no perfil, no ranking da turma e em toda a jornada. Num estúdio simples e divertido, ele monta o personagem do jeito que quiser: tom de pele, cabelo e cor, expressão do rosto e o fundo. Parte dos itens — penteados, acessórios como óculos e brincos, e fundos especiais — começa **bloqueada e vai sendo desbloqueada conforme o aluno sobe de nível**, virando mais uma recompensa por praticar. É uma forma de identidade e pertencimento, sem pedir foto nenhuma da criança.
 
 ## Desafio da semana
 

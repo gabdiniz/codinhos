@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { avatarConfigSchema } from '../avatar/avatar.schema.js'
 
 // ─── Params ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ const rankingEntrySchema = z.object({
     id: z.string().uuid(),
     name: z.string(),
     avatarUrl: z.string().nullable(),
+    avatarConfig: avatarConfigSchema.nullable(),
   }),
   totalXp: z.number(),
   level: z.number(),

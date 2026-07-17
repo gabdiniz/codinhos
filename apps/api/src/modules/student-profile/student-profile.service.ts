@@ -63,6 +63,7 @@ export async function getStudentProfile(
     id: target.id,
     name: target.name,
     avatarUrl: target.avatarUrl ?? null,
+    avatarConfig: target.avatarConfig ?? null,
     age: calculateAge(target.birthDate),
     className: classInfo?.name ?? null,
     totalXp: stats?.totalXp ?? 0,

@@ -55,6 +55,7 @@ export async function getClassRanking(
       id: row.studentId,
       name: row.name,
       avatarUrl: row.avatarUrl ?? null,
+      avatarConfig: row.avatarConfig ?? null,
     },
     totalXp: Number(row.totalXp),
     level: Number(row.level),

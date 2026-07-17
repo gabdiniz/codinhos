@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api.ts'
 import { useAuth } from '../../contexts/AuthContext.tsx'
+import { Avatar } from '../../components/Avatar/Avatar.tsx'
 import styles from './ProfilePage.module.css'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -149,13 +150,6 @@ export default function ProfilePage() {
     )
   }
 
-  const initials = (user?.name ?? 'A')
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-
   const { earned: xpEarned, needed: xpNeeded, pct: xpPct } = xpProgress(stats.totalXp, stats.level)
   const earnedBadges = badges.filter((b) => b.earned)
   const lockedBadges = badges.filter((b) => !b.earned)
@@ -166,7 +160,7 @@ export default function ProfilePage() {
       {/* ── Hero ── */}
       <section className={styles.hero}>
         <div className={styles.avatarWrap}>
-          <div className={styles.avatar}>{initials}</div>
+          <Avatar name={user?.name ?? 'Aluno'} config={user?.avatarConfig ?? null} size={80} />
           <div className={styles.levelBadge}>
             <span className={styles.levelBadgeLabel}>Nível</span>
             <span className={styles.levelBadgeValue}>{stats.level}</span>
@@ -176,6 +170,7 @@ export default function ProfilePage() {
         <div className={styles.heroInfo}>
           <h1 className={styles.name}>{user?.name}</h1>
           <p className={styles.subtitle}>// {stats.totalXp.toLocaleString('pt-BR')} XP acumulado</p>
+          <Link to={`/${slug}/avatar`} className={styles.editAvatarBtn}>Personalizar avatar →</Link>
 
           <div className={styles.xpBarWrap}>
             <div className={styles.xpBarTrack}>
