@@ -194,8 +194,12 @@ JS usa heurística de texto sobre código "limpo" — ver `packages/runner/src/a
 - **Testes novos** em `run-python-tests.test.ts` (6 cenários via `runPythonTests`, integração
   real com Pyodide) — mesma ressalva de sempre: não executados neste sandbox.
 
-**Não fiz:** não voltei a editar `seed-trilha-python-08.ts` pra usar `mode:'ast'` nos 12 desafios
-documentados com regra estrutural — mesma decisão do G7, só motor nesta rodada.
+**Atualização (16/07/2026):** este "Não fiz" ficou desatualizado — na validação end-to-end real
+(§1.7), `seed-trilha-python-08.ts` FOI atualizado: os 11 desafios de recursão ganharam `astRule`
+(`requireRecursion` + `forbidLoops`, e `forbidCall('max')` a mais no R.7), reseedado e confirmado
+rejeitando solução iterativa / aceitando solução recursiva de verdade. Ver §1.7 para o wiring gap
+que essa mesma validação encontrou (a integração `mode:'ast'` descrita acima nunca tinha sido
+chamada de fato pelo dispatch de testes).
 
 ### 1.3 G6 resolvido — allowlist de `import` (12/07/2026)
 
@@ -412,6 +416,68 @@ e o currículo de tratamento de erro nunca foram desenhados pra se cruzar.
 fechado, mas a decisão de currículo ("tratamento de erro fora do currículo por design") continua
 sendo uma decisão de PRODUTO separada, não revista nesta rodada. Se o Gabriel quiser trazer
 tratamento de erro pro currículo agora que o motor sustenta, é uma conversa de conteúdo nova.
+
+### 1.7 Validação end-to-end real na máquina local (16/07/2026)
+
+Tudo em §1.1-§1.6 acima tinha sido validado por **spike fora do repo** (lógica replicada contra
+Python 3.10 real, mas fora do `worker_thread`/Docker de produção) ou **não executado no sandbox**
+(testes escritos, nunca rodados). Esta seção fecha essa lacuna: checklist completo rodado de
+verdade na máquina do Gabriel — `pnpm typecheck:direct`, `pnpm --filter @codinhos/runner-python
+test`, `docker compose up`, seed das 10 trilhas, e testes manuais reais no navegador (fluxo básico,
+regra estrutural da trilha 8, allowlist de import da trilha 10). Dois bugs reais só apareceram
+nessa validação — nenhum dos dois tinha sido pego pelos spikes isolados de §1.1-§1.6:
+
+**Bug 1 — `mode:'ast'` nunca era chamado de verdade (gap de wiring, não de lógica).**
+`packages/runner-python/src/run-python-tests.ts` tinha, até esta sessão, um stub pro branch
+`tc.mode === 'ast'` que só devolvia `passed: false` com a mensagem "Verificação estrutural (ast)
+ainda não suportada para Python" — **nunca chamava `handleAstCheck`**, apesar de `python-exec.ts`
+já ter essa função pronta e validada por spike desde §1.2. Ou seja: a lógica de AST descrita em
+§1.2 estava correta e testada isoladamente, mas nunca tinha sido conectada ao caminho real que uma
+submissão de aluno percorre — qualquer desafio com `mode:'ast'` reprovava sempre, com uma mensagem
+de "não suportado", não com o resultado da regra estrutural. **Fix:** `run-python-tests.ts` ganhou
+`runAstCase` (resolve a função-alvo, chama `pool.run({ code, op:'ast', astRuleKind, astRuleName,
+targetFn })`, mapeia `res.astPassed`/`res.astMessage` pro `TestResult`). Confirmado depois do fix:
+27/27 testes de `runner-python` passam, e a trilha 8 rejeita solução iterativa / aceita solução
+recursiva de verdade num teste manual real.
+
+**Bug 2 — Pyodide não inicializava dentro do container Docker da API (`worker_thread`).**
+Toda submissão Python falhava com "Não foi possível inicializar o ambiente Python..." — sintoma
+real: `ERR_MODULE_NOT_FOUND` pra `node_modules/src/js/pyodide.asm.mjs` (caminho que não existe;
+o arquivo real fica em `node_modules/pyodide/pyodide.asm.mjs`). Root cause: a função interna do
+Pyodide que localiza os próprios assets (`calculateDirname`) se autolocaliza fazendo parsing de um
+`new Error().stack` forjado — heurística que quebra quando o código roda dentro de um
+`worker_thread` carregado a partir de um `dist/` compilado (contexto diferente do processo
+principal onde a heurística foi pensada pra funcionar). **Não era problema de pnpm/symlink**:
+recriar os volumes Docker (`deps_runner_python` etc.) não resolveu, e trocar `node-linker` de
+`isolated` pra `hoisted` no `.npmrc` só mudou o PREFIXO do caminho errado, não o bug em si — prova
+de que a causa era a resolução de path dentro do Pyodide, não a estrutura de `node_modules`. **Fix
+real:** `packages/runner-python/src/python-worker.ts` passou a resolver o `indexURL` explicitamente
+via `import.meta.resolve('pyodide/pyodide.mjs')` (+ `fileURLToPath`) e passar isso pra
+`loadPyodide({ indexURL })`, em vez de deixar o Pyodide adivinhar sozinho. Confirmado: submissão
+real via API voltou a inicializar e passou com XP/badges. Registrado em memória
+([[pyodide-falha-no-docker]]) com o histórico completo de hipóteses descartadas.
+
+**Bug 3 (menor) — 3 schemas Zod sem `'instance-call'` no enum de `mode`.**
+`apps/api/src/modules/authoring/authoring.schema.ts`, `.../learn/learn.schema.ts` e
+`.../catalog/catalog.schema.ts` tinham `mode: z.enum(['stdout', 'ast'])` — não incluíam
+`'instance-call'` (adicionado ao tipo compartilhado em §1.1/G7), o que quebrava
+`pnpm typecheck:direct` (o tipo `TestCase` não era atribuível ao tipo inferido do schema, mais
+estreito). Fix: os 3 enums passaram a incluir `'instance-call'`.
+
+**Resultado da validação real (checklist completo, 9 itens):** `pnpm typecheck:direct` limpo (9/9
+pacotes), `pnpm --filter @codinhos/runner-python test` 27/27, `docker compose up` de pé com os 3
+bugs acima corrigidos, seed das 10 trilhas rodado, submissão real via navegador com XP/badge
+confirmados, regra estrutural da trilha 8 confirmada rejeitando/aceitando corretamente, allowlist
+de import da trilha 10 confirmada bloqueando `os` e liberando `math`/`random`/`string`/`functools`.
+Fix mergeado em `main` via PR #110 (`fix/python-motor-validacao-e2e`, merge commit `c1ab8d6`).
+
+Com isso, as ressalvas "não executado neste sandbox"/"validado fora do repo, precisa confirmar na
+máquina local" espalhadas em §1.1-§1.6 (P1, G7, G5, G6, G2, G3-completo, G4) estão **superadas**:
+G5 (ast) e o G7/G2/G3/G4 relacionados via testes automatizados foram de fato executados e
+confirmados nesta validação — a única ressalva que permanece é que os cenários ESPECÍFICOS de
+G7/G2/G3-completo/G4 (instance-call, stdin, expectedType, raises) foram confirmados via suíte
+automatizada (27/27), não individualmente via navegador manual (só G5/AST e G6/import allowlist
+tiveram teste manual ponta a ponta nesta rodada, por serem os dois itens do checklist original).
 
 **Estado do motor Python depois de G7+G5+G6+G2+G3(completo)+G4: nenhum gap identificado em
 `docs/pesquisa-trilhas-python.md` §4 segue aberto.** Não há mais nenhum item no "horizonte" do
