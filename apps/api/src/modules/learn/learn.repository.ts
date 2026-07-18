@@ -71,7 +71,9 @@ export async function listClassTrailsWithData(classId: string) {
     .from(classTrails)
     .innerJoin(trails, eq(trails.id, classTrails.trailId))
     .where(eq(classTrails.classId, classId))
-    .orderBy(classTrails.order)
+    // order = ordem de atribuição à turma; createdAt como desempate estável
+    // (garante ordem determinística mesmo com valores de order repetidos)
+    .orderBy(classTrails.order, classTrails.createdAt)
 }
 
 /** Contagem de módulos totais por trilha (map trailId → total). */
