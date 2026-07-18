@@ -11,6 +11,14 @@
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
 .card { display: flex; flex-direction: column; gap: 0.6rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; }
+
+/* ── Reordenação por arrastar e soltar ── */
+.reorderHint { font-family: var(--font-mono); font-size: 0.74rem; color: var(--color-text-muted); margin: 0 0 0.75rem; }
+.cardDraggable { cursor: grab; transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease; }
+.cardDraggable:active { cursor: grabbing; }
+.cardDragging { opacity: 0.45; }
+.cardDragOver { border-color: var(--color-primary); transform: translateY(-2px); }
+.dragHandle { font-family: var(--font-mono); font-size: 0.95rem; color: var(--color-text-muted); margin-right: 0.45rem; user-select: none; }
 .cardHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
 .cardTitle { font-family: var(--font-sans); font-size: 1.02rem; font-weight: 650; color: var(--color-text); margin: 0; }
 .cardDesc { font-family: var(--font-sans); font-size: 0.84rem; color: var(--color-text-muted); margin: 0; }

@@ -59,9 +59,13 @@ function ActivateModal({ onClose, onActivated }: { onClose: () => void; onActiva
     setError(null)
     try {
       await api.post(`/api/${slug}/trails`, { trailId })
+      // Marca localmente como ativada (sai da lista de disponíveis) e atualiza
+      // a lista de fundo — sem fechar o modal, para ativar várias em sequência.
+      setItems((prev) => prev.map((t) => (t.id === trailId ? { ...t, activated: true } : t)))
       onActivated()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Erro ao ativar trilha.')
+    } finally {
       setAddingId(null)
     }
   }
@@ -210,6 +214,8 @@ export default function TrailsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!slug) return
@@ -249,6 +255,41 @@ export default function TrailsPage() {
     }
   }
 
+  // ── Reordenação por arrastar e soltar ──
+  async function persistOrder(next: TenantTrail[], prev: TenantTrail[]) {
+    if (!slug) return
+    // Renormaliza todas para order 1..n (1-based, igual à ativação). Evita empates,
+    // já que a listagem do gestor ordena só por order, sem desempate.
+    const changed = next.filter((t, i) => t.order !== i + 1 || prev[i]?.id !== t.id)
+    try {
+      await Promise.all(
+        changed.map((t) =>
+          api.patch(`/api/${slug}/trails/${t.id}/order`, {
+            order: next.findIndex((x) => x.id === t.id) + 1,
+          }),
+        ),
+      )
+      setTrails(next.map((t, i) => ({ ...t, order: i + 1 })))
+      setToast('Ordem atualizada.')
+    } catch (err) {
+      setToast(err instanceof ApiError ? err.message : 'Erro ao reordenar.')
+      setTrails(prev) // rollback otimista
+    }
+  }
+
+  function reorder(fromId: string, toId: string) {
+    if (fromId === toId) return
+    const from = trails.findIndex((t) => t.id === fromId)
+    const to = trails.findIndex((t) => t.id === toId)
+    if (from < 0 || to < 0) return
+    const prev = trails
+    const next = [...trails]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved!)
+    setTrails(next)
+    void persistOrder(next, prev)
+  }
+
   async function deleteOwn(trailId: string) {
     if (!slug) return
     setRemoving(trailId)
@@ -283,20 +324,37 @@ export default function TrailsPage() {
           <button className={styles.btnPrimary} onClick={() => setModalOpen(true)}>+ Ativar trilha</button>
         </div>
       ) : (
-        <div className={styles.grid}>
-          {trails.map((t) => (
-            <div key={t.id} className={styles.card}>
-              <div className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>{t.title}</h2>
-                <span className={styles.badge}>{LANG_LABEL[t.language]}</span>
+        <>
+          {trails.length > 1 && (
+            <p className={styles.reorderHint}>// arraste os cards para reordenar as trilhas</p>
+          )}
+          <div className={styles.grid}>
+            {trails.map((t) => (
+              <div
+                key={t.id}
+                className={`${styles.card} ${styles.cardDraggable} ${dragId === t.id ? styles.cardDragging : ''} ${overId === t.id && dragId !== t.id ? styles.cardDragOver : ''}`}
+                draggable
+                onDragStart={() => setDragId(t.id)}
+                onDragEnter={() => { if (dragId && dragId !== t.id) setOverId(t.id) }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); if (dragId) reorder(dragId, t.id); setDragId(null); setOverId(null) }}
+                onDragEnd={() => { setDragId(null); setOverId(null) }}
+              >
+                <div className={styles.cardHead}>
+                  <h2 className={styles.cardTitle}>
+                    <span className={styles.dragHandle} aria-hidden="true">⠿</span>
+                    {t.title}
+                  </h2>
+                  <span className={styles.badge}>{LANG_LABEL[t.language]}</span>
+                </div>
+                {t.description && <p className={styles.cardDesc}>{t.description}</p>}
+                <button className={styles.btnDanger} onClick={() => deactivate(t.id)} disabled={removing === t.id}>
+                  {removing === t.id ? 'Desativando...' : 'Desativar'}
+                </button>
               </div>
-              {t.description && <p className={styles.cardDesc}>{t.description}</p>}
-              <button className={styles.btnDanger} onClick={() => deactivate(t.id)} disabled={removing === t.id}>
-                {removing === t.id ? 'Desativando...' : 'Desativar'}
-              </button>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* ── Minhas trilhas (autoria própria) ── */}
@@ -330,7 +388,7 @@ export default function TrailsPage() {
       {manualOpen && <ManualModal onClose={() => setManualOpen(false)} />}
       {createOpen && <CreateTrailModal onClose={() => setCreateOpen(false)} />}
       {modalOpen && (
-        <ActivateModal onClose={() => setModalOpen(false)} onActivated={() => { setModalOpen(false); setToast('Trilha ativada.'); load() }} />
+        <ActivateModal onClose={() => setModalOpen(false)} onActivated={() => { setToast('Trilha ativada.'); load() }} />
       )}
       {toast && <div className={styles.toast}>{toast}</div>}
     </div>
