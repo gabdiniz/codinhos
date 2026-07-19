@@ -61,8 +61,9 @@ services:
       - -c
       - >
         pnpm --filter @codinhos/api db:migrate &&
-        (pnpm --filter @codinhos/api db:seed || echo 'seed: pulado (talvez ja populado)') &&
-        (pnpm --filter @codinhos/api db:seed:trilha || echo 'seed trilha: pulado (talvez ja populado)')
+        (pnpm --filter @codinhos/api db:seed:js || echo 'seed js: pulado') &&
+        (pnpm --filter @codinhos/api db:seed:python || echo 'seed python: pulado') &&
+        (pnpm --filter @codinhos/api db:seed || echo 'seed bootstrap: pulado (talvez ja populado)')
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/codinhos
       SEED_SUPER_ADMIN_EMAIL: ${SEED_SUPER_ADMIN_EMAIL:-admin@codinhos.com.br}
