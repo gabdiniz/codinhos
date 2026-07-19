@@ -11,8 +11,8 @@ Contexto e decisão de produto em `docs/planejamento.md` (seção "Codi na Landi
 | `00-sobre-codinhos.md` | O que é, para quem, diferenciais |
 | `01-para-escolas-e-gestores.md` | Configuração, turmas, progressão, avaliação, relatórios, onboarding |
 | `02-para-alunos.md` | Jornada do aluno, sandbox, tutor Codi |
-| `03-trilha-e-conteudo.md` | Trilha de JavaScript, módulos, catálogo |
-| `04-gamificacao.md` | XP, níveis, badges, ranking, streak |
+| `03-trilha-e-conteudo.md` | Trilhas de JavaScript e Python (do básico à POO), módulos, catálogo |
+| `04-gamificacao.md` | XP, níveis, badges, ranking, streak, avatar, portfólio e certificados |
 | `05-privacidade-e-seguranca.md` | LGPD, dados por escola, moderação da IA |
 | `06-faq.md` | Perguntas frequentes (formato pergunta/resposta) |
 | `07-roadmap.md` | Novidades planejadas (sempre como "em breve") |

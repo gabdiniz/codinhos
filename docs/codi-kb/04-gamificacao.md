@@ -19,9 +19,11 @@ A gamificação é um dos pilares do Codinhos. Ela existe para manter o aluno **
 - **Por marco:** completar a primeira trilha, resolver um desafio sem dicas, manter dias seguidos de prática.
 - **Especiais e raras:** criam senso de conquista e dão aquele "quero conseguir também".
 
-## Recompensas visuais
+## Avatar personalizado (recompensa visual)
 
-Subir de nível não rende só números: **desbloqueia itens de personalização do avatar** do aluno — novos penteados, acessórios e fundos especiais que só aparecem quando ele avança. É um incentivo concreto e visual para continuar praticando, e deixa o progresso visível de um jeito que a criança curte mostrar.
+Cada aluno tem um **avatar** que o representa no perfil, no ranking e em toda a jornada. Num estúdio simples e divertido, ele monta o personagem do jeito que quiser — tom de pele, cabelo e cor, expressão do rosto e fundo — **sem pedir nenhuma foto da criança**.
+
+Subir de nível não rende só números: **desbloqueia novos itens do avatar** — penteados, acessórios (como óculos e brincos) e fundos especiais que só aparecem quando o aluno avança. É um incentivo concreto e visual para continuar praticando, e deixa o progresso visível de um jeito que a criança curte mostrar.
 
 ## Competição saudável
 
@@ -32,6 +34,11 @@ Subir de nível não rende só números: **desbloqueia itens de personalização
 
 - **Sequência diária:** manter o hábito de praticar todo dia.
 - **Missão diária:** por exemplo, "complete 1 desafio hoje".
+- **Desafio da semana:** uma atividade extra, além da trilha, para praticar e manter o engajamento.
+
+## Portfólio e certificados
+
+Conforme avança, o aluno constrói um **portfólio** com as trilhas concluídas, as em andamento e as conquistas ganhas. Ao **concluir uma trilha**, ele pode **baixar um certificado em PDF** com a marca da escola — um reconhecimento concreto do que aprendeu.
 
 ## Sempre a favor do aprendizado
 

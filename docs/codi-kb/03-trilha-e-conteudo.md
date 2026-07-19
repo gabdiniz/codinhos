@@ -1,12 +1,12 @@
 ---
 titulo: Trilha e conteúdo
-tema: trilha, conteudo, javascript, modulos, autoria
+tema: trilha, conteudo, javascript, python, modulos, autoria, poo, avancado
 publico: gestores, professores, responsáveis
 ---
 
 # Trilha e conteúdo
 
-O aprendizado no Codinhos é organizado em **trilhas**, e cada trilha é feita de **módulos em sequência**. A linguagem de partida é o **JavaScript** — uma das linguagens mais usadas no mundo e uma ótima porta de entrada para a programação.
+O aprendizado no Codinhos é organizado em **trilhas**, e cada trilha é feita de **módulos em sequência**. A linguagem principal é o **JavaScript** — uma das mais usadas no mundo e uma ótima porta de entrada para a programação. O catálogo também tem um caminho completo de **Python**, para escolas que preferem começar por ela ou oferecer uma segunda linguagem.
 
 ## Como uma trilha é montada
 
@@ -19,17 +19,19 @@ Cada módulo segue sempre a mesma estrutura, pensada para o aluno aprender fazen
 
 ## O que o aluno aprende
 
-O catálogo cobre os fundamentos da programação de forma progressiva:
+O catálogo leva o aluno **do zero ao avançado**, um conceito de cada vez, numa sequência de trilhas que se apoiam umas nas outras (nada é cobrado antes de ser ensinado):
 
-- **Lógica básica** — condicionais e loops.
-- **Variáveis e tipos**.
-- **Funções**.
-- **Arrays e listas**.
-- **Mini-projetos** — como um jogo simples ou uma calculadora, para juntar tudo na prática.
+- **Fundamentos** — variáveis e tipos, operadores, decisões (condicionais) e repetições (loops).
+- **Funções e dados** — funções (incluindo funções que se combinam), listas e textos, números, e objetos.
+- **Pensar como programador** — transformar listas de forma elegante (alta ordem), imprimir e formatar resultados na tela, recursão de verdade e algoritmos clássicos (contagens, frequências, padrões).
+- **Tópicos avançados** — sintaxe moderna da linguagem, coleções (conjuntos e mapas), tratamento de erros, programação assíncrona e **orientação a objetos (classes)** — o topo do percurso.
+- **Extra criativo** — uma trilha opcional de **desafios visuais**, em que o aluno programa desenhos e animações e vê o resultado na tela.
 
-Os desafios têm **formatos variados**: alguns pedem uma resposta a partir de uma entrada; outros pedem que o programa **mostre o resultado na tela** (uma tabuada, um padrão, uma contagem). Isso deixa a prática mais próxima de "programar de verdade" desde cedo.
+Em Python, o caminho é equivalente: dos primeiros passos até orientação a objetos, com estruturas de dados, recursão e algoritmos pelo meio.
 
-Já existe uma trilha completa de JavaScript pronta para uso, cobrindo do fundamento ao algoritmo em uma sequência progressiva de desafios.
+Os desafios têm **formatos variados**: alguns pedem uma resposta a partir de uma entrada; outros pedem que o programa **mostre o resultado na tela** (uma tabuada, um padrão, uma contagem); e há os **visuais**, em que o aluno desenha e anima. Isso deixa a prática mais próxima de "programar de verdade" desde cedo.
+
+O catálogo é uma **sequência progressiva de trilhas** pronta para uso — o gestor escolhe e ordena o que faz sentido para cada turma.
 
 ## Catálogo pronto ou trilha própria
 

@@ -6,7 +6,7 @@ publico: gestores, professores, responsáveis
 
 # O que é o Codinhos
 
-O Codinhos é uma plataforma onde crianças e adolescentes de **11 a 14 anos** aprendem a programar de verdade, escrevendo código e vendo o resultado na hora. O foco inicial é **JavaScript**, ensinado por meio de **desafios práticos** — nada de só assistir vídeo: o aluno põe a mão no código desde o primeiro dia.
+O Codinhos é uma plataforma onde crianças e adolescentes de **11 a 14 anos** aprendem a programar de verdade, escrevendo código e vendo o resultado na hora. A linguagem principal é o **JavaScript** (com um caminho completo de **Python** também disponível), ensinada por meio de **desafios práticos** — nada de só assistir vídeo: o aluno põe a mão no código desde o primeiro dia, e avança dos primeiros passos até tópicos avançados como orientação a objetos.
 
 É um produto pensado para **escolas**. A instituição contrata o Codinhos e ganha um ambiente próprio, com a sua identidade visual, onde monta trilhas de aprendizagem, cria turmas e acompanha o progresso de cada aluno.
 
