@@ -14,7 +14,8 @@ Cada escola tem seu próprio espaço na plataforma, com **identidade visual pers
 
 ## O que o gestor faz
 
-- **Monta trilhas** escolhendo e ordenando módulos de um **catálogo pronto e de qualidade** — ou **cria trilhas próprias** quando quer um percurso sob medida.
+- **Monta trilhas** escolhendo e ordenando módulos de um **catálogo pronto e de qualidade** (JavaScript e Python) — ou **cria trilhas próprias** quando quer um percurso sob medida.
+- **Cria desafios com apoio de IA:** descreve o tema e recebe um rascunho de desafio pronto para revisar e ajustar, agilizando a montagem de conteúdo sob medida.
 - **Cria turmas** e associa alunos a elas.
 - **Atribui professores** às turmas e **cadastra responsáveis** vinculados aos alunos.
 - **Define regras por turma ou por trilha:** como o aluno avança e como os desafios são avaliados.

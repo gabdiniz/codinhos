@@ -13,7 +13,6 @@ Além do que já faz parte do Codinhos hoje, algumas novidades estão planejadas
 ## Experiência de código ainda mais rica
 
 - **Modo híbrido de blocos e texto:** alternar entre blocos visuais e código escrito, com conversão entre os dois, para uma transição gradual. (Hoje já existe um modo de blocos isolado; o híbrido e a conversão são o próximo passo.)
-- **Desafios visuais:** desafios em que o aluno programa **desenhos e animações** e vê o resultado na tela — uma forma mais lúdica e criativa de praticar lógica.
 
 ## Mais criação e colaboração
 
@@ -25,7 +24,6 @@ Além do que já faz parte do Codinhos hoje, algumas novidades estão planejadas
 - **Painéis mais ricos:** quem está travado e há quanto tempo, comparativo entre turmas e alertas de alunos inativos.
 - **Resumo semanal por e-mail para os responsáveis.**
 - **Aulas em vídeo** por módulo.
-- **Criação de desafios com apoio de IA:** o gestor descreve o tema e recebe um rascunho de desafio pronto para revisar, agilizando a montagem de conteúdo sob medida.
 
 ## Mais integração
 
@@ -34,7 +32,7 @@ Além do que já faz parte do Codinhos hoje, algumas novidades estão planejadas
 
 ## Mais conteúdo e recompensas
 
-- **Python** como segunda linguagem.
-- **Conquistas raras e itens cosméticos** (temas de editor, avatares) — sempre sem afetar o aprendizado.
+- **Novas trilhas e projetos temáticos** ampliando ainda mais o catálogo.
+- **Temas de editor** e novos itens cosméticos — sempre sem afetar o aprendizado.
 
 > Quer saber quando uma novidade específica chega? Fale com a gente pelo formulário de contato.

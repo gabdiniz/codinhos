@@ -10,7 +10,7 @@ publico: gestores, professores, responsáveis
 Para crianças e adolescentes de 11 a 14 anos. Todo o conteúdo, a linguagem e os desafios são pensados para essa faixa.
 
 **Que linguagem de programação o aluno aprende?**
-JavaScript, uma das linguagens mais usadas no mundo e uma excelente porta de entrada para programar.
+A principal é o **JavaScript**, uma das linguagens mais usadas no mundo e uma excelente porta de entrada para programar. O catálogo também tem um caminho completo de **Python**. Em qualquer uma, o aluno vai dos primeiros passos até tópicos avançados como orientação a objetos.
 
 **Precisa instalar alguma coisa?**
 Não. O aluno escreve e roda o código direto no navegador. Basta acesso à internet.
@@ -28,7 +28,7 @@ A avaliação olha se o código funciona (o comportamento), o que permite vária
 É o tutor de IA que acompanha o aluno. Ele ajuda com dicas em níveis quando o aluno trava, explica o que deu errado quando um desafio falha e, depois que o aluno acerta, pode comentar como deixar o código melhor — mas nunca entrega a resposta pronta. O objetivo é fazer o aluno pensar e aprender.
 
 **Que tipos de desafio o aluno resolve?**
-Vários formatos, sempre praticando: desde escrever uma função que devolve o resultado certo até programas que mostram resultados na tela. Como a avaliação olha se o código funciona, quase sempre há mais de uma maneira válida de resolver.
+Vários formatos, sempre praticando: desde escrever uma função que devolve o resultado certo, passando por programas que mostram resultados na tela (uma tabuada, um padrão), até **desafios visuais** em que o aluno programa desenhos e animações. Como a avaliação olha se o código funciona, quase sempre há mais de uma maneira válida de resolver.
 
 **Professores têm acesso?**
 Sim. Cada professor tem login próprio e vê apenas as turmas atribuídas a ele, onde acompanha o progresso e revisa as entregas que precisam de avaliação manual.
