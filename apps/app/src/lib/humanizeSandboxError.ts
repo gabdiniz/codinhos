@@ -1,11 +1,11 @@
 // ─── Erros de sandbox humanizados ──────────────────────────────────────────
 //
-// Traduz mensagens nativas de erro do JavaScript (TypeError, ReferenceError,
-// SyntaxError, RangeError) para linguagem acessível a alunos de 11-14 anos.
+// Traduz mensagens nativas de erro (JavaScript ou Python/Pyodide) para
+// linguagem acessível a alunos de 11-14 anos, no idioma da linguagem do desafio.
 //
 // Mensagens que já são amigáveis (ex.: "Nenhuma função encontrada...",
 // "Tempo limite excedido...") são escritas à mão no worker/backend e não
-// passam por aqui — esse arquivo só traduz erros nativos do motor JS.
+// passam por aqui — esse arquivo só traduz erros nativos do motor.
 //
 // Não confundir com a explicação de erro via IA (Codi / `aiErrorExplanationEnabled`),
 // que é um recurso separado e já existe — este arquivo cobre a mensagem
@@ -16,6 +16,8 @@ export interface RawSandboxError {
   /** err.name (ex.: "TypeError") — só disponível quando o teste rodou no worker do navegador */
   name?: string
 }
+
+export type SandboxLanguage = 'javascript' | 'python'
 
 const SERVER_ERROR_PREFIX = 'Erro: '
 
@@ -44,7 +46,8 @@ interface Rule {
   message: (match: RegExpMatchArray) => string
 }
 
-const RULES: Rule[] = [
+// ─── Regras de JavaScript ─────────────────────────────────────────────────────
+const JS_RULES: Rule[] = [
   // ReferenceError: "x is not defined"
   {
     test: /^([\s\S]+?) is not defined$/,
@@ -113,13 +116,98 @@ const RULES: Rule[] = [
   },
 ]
 
+// ─── Regras de Python (mensagens do Pyodide/CPython) ──────────────────────────
+// As mensagens do Python costumam vir como "TipoDoErro: descrição" (última linha
+// do traceback). As regras abaixo casam com esse formato.
+const PY_RULES: Rule[] = [
+  // NameError: name 'x' is not defined
+  {
+    test: /name '([^']+)' is not defined/,
+    message: (m) =>
+      `Você usou "${m[1]}", mas ela ainda não existe no seu código. Confira se escreveu o nome certinho ou se esqueceu de criar essa variável antes de usá-la (ex.: ${m[1]} = ...).`,
+  },
+  // IndentationError / TabError / "expected an indented block"
+  {
+    test: /IndentationError|TabError|expected an indented block|unexpected indent|unindent does not match/,
+    message: () =>
+      'A indentação (os espaços no começo da linha) está incorreta. No Python, o que está dentro de um if, for ou def precisa de espaços a mais — alinhe as linhas do bloco com o mesmo recuo.',
+  },
+  // ZeroDivisionError
+  {
+    test: /division (by|or modulo by) zero/,
+    message: () =>
+      'Você dividiu um número por zero, o que não é possível. Confira o valor do divisor antes de dividir.',
+  },
+  // IndexError: list/string index out of range
+  {
+    test: /(list|string|tuple) index out of range/,
+    message: (m) =>
+      `Você tentou acessar uma posição que não existe ${m[1] === 'string' ? 'no texto' : 'na lista'}. Lembre que a contagem começa em 0 e vai até o tamanho − 1.`,
+  },
+  // KeyError: 'x'
+  {
+    test: /KeyError: '?([^'\n]+)'?/,
+    message: (m) =>
+      `A chave "${m[1].trim()}" não existe nesse dicionário. Confira se o nome da chave está certo (maiúsculas/minúsculas contam).`,
+  },
+  // TypeError: 'x' object is not subscriptable
+  {
+    test: /'([^']+)' object is not subscriptable/,
+    message: (m) =>
+      `Você usou colchetes [ ] em algo do tipo ${m[1]}, que não aceita indexação. Colchetes funcionam com listas, textos e dicionários.`,
+  },
+  // TypeError: 'x' object is not callable
+  {
+    test: /'([^']+)' object is not callable/,
+    message: (m) =>
+      `Você usou parênteses ( ) em algo do tipo ${m[1]}, como se fosse uma função — mas não é. Confira o nome ou se você não sobrescreveu uma função com uma variável.`,
+  },
+  // TypeError: 'x' object is not iterable
+  {
+    test: /'([^']+)' object is not iterable/,
+    message: (m) =>
+      `Você tentou percorrer algo do tipo ${m[1]} item por item, mas isso só funciona com listas, textos, dicionários e outros iteráveis.`,
+  },
+  // AttributeError: 'x' object has no attribute 'y'
+  {
+    test: /'([^']+)' object has no attribute '([^']+)'/,
+    message: (m) =>
+      `O valor do tipo ${m[1]} não tem "${m[2]}". Confira o nome do método/atributo e se o valor é do tipo que você esperava.`,
+  },
+  // ModuleNotFoundError / ImportError
+  {
+    test: /No module named '([^']+)'/,
+    message: (m) =>
+      `O módulo "${m[1]}" não foi encontrado. Confira o nome no import — e lembre que nem toda biblioteca está disponível aqui.`,
+  },
+  // ValueError de conversão numérica
+  {
+    test: /invalid literal for int|could not convert string to float/,
+    message: () =>
+      'Você tentou transformar em número um texto que não é um número. Confira o valor antes de usar int() ou float().',
+  },
+  // TypeError de mistura de tipos
+  {
+    test: /can only concatenate|unsupported operand type|must be str, not|not all arguments converted|can't multiply sequence/,
+    message: () =>
+      'Você misturou tipos diferentes numa mesma operação (por exemplo, texto com número). Converta os valores com int(), float() ou str() antes de combiná-los.',
+  },
+  // SyntaxError (Python) — genérico
+  {
+    test: /SyntaxError|invalid syntax|unexpected EOF|EOL while scanning|unterminated string|was never closed|invalid decimal literal/,
+    message: () =>
+      'Tem um errinho de digitação no código — pode ser parênteses ( ), aspas ou os dois-pontos ( : ) do if/for/def faltando ou sobrando. Releia o código linha por linha.',
+  },
+]
+
 const DEFAULT_MESSAGE =
   'Seu código encontrou um erro ao rodar. Releia a lógica com calma — você consegue resolver!'
 
-/** Traduz a mensagem nativa de um erro JS para uma frase acessível em PT-BR. */
-export function humanizeSandboxError(rawMessage: string): string {
+/** Traduz a mensagem nativa de um erro (JS ou Python) para uma frase acessível em PT-BR. */
+export function humanizeSandboxError(rawMessage: string, language: SandboxLanguage = 'javascript'): string {
   const message = rawMessage.trim()
-  for (const rule of RULES) {
+  const rules = language === 'python' ? PY_RULES : JS_RULES
+  for (const rule of rules) {
     const match = message.match(rule.test)
     if (match) return rule.message(match)
   }

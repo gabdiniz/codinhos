@@ -200,14 +200,17 @@ export async function getModuleContext(moduleId: string): Promise<{
   moduleTitle: string
   moduleConcept: string | null
   exampleCode: string | null
+  language: 'javascript' | 'python'
 } | null> {
   const [row] = await db
     .select({
       moduleTitle: trailModules.title,
       moduleConcept: trailModules.concept,
       exampleCode: trailModules.exampleCode,
+      language: trails.language,
     })
     .from(trailModules)
+    .innerJoin(trails, eq(trailModules.trailId, trails.id))
     .where(eq(trailModules.id, moduleId))
     .limit(1)
   return row ?? null
