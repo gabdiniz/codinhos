@@ -305,7 +305,7 @@ export const router = createBrowserRouter([
     path: '/404',
     element: (
       <div style={{ textAlign: 'center', padding: '4rem', fontFamily: 'var(--font-sans)', color: 'var(--color-text)' }}>
-        <h1>Escola nao encontrada</h1>
+        <h1>Escola não encontrada</h1>
         <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
           Verifique o endereco e tente novamente.
         </p>

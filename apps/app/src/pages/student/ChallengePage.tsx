@@ -505,9 +505,9 @@ function CodeEditor({ initialValue, onChange, vocabulary }: CodeEditorProps) {
 // Mostra a versão humanizada do erro por padrão; a mensagem técnica original
 // (stack/erro nativo) fica escondida atrás de um toggle, para quem quiser ver.
 
-function SandboxErrorMessage({ raw }: { raw: RawSandboxError }) {
+function SandboxErrorMessage({ raw, language = 'javascript' }: { raw: RawSandboxError; language?: 'javascript' | 'python' }) {
   const [showTechnical, setShowTechnical] = useState(false)
-  const friendly = humanizeSandboxError(raw.message)
+  const friendly = humanizeSandboxError(raw.message, language)
   const technical = raw.name ? `${raw.name}: ${raw.message}` : raw.message
 
   return (
@@ -547,9 +547,11 @@ interface TestResultsPanelProps {
   onAskCodi?: (result: TestResult) => void
   /** Tarefa 3.3 — esconde o botão quando o tenant desabilitou a explicação de erro */
   aiHelpEnabled?: boolean
+  /** Linguagem do desafio — usada para humanizar o erro no idioma certo (JS vs Python) */
+  language?: 'javascript' | 'python'
 }
 
-function TestResultsPanel({ results, testCases, onAskCodi, aiHelpEnabled }: TestResultsPanelProps) {
+function TestResultsPanel({ results, testCases, onAskCodi, aiHelpEnabled, language = 'javascript' }: TestResultsPanelProps) {
   const passed = results.filter((r) => r.passed).length
   const total = results.length
   const allPassed = passed === total
@@ -584,7 +586,7 @@ function TestResultsPanel({ results, testCases, onAskCodi, aiHelpEnabled }: Test
                   {(() => {
                     const rawError = extractRawSandboxError(r.error, r.errorName, r.actual)
                     if (rawError) {
-                      return <SandboxErrorMessage raw={rawError} />
+                      return <SandboxErrorMessage raw={rawError} language={language} />
                     }
                     return (
                       <>
@@ -677,6 +679,8 @@ interface CodiDrawerProps {
   moduleId: string | null
   /** true quando o módulo é uma lição (sem desafio) */
   isLesson: boolean
+  /** Linguagem do módulo — usada nos textos do tutor (JavaScript vs Python) */
+  language: 'javascript' | 'python'
 }
 
 function CodiDrawer({
@@ -690,7 +694,9 @@ function CodiDrawer({
   autoMessage,
   moduleId,
   isLesson,
+  language,
 }: CodiDrawerProps) {
+  const languageLabel = language === 'python' ? 'Python' : 'JavaScript'
   const [messages, setMessages] = useState<AiMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -830,7 +836,7 @@ function CodiDrawer({
         {messages.length === 0 && !sending && (
           <div className={styles.codiEmpty}>
             <p>Olá! Sou o Codi, seu tutor de IA. 👋</p>
-            <p>Pode me perguntar sobre o desafio, pedir dicas ou tirar dúvidas sobre JavaScript!</p>
+            <p>Pode me perguntar sobre o desafio, pedir dicas ou tirar dúvidas sobre {languageLabel}!</p>
           </div>
         )}
         {messages.map((m) => (
@@ -1215,9 +1221,11 @@ export default function ChallengePage() {
   }
 
   const { module: mod, challenge } = moduleData
-  const starterCode = challenge?.starterCode ?? '// Escreva seu código aqui\n'
+  const isPython = mod.language === 'python'
+  const starterCode = challenge?.starterCode ?? (isPython ? '# Escreva seu código aqui\n' : '// Escreva seu código aqui\n')
   const hasTests = (challenge?.testCases?.length ?? 0) > 0
   const isP5 = challenge?.renderMode === 'p5'
+  const solutionFilename = isPython ? 'solution.py' : 'solution.js'
 
   return (
     <div className={styles.root}>
@@ -1314,7 +1322,7 @@ export default function ChallengePage() {
               {/* Editor */}
               <div className={styles.editorWrapper}>
                 <div className={styles.editorHeader}>
-                  <span className={styles.editorFilename}>solution.js</span>
+                  <span className={styles.editorFilename}>{solutionFilename}</span>
                   <div className={styles.editorDots}>
                     <span /><span /><span />
                   </div>
@@ -1425,6 +1433,7 @@ export default function ChallengePage() {
                   testCases={moduleData?.challenge?.testCases ?? undefined}
                   onAskCodi={handleAskCodi}
                   aiHelpEnabled={aiData?.aiErrorExplanationEnabled ?? false}
+                  language={mod.language}
                 />
               )}
             </>
@@ -1474,6 +1483,7 @@ export default function ChallengePage() {
             challengeId={challenge?.id ?? null}
             moduleId={moduleId ?? null}
             isLesson={!challenge}
+            language={mod.language}
             slug={slug!}
             getCode={() => codeRef.current}
             conversation={aiData}
