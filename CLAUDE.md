@@ -32,6 +32,11 @@ pnpm lint             # Biome lint em todo o monorepo
 pnpm test             # rodar todos os testes
 ```
 
+> **Terminal do projeto: PowerShell (Windows).** Ao passar comandos de shell, escreva-os
+> compatíveis com PowerShell: um comando por linha, **sem** a continuação `\` do bash
+> (o PowerShell trata `\` como caminho e falha). Se precisar quebrar linha, use crase
+> `` ` `` no fim da linha — mas prefira comandos em linha única.
+
 ---
 
 ## Regras não-negociáveis
