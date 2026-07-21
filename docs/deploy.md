@@ -18,7 +18,9 @@ Serviços do `docker-compose.prod.yml`: `caddy` (única porta pública: 80/443),
 
 ## 1. Provisionar o servidor (Hetzner)
 
-1. Crie um servidor **x86** (ex.: CX22, Ubuntu 24.04 LTS).
+1. Crie um servidor **x86** (ex.: CX23 — 2 vCPU / 4 GB, Ubuntu LTS). Com 4 GB o
+   build roda no próprio host graças ao swap (passo 3). Ligue os **Backups** da
+   Hetzner (+20%) para ter snapshot diário do disco além do dump do Postgres.
 2. Aponte o DNS no **Registro.br** para o IP do servidor:
 
    | Tipo | Nome | Valor |
@@ -34,20 +36,38 @@ Serviços do `docker-compose.prod.yml`: `caddy` (única porta pública: 80/443),
    ```bash
    # como root
    apt update && apt upgrade -y
-   adduser deploy && usermod -aG sudo deploy
-   # copie sua chave pública para o novo usuário
-   rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy
+
+   # usuário de deploy (sem senha de login — acesso só por chave SSH)
+   adduser --disabled-password --gecos "" deploy
+   usermod -aG sudo deploy
+   rsync --archive --chown=deploy:deploy ~/.ssh /home/deploy   # copia sua chave
+   # sudo sem senha (login por senha fica desativado; o deploy roda docker/CI)
+   echo 'deploy ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/deploy && chmod 440 /etc/sudoers.d/deploy
+
+   # Swap — ESSENCIAL num host de 4 GB: o build das imagens (Next + Vite + tsc)
+   # estoura a RAM sem ele. Pule se o servidor tiver 8 GB+.
+   fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+   echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
    # Docker Engine + compose plugin
    curl -fsSL https://get.docker.com | sh
    usermod -aG docker deploy
 
    # Firewall: só SSH + HTTP + HTTPS
-   ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw enable
+   ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
    ```
 
-   Desabilite login por senha/root no `sshd_config` (`PasswordAuthentication no`,
-   `PermitRootLogin no`) e `systemctl restart ssh`.
+   Por fim, desabilite login por senha e por root. No Ubuntu use um **drop-in**
+   (o `sshd_config` principal pode ser sobrescrito pelo `50-cloud-init.conf`):
+
+   ```bash
+   printf 'PermitRootLogin no\nPasswordAuthentication no\nKbdInteractiveAuthentication no\n' \
+     > /etc/ssh/sshd_config.d/00-hardening.conf
+   sshd -t && systemctl restart ssh
+   ```
+
+   > ⚠️ **Antes de reiniciar o SSH**, confirme em OUTRO terminal que o `deploy`
+   > entra por chave (`ssh deploy@IP`) — senão você se tranca para fora.
 
 ---
 
@@ -57,7 +77,7 @@ Como usuário `deploy`:
 
 ```bash
 sudo mkdir -p /opt/codinhos && sudo chown deploy:deploy /opt/codinhos
-git clone <URL-do-repo> /opt/codinhos
+git clone https://github.com/gabdiniz/codinhos.git /opt/codinhos
 cd /opt/codinhos
 
 cp .env.docker.example .env
@@ -81,31 +101,44 @@ docker compose -f docker-compose.prod.yml logs -f api
 > e as portas 80/443 estão abertas. Para não bater no rate limit do Let's
 > Encrypt enquanto testa, descomente `acme_ca ...staging...` no `deploy/Caddyfile`.
 
-### Seed inicial (super admin + catálogo de desafios)
+### Seed inicial (catálogo + super admin + escola demo)
 
 O seed não roda automaticamente em prod (só as migrations). Rode uma vez, após
-o primeiro `up`, para criar o super admin e popular o catálogo da trilha JS
-(84 desafios — sem isso os alunos não têm o que estudar):
+o primeiro `up`. São três comandos — os **catálogos primeiro**, o `db:seed` por
+último (ele vincula às turmas as trilhas já semeadas). Sem isso os alunos não
+têm o que estudar:
 
 ```bash
-# super admin (usa SEED_SUPER_ADMIN_EMAIL / _PASSWORD do .env)
+# 1. Catálogo JavaScript (15 trilhas)
 docker compose -f docker-compose.prod.yml run --rm migrate \
-  sh -c "pnpm --filter @codinhos/api db:seed"
+  sh -c "pnpm --filter @codinhos/api db:seed:js"
 
-# catálogo da trilha de JavaScript
+# 2. Catálogo Python (10 trilhas)
 docker compose -f docker-compose.prod.yml run --rm migrate \
-  sh -c "pnpm --filter @codinhos/api db:seed:trilha"
+  sh -c "pnpm --filter @codinhos/api db:seed:python"
+
+# 3. Super admin + Escola Demo (tenant, gestor, alunos, turmas, vínculos)
+docker compose -f docker-compose.prod.yml run --rm \
+  -e SEED_SUPER_ADMIN_EMAIL="$(grep -E '^SEED_SUPER_ADMIN_EMAIL=' .env | cut -d= -f2-)" \
+  -e SEED_SUPER_ADMIN_PASSWORD="$(grep -E '^SEED_SUPER_ADMIN_PASSWORD=' .env | cut -d= -f2-)" \
+  migrate sh -c "pnpm --filter @codinhos/api db:seed"
 ```
 
-Confirme antes `SEED_SUPER_ADMIN_EMAIL` / `SEED_SUPER_ADMIN_PASSWORD` no `.env`
-e troque a senha no primeiro login.
+> **Por que o `-e ...` só no passo 3?** O serviço `migrate` recebe apenas a
+> `DATABASE_URL` pelo compose. O `db:seed` lê `SEED_SUPER_ADMIN_*` do ambiente e
+> **falha** se não estiverem presentes — por isso são passados explicitamente.
+> Os passos 1 e 2 só precisam da `DATABASE_URL`.
+
+Os seeds são **idempotentes** (pode re-rodar). Troque a senha do super admin no
+primeiro login. As contas da Escola Demo saem com senha `demo1234`.
 
 ---
 
 ## 3. CI/CD (GitHub Actions)
 
 O workflow `.github/workflows/deploy.yml` faz deploy a cada push na `main`:
-conecta por SSH, `git pull` e `docker compose up -d --build`.
+conecta por SSH, faz `git reset --hard origin/main`, `docker compose up -d
+--build` e um `docker image prune -f` no fim.
 
 Configure em **Settings → Secrets and variables → Actions**:
 
@@ -120,10 +153,21 @@ Configure em **Settings → Secrets and variables → Actions**:
 Gere uma chave só para o CI e autorize no servidor:
 
 ```bash
+# na sua máquina — sem passphrase (o CI não digita senha)
 ssh-keygen -t ed25519 -C "github-actions" -f ci_deploy_key
-ssh-copy-id -i ci_deploy_key.pub deploy@SEU_IP   # ou cole em ~/.ssh/authorized_keys
-# conteúdo de ci_deploy_key (privada) → secret SSH_KEY
+
+# a PÚBLICA vai para o authorized_keys do deploy, no servidor:
+#   echo "<conteúdo real de ci_deploy_key.pub>" >> ~/.ssh/authorized_keys
+# valide: ssh -i ci_deploy_key deploy@IP   (tem que logar sem senha)
 ```
+
+> ⚠️ **Dois tropeços comuns:**
+> - No secret `SSH_KEY`, cole a chave **privada inteira**, incluindo as linhas
+>   `-----BEGIN OPENSSH PRIVATE KEY-----` e `-----END OPENSSH PRIVATE KEY-----`.
+>   Sem elas o Action dá `ssh: no key found`. (`Get-Content ... -Raw | Set-Clipboard`
+>   no Windows preserva a formatação.)
+> - No `authorized_keys`, cole a chave **pública real** — não o texto de exemplo.
+>   `ssh-copy-id` não serve aqui porque o login por senha está desativado.
 
 Disparo manual: aba **Actions → deploy → Run workflow**.
 
@@ -193,6 +237,11 @@ docker compose -f docker-compose.prod.yml down                # parar (mantém v
 
 > Mudar o `.env` só tem efeito ao **recriar** o container (`up -d
 > --force-recreate`), não no `restart`.
+
+> **Disco**: como as imagens são buildadas no próprio host, cada deploy deixa
+> camadas antigas. O workflow do CI já roda `docker image prune -f`; em deploys
+> manuais, rode-o de vez em quando (`docker image prune -f`) para não encher o
+> disco. Veja o uso com `df -h /` e `docker system df`.
 
 ### Rollback
 
