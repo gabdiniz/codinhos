@@ -37,8 +37,10 @@ export function Trilha() {
             {TOPICS.map((t) => (
               <li key={t.label} className={styles.topic}>
                 <span className={styles.dot} />
-                <span className={styles.topicLabel}>{t.label}</span>
-                <span className={styles.topicHint}>{t.hint}</span>
+                <span className={styles.topicText}>
+                  <span className={styles.topicLabel}>{t.label}</span>
+                  <span className={styles.topicHint}>{t.hint}</span>
+                </span>
               </li>
             ))}
           </ul>
