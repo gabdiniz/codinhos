@@ -1,6 +1,6 @@
 # Codinhos
 
-Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escolas contratam como tenant; gestores configuram trilhas e turmas; alunos aprendem JavaScript via desafios práticos com sandbox, gamificação e tutor de IA (Codi).
+Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escolas contratam como tenant; gestores configuram trilhas e turmas; alunos aprendem **JavaScript e Python** — do básico à orientação a objetos — via desafios práticos com sandbox, gamificação e tutor de IA (Codi).
 
 ---
 
@@ -11,10 +11,12 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 | Monorepo | Turborepo + pnpm workspaces |
 | API | Fastify v5, Zod, Drizzle ORM, PostgreSQL |
 | SPA interna | Vite + React 19, React Router 6, CSS Modules |
-| Web pública | Next.js (planejado) |
+| Web pública | Next.js — landing / LP de vendas |
 | Editor de código | CodeMirror 6 |
+| Runner de desafios | pacote `runner` compartilhado (JS em Web Worker no front + `node:vm` no back); Python via Pyodide (`runner-python`) |
+| Desafios visuais | p5.js (desenho e animação) |
 | Autenticação | Sessions + cookie httpOnly |
-| IA | Anthropic Claude Haiku |
+| IA | Anthropic Claude (Haiku no tutor Codi; Sonnet na geração de desafios) |
 | E-mail | Resend |
 
 ---
@@ -26,7 +28,7 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 | **Super Admin** | global (tenant `__system__`) | Gerencia tenants (escolas), catálogo global de trilhas/módulos/desafios e badges. |
 | **Gestor** (`manager`) | tenant | Configura trilhas e turmas, cadastra/importa alunos, vincula professores e responsáveis, conecta o Google Classroom, acompanha o dashboard do tenant. |
 | **Professor** (`professor`) | turmas atribuídas | Acompanha só as turmas atribuídas a ele (alunos, progresso) e revisa submissões manuais. Sem acesso a configurações do tenant. |
-| **Aluno** (`student`) | próprio progresso | Aprende JavaScript via trilhas/desafios no sandbox, ganha XP/badges, usa o tutor de IA e baixa certificados. |
+| **Aluno** (`student`) | próprio progresso | Aprende JavaScript e Python via trilhas/desafios no sandbox, personaliza o avatar, ganha XP/badges, usa o tutor de IA e baixa certificados. |
 | **Responsável** (`guardian`) | filhos vinculados | Portal **somente leitura**: acompanha progresso, badges e trilhas dos filhos. Sem sandbox/IA. |
 
 ---
@@ -35,17 +37,20 @@ Plataforma B2B de ensino de programação para crianças de 11 a 14 anos. Escola
 
 **Conteúdo e aprendizado**
 - Catálogo global de **trilhas → módulos → desafios** (gerido pelo Super Admin via UI de catálogo), ativado por tenant.
-- **Trilha própria da escola** — o gestor pode criar suas próprias trilhas/módulos/desafios (autoria híbrida; `trails.tenant_id`).
-- **Trilha embutida "JavaScript: do Fundamento ao Algoritmo"** — 96 módulos (84 desafios + 12 lições teóricas intercaladas), do básico ao avançado e ordenados por pré-requisito (`pnpm --filter @codinhos/api db:seed:trilha`).
-- **Sandbox JavaScript** com execução segura em Web Worker e editor CodeMirror 6.
+- **Currículo de JavaScript** — 15 trilhas do básico ao avançado (variáveis → decisões/loops → funções → listas e textos → números e objetos → alta ordem → saída/formatação → recursão → algoritmos → sintaxe moderna ES6+ → Map/Set → tratamento de erros → async/await → **orientação a objetos**), mais uma trilha **opcional de desafios visuais com p5.js**.
+- **Currículo de Python** — 10 trilhas, dos primeiros passos à orientação a objetos, executadas via Pyodide.
+- **Trilha própria da escola** — o gestor pode criar suas próprias trilhas/módulos/desafios (autoria híbrida; `trails.tenant_id`), inclusive com **geração de rascunho de desafio por IA**.
+- **Vários modos de desafio** — retorno de função, saída no console (stdout), verificação de **estrutura do código** (ex.: "resolva com recursão, sem laço") e desafios **visuais**.
+- **Sandbox** com execução segura (Web Worker no front, revalidação no backend) e editor CodeMirror 6.
 - **Autocomplete contextual** — sugere só o vocabulário já ensinado até o módulo atual.
 - **Editor de blocos visuais** (Blockly) por trilha (`visualBlocksEnabled`), gerando JS para o mesmo fluxo de submissão.
-- **Tutor de IA "Codi"** (Anthropic Claude) com histórico por desafio, limite diário e explicação de erros.
-- **Erros de sandbox humanizados** — traduz erros nativos do JS para linguagem acessível à idade.
+- **Tutor de IA "Codi"** (Anthropic Claude) com histórico por desafio, limite diário, **dicas progressivas**, explicação de erros e **code review** após o acerto.
+- **Erros de sandbox humanizados** — traduz erros nativos para linguagem acessível à idade.
 
 **Gamificação**
 - XP, níveis, **streak** diário, **badges** automáticas e **ranking** de turma. Regras configuráveis por tenant.
 - **Desafio da semana** por turma.
+- **Avatar personalizado** (DiceBear) com itens desbloqueados por nível.
 
 **Gestão (escola)**
 - Turmas com modos de progressão (livre/sequencial/controlado) e validação (automática/auto+revisão/manual).
@@ -127,20 +132,31 @@ pnpm --filter @codinhos/api db:migrate
 
 ### 4. Rode o seed
 
-O seed cria o tenant `__system__` com o super admin, e a **Escola Demo** com usuários prontos para teste:
+O seed tem três partes: o **catálogo de JavaScript** (15 trilhas), o **catálogo de Python** (10 trilhas) e o **bootstrap** (`db:seed`), que cria o tenant `__system__` com o super admin e a **Escola Demo** — com duas turmas (JavaScript e Python), 3 alunos cada, já com as trilhas associadas em ordem.
+
+Rode tudo de uma vez:
 
 ```bash
-pnpm --filter @codinhos/api db:seed
+pnpm --filter @codinhos/api db:seed:all
 ```
 
-Credenciais da Escola Demo:
+Ou por partes (útil para re-semear um bloco isolado):
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| Gestor | gestor@escola-demo.com | demo1234 |
-| Aluno | aluno@escola-demo.com | demo1234 |
+```bash
+pnpm --filter @codinhos/api db:seed:js       # 15 trilhas JS (01-14 + p5)
+pnpm --filter @codinhos/api db:seed:python   # 10 trilhas Python
+pnpm --filter @codinhos/api db:seed          # tenant + turmas + alunos + vínculos
+```
 
-O seed é **idempotente** — pode rodar múltiplas vezes sem duplicar dados.
+Credenciais da Escola Demo (senha `demo1234` para todos):
+
+| Perfil | E-mail |
+|---|---|
+| Gestor | gestor@escola-demo.com |
+| Turma JavaScript | aluno@ / ana@ / pedro@ escola-demo.com |
+| Turma Python | julia@ / lucas@ / marina@ escola-demo.com |
+
+Todos os seeds são **idempotentes** — podem rodar múltiplas vezes sem duplicar dados.
 
 ---
 
@@ -208,9 +224,11 @@ apps/
   app/        → Vite + React — SPA interna autenticada
   web/        → Next.js — landing pública (LP de vendas)
 packages/
-  ui/         → componentes React compartilhados
-  types/      → tipos TypeScript compartilhados (DTOs, entidades)
-  config/     → eslint, tsconfig, prettier base
+  ui/            → componentes React compartilhados
+  types/         → tipos TypeScript compartilhados (DTOs, entidades)
+  runner/        → lógica pura do corretor de JS (comparação, matchers, AST, stdout, async) — usada no back e no front
+  runner-python/ → corretor de Python via Pyodide
+  config/        → eslint, tsconfig, prettier base
 docs/
   api.md      → contratos completos de todos os endpoints
   database.md → schema completo do banco
