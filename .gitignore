@@ -50,3 +50,6 @@ backups/
 # Assets do Pyodide copiados de node_modules no postinstall (P1 Python) —
 # gerados, não versionar. Ver apps/app/scripts/copy-pyodide-assets.mjs.
 apps/app/public/pyodide/
+
+# Arquivos temporários da ferramenta de escrita
+_tmp_*
