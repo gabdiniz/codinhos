@@ -118,9 +118,9 @@ describe('gamification.service', () => {
         showRanking: true,
       })
       vi.mocked(listClassRanking).mockResolvedValue([
-        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: 500, level: 6 },
-        { studentId: 'b', name: 'Bob', avatarUrl: null, totalXp: 300, level: 4 },
-        { studentId: 'c', name: 'Carol', avatarUrl: null, totalXp: 100, level: 2 },
+        { studentId: 'a', name: 'Alice', avatarUrl: null, avatarConfig: null, totalXp: 500, level: 6 },
+        { studentId: 'b', name: 'Bob', avatarUrl: null, avatarConfig: null, totalXp: 300, level: 4 },
+        { studentId: 'c', name: 'Carol', avatarUrl: null, avatarConfig: null, totalXp: 100, level: 2 },
       ])
 
       const result = await getClassRanking('class-id', 'tenant-id', 'b', 'student')
@@ -136,7 +136,7 @@ describe('gamification.service', () => {
         showRanking: true,
       })
       vi.mocked(listClassRanking).mockResolvedValue([
-        { studentId: 'a', name: 'Alice', avatarUrl: null, totalXp: 500, level: 6 },
+        { studentId: 'a', name: 'Alice', avatarUrl: null, avatarConfig: null, totalXp: 500, level: 6 },
       ])
 
       const result = await getClassRanking('class-id', 'tenant-id', 'manager-id', 'manager')

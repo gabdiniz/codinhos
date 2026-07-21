@@ -145,6 +145,7 @@ describe('auth.service', () => {
         name: activeUser.name,
         role: activeUser.role,
         avatarUrl: null,
+        avatarConfig: null,
         isActive: true,
         tenantId: activeUser.tenantId,
       }

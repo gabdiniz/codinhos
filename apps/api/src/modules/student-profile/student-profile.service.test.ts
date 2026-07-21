@@ -34,6 +34,7 @@ const STUDENT = {
   email: 'ana@escola.com',
   role: 'student' as const,
   avatarUrl: null,
+  avatarConfig: null,
   birthDate: '2013-06-01',
   isActive: true,
   createdAt: new Date('2025-01-10T00:00:00Z'),
