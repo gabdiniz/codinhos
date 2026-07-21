@@ -4,7 +4,7 @@ import type { ContactBody } from './contact.schema.js'
 
 // Para onde os leads da landing são encaminhados. Configurável por env.
 const CONTACT_TO = process.env.CONTACT_TO ?? 'contato@codinhos.com.br'
-const EMAIL_FROM = process.env.EMAIL_FROM ?? 'noreply@codinhos.com.br'
+const EMAIL_FROM = process.env.EMAIL_FROM ?? 'noreply@send.codinhos.com.br'
 
 /** Escapa HTML para não injetar markup no corpo do e-mail. */
 function escapeHtml(value: string): string {
