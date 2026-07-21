@@ -61,14 +61,14 @@
     "zod": "^3.23.8",
     "pdfkit": "^0.15.1",
     "@codinhos/runner": "workspace:*",
-    "@codinhos/runner-python": "workspace:*"
+    "@codinhos/runner-python": "workspace:*",
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "@codinhos/types": "workspace:*",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^2.1.8",
-    "dotenv": "^17.4.2",
     "drizzle-kit": "^0.30.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
