@@ -9,6 +9,13 @@ const inDocker = process.env.DOCKER === 'true'
 
 export default defineConfig({
   plugins: [react()],
+  // O worker do sandbox (sandbox.worker.ts) é um module worker que carrega o
+  // Pyodide via import dinâmico (code-splitting). O formato padrão de worker do
+  // Vite é 'iife', que não suporta code-splitting e quebra o build de produção.
+  // 'es' é compatível e casa com o `new Worker(..., { type: 'module' })`.
+  worker: {
+    format: 'es',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
