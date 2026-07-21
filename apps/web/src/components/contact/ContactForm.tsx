@@ -16,9 +16,27 @@ export function ContactForm() {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
 
+  /** Validação no cliente com mensagens amigáveis, espelhando o schema da API. */
+  function validate(): string | null {
+    if (name.trim().length < 2) return 'Preencha seu nome (mínimo 2 caracteres).'
+    if (school.trim().length < 2) return 'Preencha o nome da escola (mínimo 2 caracteres).'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      return 'Informe um e-mail válido (ex.: nome@escola.com.br).'
+    if (message.trim().length < 5)
+      return 'Sua mensagem está muito curta — escreva pelo menos 5 caracteres.'
+    return null
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (status === 'sending') return
+
+    const validationError = validate()
+    if (validationError) {
+      setStatus('error')
+      setError(validationError)
+      return
+    }
 
     setStatus('sending')
     setError(null)
@@ -27,12 +45,22 @@ export function ContactForm() {
       const res = await fetch(`${API_URL}/api/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, school, email, message }),
+        body: JSON.stringify({
+          name: name.trim(),
+          school: school.trim(),
+          email: email.trim(),
+          message: message.trim(),
+        }),
       })
 
       if (res.status === 429) {
         setStatus('error')
         setError('Você enviou várias mensagens em pouco tempo. Tente de novo daqui a pouco.')
+        return
+      }
+      if (res.status === 400) {
+        setStatus('error')
+        setError('Confira os campos: algum ficou incompleto ou muito curto.')
         return
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
