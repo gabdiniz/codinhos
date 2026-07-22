@@ -18,7 +18,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.codinhos.com.b
 const SITE_NAME = 'Codinhos'
 const TITLE = 'Codinhos — ensino de programação para escolas'
 const DESCRIPTION =
-  'Plataforma B2B de ensino de programação para alunos de 11 a 14 anos: JavaScript na prática, com sandbox no navegador, gamificação e o tutor de IA Codi. Feito para escolas.'
+  'Plataforma B2B de ensino de programação para alunos de 11 a 14 anos: JavaScript e Python na prática, com sandbox no navegador, gamificação e o tutor de IA Codi. Feito para escolas.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
