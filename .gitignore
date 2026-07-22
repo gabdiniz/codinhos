@@ -53,3 +53,6 @@ apps/app/public/pyodide/
 
 # Arquivos temporários da ferramenta de escrita
 _tmp_*
+
+# Materiais financeiros, comerciais e juridicos — internos, fora do versionamento
+docs/financeiro/
