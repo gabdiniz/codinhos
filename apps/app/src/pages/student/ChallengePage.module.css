@@ -190,17 +190,6 @@
   white-space: pre-wrap;
 }
 
-.conceptInlineCode {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.05rem 0.35rem;
-  color: var(--color-text);
-  white-space: normal;
-}
-
 .conceptCodeBlock {
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
