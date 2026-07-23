@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 // Biblioteca p5.js empacotada como texto (?raw) e injetada no iframe de prévia
 // dos desafios visuais — roda offline, sem CDN, dentro de um sandbox isolado.
@@ -344,6 +344,32 @@ function buildEditorTheme() {
 // ─── Helpers de renderização ──────────────────────────────────────────────────
 
 /** Renderiza texto com blocos de código separados. */
+/** Renderiza markdown inline simples: **negrito** e `código`. */
+function renderInline(text: string, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = []
+  const regex = /\*\*([^*]+)\*\*|`([^`]+)`/g
+  let last = 0
+  let match: RegExpExecArray | null
+  let i = 0
+  // biome-ignore lint/suspicious/noAssignInExpressions: laço padrão de regex.exec
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    if (match[1] !== undefined) {
+      nodes.push(<strong key={`${keyPrefix}-${i}`}>{match[1]}</strong>)
+    } else if (match[2] !== undefined) {
+      nodes.push(
+        <code key={`${keyPrefix}-${i}`} className={styles.conceptInlineCode}>
+          {match[2]}
+        </code>,
+      )
+    }
+    last = match.index + match[0].length
+    i += 1
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
 function ConceptText({ text }: { text: string }) {
   const parts = text.split(/(```[\s\S]*?```)/g)
   return (
@@ -359,7 +385,7 @@ function ConceptText({ text }: { text: string }) {
         }
         return (
           <span key={i} className={styles.conceptProse}>
-            {part}
+            {renderInline(part, `p${i}`)}
           </span>
         )
       })}
